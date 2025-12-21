@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SDC Lab Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['"Noto Sans KR"', 'sans-serif'],
+            },
+            colors: {
+              navy: {
+                DEFAULT: '#2C3E50', // Midnight Navy (Primary)
+                light: '#34495E',
+                dark: '#1a252f',
+              },
+              sage: {
+                DEFAULT: '#27AE60', // Sage Green (Success/Accent)
+                light: '#2ECC71',
+                bg: '#EAFAF1'
+              },
+              coral: {
+                DEFAULT: '#E67E22', // Coral Orange (Alert)
+                light: '#F39C12',
+                bg: '#FEF5E7'
+              },
+              soft: {
+                grey: '#F4F6F7', // Soft Grey (Background)
+              }
+            }
+          }
+        }
+      }
+    </script>
+
+<link rel="stylesheet" href="/index.css">
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0"
+  }
+}
+</script>
+  <script type="module" crossorigin src="/sdc-lab-dashboard2/assets/index-D_0GZc3J.js"></script>
+</head>
+  <body class="bg-soft-grey text-navy-dark antialiased">
+    <div id="root"></div>
+</body>
+</html>
