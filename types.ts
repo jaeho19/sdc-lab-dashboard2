@@ -68,6 +68,8 @@ export interface Paper {
   title: string;
   targetJournal?: string;
   deadline?: string; // YYYY-MM-DD
+  targetSubmissionDate?: string; // NEW
+  targetPublicationDate?: string; // NEW
   progress: number; // 0-100 (Auto-calculated)
   
   stages: PaperStage[];

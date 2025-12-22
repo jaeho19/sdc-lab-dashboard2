@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ResearchRecord, PaperAuthor, getProgressColor } from '../types';
 import { generateStages } from '../services/mockData';
-import { CheckCircle, Plus, Trash2, Edit2, User, Clock, FileText, ChevronDown } from 'lucide-react';
+import { CheckCircle, Plus, Trash2, Edit2, User, Clock, FileText, ChevronDown, Calendar } from 'lucide-react';
 import Button from './Button';
 
 interface ResearchArticleDetailProps {
@@ -175,27 +175,31 @@ const ResearchArticleDetail: React.FC<ResearchArticleDetailProps> = ({
   return (
     <div className="border-t border-slate-100 bg-slate-50/50 p-6 animate-in slide-in-from-top-2 duration-300 pb-24 relative">
                                                     
-        {/* Header Details */}
-        <div className="flex flex-col md:flex-row justify-between items-start mb-8 gap-6">
-            <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-xl font-bold text-slate-800 leading-tight">{paper.title}</h3>
-                    <div className="flex gap-2 shrink-0">
-                        <span className="px-2 py-0.5 rounded text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-tight">{paper.status}</span>
-                        <span className={`px-2 py-0.5 rounded text-xs font-bold border uppercase tracking-tight ${
-                            paper.statusTag === 'On Track' ? 'bg-green-50 text-green-700 border-green-200' :
-                            paper.statusTag === 'At Risk' ? 'bg-red-50 text-red-700 border-red-200' :
-                            'bg-yellow-50 text-yellow-700 border-yellow-200'
-                        }`}>{paper.statusTag || 'No Status'}</span>
-                    </div>
+        {/* Target Dates Section */}
+        <div className="grid grid-cols-2 gap-4 mb-6 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+             <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">Target Submission</label>
+                <div className="flex items-center gap-2">
+                    <Calendar size={14} className="text-slate-400"/>
+                    <input 
+                        type="date"
+                        value={paper.targetSubmissionDate || ''}
+                        onChange={(e) => onUpdate({ ...paper, targetSubmissionDate: e.target.value })}
+                        className="text-sm font-semibold text-slate-700 bg-transparent outline-none w-full"
+                    />
                 </div>
-                <div className="text-sm text-slate-500 font-medium">TYPE <span className="text-slate-700 ml-1">{paper.type || 'Research'}</span></div>
             </div>
-
-            <div className="flex items-center gap-4">
-                <div onClick={onClose} className="cursor-pointer p-1 hover:bg-slate-200 rounded-full text-slate-400">
-                    <ChevronDown className="transform rotate-180" size={20}/>
-                </div>
+            <div>
+                 <label className="block text-xs font-bold text-slate-500 mb-1">Target Publication</label>
+                 <div className="flex items-center gap-2">
+                    <Calendar size={14} className="text-slate-400"/>
+                    <input 
+                        type="date"
+                        value={paper.targetPublicationDate || ''}
+                        onChange={(e) => onUpdate({ ...paper, targetPublicationDate: e.target.value })}
+                        className="text-sm font-semibold text-slate-700 bg-transparent outline-none w-full"
+                    />
+                 </div>
             </div>
         </div>
 

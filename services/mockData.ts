@@ -68,21 +68,21 @@ export const STAGE_CHECKLISTS: Record<string, string[]> = {
     '데이터 수집': ['공공데이터 포털 데이터 확보', '데이터 전처리 및 정제', '결측치 및 이상치 처리', '데이터 구조화 완료'],
     '분석': ['기초 통계 분석', '시각화 수행', '가설 검증 / 모델 학습', '분석 결과 해석'],
     '초고 작성': ['서론 및 이론적 배경 작성', '연구 방법 기술', '분석 결과 정리', '결론 및 시사점 도출'],
-    '내부 검토': ['지도교수님 피드백 반영', '연구실 세미나 발표', '논리기조 점검', '참고문헌 포맷 확인'],
+    // Removed Internal Review
     '투고': ['타겟 저널 포맷팅 (Author Guidelines)', 'Cover Letter 작성', 'Manuscript 제출', '심사료 납부'],
     '심사/수정': ['Reviewer 코멘트 분석', '수정본(Revised Manuscript) 작성', 'Response Letter 작성', '재투고'],
     '게재확정': ['최종 교정(Galley Proof)', '게재료 납부', '연구 실적 등록', '아카이빙']
 };
 
 export const generateStages = (completedCount: number): PaperStage[] => [
-    { id: 's1', stageType: '문헌조사', weight: 10, order: 1 },
-    { id: 's2', stageType: '방법론 설계', weight: 10, order: 2 },
+    { id: 's1', stageType: '문헌조사', weight: 12, order: 1 },
+    { id: 's2', stageType: '방법론 설계', weight: 12, order: 2 },
     { id: 's3', stageType: '데이터 수집', weight: 15, order: 3 },
     { id: 's4', stageType: '분석', weight: 20, order: 4 },
     { id: 's5', stageType: '초고 작성', weight: 15, order: 5 },
-    { id: 's6', stageType: '내부 검토', weight: 10, order: 6 },
-    { id: 's7', stageType: '투고', weight: 5, order: 7 },
-    { id: 's8', stageType: '심사/수정', weight: 10, order: 8 },
+    // Removed Internal Review
+    { id: 's7', stageType: '투고', weight: 6, order: 7 },
+    { id: 's8', stageType: '심사/수정', weight: 15, order: 8 },
     { id: 's9', stageType: '게재확정', weight: 5, order: 9 },
 ].map((s, i) => ({
     ...s,
@@ -107,7 +107,7 @@ export const INITIAL_RESEARCH: ResearchRecord[] = [
     statusTag: 'On Track',
     progress: 35, 
     targetJournal: 'Landscape and Urban Planning',
-    stages: generateStages(3), // 1,2,3 done
+    stages: generateStages(3), 
     authors: [
         { id: 'a1', name: '강성익', role: '1저자', responsibilities: ['데이터 수집', '분석', '초고 작성'], order: 1 },
         { id: 'a2', name: '이재호', role: '교신저자', responsibilities: ['연구 설계', '검토', '투고 관리'], order: 2 }
@@ -132,7 +132,7 @@ export const INITIAL_RESEARCH: ResearchRecord[] = [
     statusTag: 'Under Review',
     progress: 85, 
     targetJournal: 'Health & Place',
-    stages: generateStages(7), // Submitted
+    stages: generateStages(6), 
     authors: [
         { id: 'a1', name: '강성익', role: '1저자', responsibilities: ['분석', '글쓰기'], order: 1 },
         { id: 'a2', name: 'Dr. Smith', role: '공저자', responsibilities: ['데이터 제공'], order: 2 },
@@ -141,23 +141,9 @@ export const INITIAL_RESEARCH: ResearchRecord[] = [
     deadline: '2025-02-15'
   },
   
+  
   // Oh Jae-in
-  { 
-    id: 'r3', 
-    assignedMemberId: 'm2', 
-    studentId: 'm2',
-    title: '고령층의 주요 공원 대중교통 접근성 다차원 분석', 
-    type: ResearchType.NewResearch, 
-    status: ResearchStatus.Preparing, 
-    progress: 20, 
-    targetJournal: 'Journal of Transport Geography',
-    stages: generateStages(2),
-    authors: [
-        { id: 'a1', name: '오재인', role: '1저자', responsibilities: ['전체 수행'], order: 1 },
-        { id: 'a2', name: '이재호', role: '교신저자', responsibilities: ['지도'], order: 2 }
-    ],
-    deadline: '2025-05-30'
-  },
+  // Oh Jae-in
   { 
     id: 'r4', 
     assignedMemberId: 'm2', 

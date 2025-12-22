@@ -330,15 +330,18 @@ const MemberDirectory: React.FC<MemberDirectoryProps> = ({
                         </div>
 
                         {/* EXPANDED DETAILS - Using New Component */}
-                        {isExpanded && (
-                            <ResearchArticleDetail 
-                                paper={r}
-                                onUpdate={onUpdateResearch}
-                                onDelete={onDeleteResearch}
-                                currentUser={currentUser}
-                                onClose={() => setExpandedResearchId(null)}
-                            />
-                        )}
+                        {/* EXPANDED DETAILS - Smooth Accordion */}
+                        <div className={`grid transition-all duration-500 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                             <div className="overflow-hidden">
+                                <ResearchArticleDetail 
+                                    paper={r}
+                                    onUpdate={onUpdateResearch}
+                                    onDelete={onDeleteResearch}
+                                    currentUser={currentUser}
+                                    onClose={() => setExpandedResearchId(null)}
+                                />
+                             </div>
+                        </div>
                     </div>
                 );
             })}
