@@ -228,6 +228,77 @@ export const INITIAL_RESEARCH: ResearchRecord[] = [
       stages: generateStages(0),
       authors: [{ id: 'a1', name: '이은진', role: '1저자', responsibilities: [], order: 1 }],
       deadline: '2027-02-28'
+   },
+
+   // ------------------------------------------------------------------
+   // DETAILED ADDITIONS (User Request 2024-12-23)
+   // ------------------------------------------------------------------
+
+   // Lee Da-yeon (m4) - Research 1
+   {
+      id: 'r30',
+      assignedMemberId: 'm4',
+      studentId: 'm4',
+      title: '개인 추천 경로 분석 (SP 검증)',
+      type: ResearchType.NewResearch,
+      status: ResearchStatus.Preparing,
+      progress: 20,
+      stages: generateStages(2),
+      authors: [{ id: 'a1', name: '이다연', role: '1저자', responsibilities: [], order: 1 }],
+      deadline: '2025-08-31',
+      activityLog: [
+          { id: 'al1', date: '2024-12-20', content: '데이터: 스트리트런 (맨하탄, 피츠버그) 활용 결정', type: 'log' },
+          { id: 'al2', date: '2024-12-22', content: '방법론: Stated Preferences(SP) 조사 검증 채택 (단순 설문조사 한계 극복, 교통 분야 투고 고려)', type: 'milestone' },
+          { id: 'al3', date: '2024-12-22', content: 'Gap: GSV 대비 화질 우수성 강조 및 SP 검증 차별화 전략 수립', type: 'log' }
+      ]
+   },
+   // Lee Da-yeon (m4) - Research 2
+   {
+      id: 'r31',
+      assignedMemberId: 'm4',
+      studentId: 'm4',
+      title: '픽셀 기반 vs LLM 기반 분석',
+      type: ResearchType.NewResearch,
+      status: ResearchStatus.Preparing,
+      progress: 15,
+      stages: generateStages(1),
+      authors: [{ id: 'a1', name: '이다연', role: '1저자', responsibilities: [], order: 1 }],
+      deadline: '2025-10-15',
+      activityLog: [
+          { id: 'al1', date: '2024-12-20', content: '목적: 픽셀 기반(정량) vs LLM 기반(정성/맥락) 분석 비교', type: 'log' },
+          { id: 'al2', date: '2024-12-22', content: '방법: VLM (GPT-4V, LLaVA) 활용하여 이미지 -> 텍스트 설명 생성', type: 'milestone' },
+          { id: 'al3', date: '2024-12-22', content: '가설: 픽셀 비율은 "쾌적함의 이유"나 "맥락적 정보(관리상태, 그늘 등)"를 설명하지 못하는 한계 존재', type: 'log' }
+      ]
+   },
+
+   // Lee Ji-yoon (m3)
+   {
+      id: 'r32',
+      assignedMemberId: 'm3',
+      studentId: 'm3',
+      title: '매력도 기반 Multi-modal 3SFCA를 활용한 서울시 공원 접근성 형평성 평가',
+      type: ResearchType.NewResearch,
+      status: ResearchStatus.Preparing,
+      progress: 10,
+      stages: generateStages(1),
+      authors: [{ id: 'a1', name: '이지윤', role: '1저자', responsibilities: [], order: 1 }],
+      deadline: '2025-11-30'
+   },
+
+   // Kim Eun-sol (m5) - New Submitting Paper
+   {
+      id: 'r33',
+      assignedMemberId: 'm5',
+      studentId: 'm5',
+      title: '광역-기초-생활권을 연계한 경기도 농촌공간 다층적 유형화 모델 개발',
+      type: ResearchType.Submission,
+      status: ResearchStatus.Submitting,
+      statusTag: 'Under Review',
+      progress: 90,
+      targetJournal: 'Journal of Rural Studies',
+      stages: generateStages(7),
+      authors: [{ id: 'a1', name: '김은솔', role: '1저자', responsibilities: [], order: 1 }],
+      deadline: '2025-02-28'
    }
 ];
 
