@@ -26,7 +26,7 @@ import {
 
 // Version control for data. Incrementing this forces a reset of local storage
 // to ensure users see the latest mock data changes and clear corrupted data.
-const DATA_VERSION = '1.17'; // Increment loop
+const DATA_VERSION = '1.18'; // Increment loop
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');

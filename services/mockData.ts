@@ -59,9 +59,9 @@ export const INITIAL_MEMBERS: Member[] = [
   },
   { id: 'm4', name: '이다연', role: MemberRole.Researcher, email: 'dayeon34@uos.ac.kr', photoUrl: '/images/lee_da_yeon.png', admissionDate: '2022-03-01', expectedGraduation: '2026-02-28', status: MemberStatus.Active },
   // New Members (User Request)
-  { id: 'm10', name: '최희진', role: MemberRole.MS, email: 'heejin02@uos.ac.kr', photoUrl: '/images/new_members_1.png', admissionDate: '2025-03-01', expectedGraduation: '2027-02-28', status: MemberStatus.Active, researchInterests: '마을재생, 문화기반 활성화' },
-  { id: 'm11', name: '이은진', role: MemberRole.MS, email: 'jinnieel@uos.ac.kr', photoUrl: '/images/new_members_1.png', admissionDate: '2025-03-01', expectedGraduation: '2027-02-28', status: MemberStatus.Active, researchInterests: '스마트 마을재생, 지역 활성화' },
-  { id: 'm12', name: '배성훈', role: MemberRole.MS, email: 'sungaeae@uos.ac.kr', photoUrl: '/images/new_members_2.png', admissionDate: '2025-03-01', expectedGraduation: '2027-02-28', status: MemberStatus.Active, researchInterests: '지방소멸, 농촌 재생', label: '학석사연계과정' },
+  { id: 'm10', name: '최희진', role: MemberRole.MS, email: 'heejin02@uos.ac.kr', photoUrl: '/images/choi_hee_jin.png', admissionDate: '2025-03-01', expectedGraduation: '2027-02-28', status: MemberStatus.Active, researchInterests: '마을재생, 문화기반 활성화' },
+  { id: 'm11', name: '이은진', role: MemberRole.MS, email: 'jinnieel@uos.ac.kr', photoUrl: '/images/lee_eun_jin.png', admissionDate: '2025-03-01', expectedGraduation: '2027-02-28', status: MemberStatus.Active, researchInterests: '스마트 마을재생, 지역 활성화' },
+  { id: 'm12', name: '배성훈', role: MemberRole.MS, email: 'sungaeae@uos.ac.kr', photoUrl: '/images/bae_sung_hoon.png', admissionDate: '2025-03-01', expectedGraduation: '2027-02-28', status: MemberStatus.Active, researchInterests: '지방소멸, 농촌 재생', label: '학석사연계과정' },
 ];
 
 // Template Generator
@@ -188,6 +188,46 @@ export const INITIAL_RESEARCH: ResearchRecord[] = [
     stages: generateStages(5),
     authors: [{ id: 'a1', name: '이다연', role: '1저자', responsibilities: [], order: 1 }],
     deadline: '2025-04-15' 
+   },
+
+   // Choi Hee-jin
+   {
+      id: 'r12',
+      assignedMemberId: 'm10',
+      studentId: 'm10',
+      title: '경기도 농촌지역의 의료서비스 접근성 분석: 잠재적 접근성과 실제 이용 패턴의 비교',
+      type: ResearchType.NewResearch,
+      status: ResearchStatus.Preparing,
+      progress: 10,
+      stages: generateStages(1),
+      authors: [{ id: 'a1', name: '최희진', role: '1저자', responsibilities: [], order: 1 }],
+      deadline: '2025-12-31'
+   },
+   // Bae Sung-hoon
+   {
+      id: 'r13',
+      assignedMemberId: 'm12',
+      studentId: 'm12',
+      title: '여주시 다른 방법론 적용 논문',
+      type: ResearchType.NewResearch,
+      status: ResearchStatus.Preparing,
+      progress: 5,
+      stages: generateStages(0),
+      authors: [{ id: 'a1', name: '배성훈', role: '1저자', responsibilities: [], order: 1 }],
+      deadline: '2025-12-31'
+   },
+   // Lee Eun-jin
+   {
+      id: 'r14',
+      assignedMemberId: 'm11',
+      studentId: 'm11',
+      title: '학위논문',
+      type: ResearchType.Thesis,
+      status: ResearchStatus.Preparing,
+      progress: 0,
+      stages: generateStages(0),
+      authors: [{ id: 'a1', name: '이은진', role: '1저자', responsibilities: [], order: 1 }],
+      deadline: '2027-02-28'
    }
 ];
 
