@@ -289,12 +289,29 @@ const MemberDirectory: React.FC<MemberDirectoryProps> = ({
                 const isExpanded = expandedResearchId === r.id;
                 const dDay = r.deadline ? Math.ceil((new Date(r.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
 
+                const handleExpand = (id: string) => {
+                    if (expandedResearchId === id) {
+                        setExpandedResearchId(null);
+                    } else {
+                        setExpandedResearchId(id);
+                        // Smooth scroll to top
+                        setTimeout(() => {
+                            const element = document.getElementById(`research-${id}`);
+                            if (element) {
+                                const yOffset = -20; // Offset for sticky header if any, or breathing room
+                                const y = element.getBoundingClientRect().top + window.scrollY + yOffset;
+                                window.scrollTo({top: y, behavior: 'smooth'});
+                            }
+                        }, 100);
+                    }
+                };
+    
                 return (
-                    <div key={r.id} className={`bg-white rounded-xl border transition-all overflow-hidden ${isExpanded ? 'border-blue-200 shadow-md ring-1 ring-blue-100' : 'border-slate-200 shadow-sm hover:shadow-md'}`}>
+                    <div key={r.id} id={`research-${r.id}`} className={`bg-white rounded-xl border transition-all overflow-hidden ${isExpanded ? 'border-blue-200 shadow-md ring-1 ring-blue-100' : 'border-slate-200 shadow-sm hover:shadow-md'}`}>
                         {/* Summary Header (Always Visible) */}
                         <div 
                             className="p-5 cursor-pointer bg-white hover:bg-slate-50 transition-colors flex items-center justify-between"
-                            onClick={() => toggleResearchExpansion(r.id)}
+                            onClick={() => handleExpand(r.id)}
                         >
                              <div className="flex-1 min-w-0 pr-4">
                                 <div className="flex items-center gap-3">

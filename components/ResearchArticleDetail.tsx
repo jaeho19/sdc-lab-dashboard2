@@ -212,7 +212,10 @@ const ResearchArticleDetail: React.FC<ResearchArticleDetailProps> = ({
                     <CheckCircle size={16} className="text-blue-500"/> 단계별 진행 (Step-by-Step Progress)
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {(paper.stages || []).sort((a,b) => a.order - b.order).map((stage, index, allStages) => {
+                        {(paper.stages || [])
+                            .filter(s => !['내부 검토', '내부검토'].includes(s.stageType)) // Strict Filter
+                            .sort((a,b) => a.order - b.order)
+                            .map((stage, index, allStages) => {
                             const isCompleted = stage.completed;
                             const isCurrent = !isCompleted && (index === 0 || allStages[index-1].completed);
                             
