@@ -58,6 +58,11 @@ export const INITIAL_MEMBERS: Member[] = [
     id: 'm3', name: '이지윤', role: MemberRole.PhD, email: 'jiyunlee41016@uos.ac.kr', photoUrl: '/images/lee_ji_yoon.png', admissionDate: '2024-03-01', expectedGraduation: '2026-02-28', status: MemberStatus.Active
   },
   { id: 'm4', name: '이다연', role: MemberRole.Researcher, email: 'dayeon34@uos.ac.kr', photoUrl: '/images/lee_da_yeon.png', admissionDate: '2022-03-01', expectedGraduation: '2026-02-28', status: MemberStatus.Active },
+  // Additional Members (Restored/Expanded)
+  { id: 'm6', name: '박준호', role: MemberRole.MS, email: 'junho.park@uos.ac.kr', photoUrl: '', admissionDate: '2024-09-01', expectedGraduation: '2026-08-31', status: MemberStatus.Active, researchInterests: '도시 재생, 커뮤니티 매핑' },
+  { id: 'm7', name: '최수진', role: MemberRole.MS, email: 'sj.choi@uos.ac.kr', photoUrl: '', admissionDate: '2024-03-01', expectedGraduation: '2026-02-28', status: MemberStatus.Active, researchInterests: '스마트 시티, 모빌리티' },
+  { id: 'm8', name: '정우성', role: MemberRole.Researcher, email: 'ws.jung@uos.ac.kr', photoUrl: '', admissionDate: '2023-09-01', expectedGraduation: '2025-08-31', status: MemberStatus.Active, researchInterests: '데이터 시각화' },
+  { id: 'm9', name: '한지민', role: MemberRole.MS, email: 'jimin.han@uos.ac.kr', photoUrl: '', admissionDate: '2025-03-01', expectedGraduation: '2027-02-28', status: MemberStatus.Active, researchInterests: '환경 정책' },
 ];
 
 // Template Generator
