@@ -36,13 +36,15 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onChangeTab, members, onSe
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'calendar', label: 'Calendar', icon: Calendar },
     { id: 'mentoring', label: 'Mentoring', icon: MessageSquare },
-    { id: 'projects', label: 'Projects', icon: FolderKanban },
   ];
 
   return (
     <div className={`w-64 bg-navy text-white h-screen flex flex-col shadow-2xl overflow-y-auto custom-scrollbar ${className}`}>
-      <div className="p-6 flex items-center space-x-3 border-b border-navy-light flex-shrink-0">
-        <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm">
+      <div 
+        onClick={() => onChangeTab('dashboard')} 
+        className="p-6 flex items-center space-x-3 border-b border-navy-light flex-shrink-0 cursor-pointer hover:bg-navy-light/50 transition-colors group"
+      >
+        <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm group-hover:bg-white/20 transition-colors">
           <Beaker className="w-6 h-6 text-white" />
         </div>
         <div>

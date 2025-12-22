@@ -1,6 +1,6 @@
 import React from 'react';
 import { CalendarEvent, ResearchRecord, Member, getStatusColor, getProgressColor } from '../types';
-import { Calendar as CalendarIcon, Clock, ChevronRight, FileText, Activity, Users, AlertCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, ChevronRight, FileText, Activity, Users, AlertCircle, LogOut } from 'lucide-react';
 
 interface DashboardProps {
   events: CalendarEvent[];
@@ -8,9 +8,10 @@ interface DashboardProps {
   members: Member[];
   categories: any[];
   onNavigate: (tab: string) => void;
+  onLogout: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ events, research, members, categories, onNavigate }) => {
+const Dashboard: React.FC<DashboardProps> = ({ events, research, members, categories, onNavigate, onLogout }) => {
   const today = new Date();
 
   const activeResearch = research.slice(0, 8); // Show top 8
@@ -27,10 +28,7 @@ const Dashboard: React.FC<DashboardProps> = ({ events, research, members, catego
           <h2 className="text-3xl font-bold text-navy tracking-tight">Lab Dashboard</h2>
           <p className="text-slate-500 mt-1">SDC Lab Management Overview</p>
         </div>
-        <div className="text-sm font-medium text-navy bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200 flex items-center">
-          <CalendarIcon className="w-4 h-4 mr-2 text-sage" />
-          {today.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-        </div>
+        {/* Header moved to App.tsx for global visibility */}
       </div>
 
       {/* 1. Schedule Section (Moved to Top) */}

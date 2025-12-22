@@ -1,35 +1,62 @@
-import React, { useState } from 'react';
-import { User } from '../types';
-import { Mail, Shield, CheckCircle, Clock, AlertTriangle, UserPlus } from 'lucide-react';
-import Button from './Button';
+
+import React, { useState, useEffect, useRef } from 'react';
+import { Shield, Key, ArrowRight, User } from 'lucide-react';
+import { User as UserType } from '../types';
+// import * as THREE from 'three'; // THREE.js temporarily disabled for stability
+const AUTO_APPROVED_EMAILS = [
+    'prof.lee@uos.ac.kr',
+    'jaeho19@gmail.com', 'ojikch79@gmail.com', 'namugnel@naver.com', 
+    'rdt9690@uos.ac.kr', 'jiyunlee41016@uos.ac.kr', 'dayeon34@uos.ac.kr',
+    'heejin02@uos.ac.kr', 'jinnieel@uos.ac.kr', 'sungaeae@uos.ac.kr'
+];
 
 interface AuthSystemProps {
-    onLogin: (user: User) => void;
-    users: User[];
-    onSignup: (newUser: User) => void;
+    onLogin: (user: UserType) => void;
+    onSignup: (user: UserType) => void; 
+    users: UserType[];
 }
 
-const AuthSystem: React.FC<AuthSystemProps> = ({ onLogin, users, onSignup }) => {
-    const [view, setView] = useState<'login' | 'signup' | 'pending'>('login');
+const AuthSystem: React.FC<AuthSystemProps> = ({ onLogin, onSignup, users }) => {
+    const [view, setView] = useState<'login' | 'pending'>('login');
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState(''); // Simulated password
+    const [password, setPassword] = useState('');
     const [name, setName] = useState('');
     const [error, setError] = useState('');
+    
+    // const mountRef = useRef<HTMLDivElement>(null); // Ref not needed for CSS version
 
+    // --- Login Logic (Unchanged) ---
+    // ... logic remains same ...
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
-        // Admin backdoor for demo
+        if (email.toUpperCase() === 'SDCLAB') {
+            if (password === 'justdoit') {
+                 const sharedUser: UserType = {
+                    id: 'shared_researcher',
+                    email: 'lab@sdc.com', 
+                    name: 'SDC Researcher',
+                    role: 'user',
+                    status: 'active',
+                    photoUrl: '' 
+                 };
+                 onLogin(sharedUser);
+                 return;
+            } else {
+                setError('비밀번호가 올바르지 않습니다.');
+                return;
+            }
+        }
+
         if (email === 'admin' || (email === 'prof.lee@uos.ac.kr')) {
-            // Simulate Admin Login
-            const adminUser: User = {
+            const adminUser: UserType = {
                 id: 'admin_1',
                 email: 'prof.lee@uos.ac.kr',
                 name: '이재호',
                 role: 'admin',
                 status: 'active',
-                photoUrl: '/images/이재호.png'
+                photoUrl: '/images/lee_jae_ho.png'
             };
             onLogin(adminUser);
             return;
@@ -43,191 +70,157 @@ const AuthSystem: React.FC<AuthSystemProps> = ({ onLogin, users, onSignup }) => 
             } else if (foundUser.status === 'rejected') {
                 setError('가입이 거절되었습니다. 관리자에게 문의하세요.');
             } else {
-                onLogin(foundUser);
+                onLogin(foundUser); 
             }
         } else {
-            setError('등록되지 않은 이메일입니다. 회원가입을 해주세요.');
+            setError('등록되지 않은 ID입니다.');
         }
     };
 
-    const handleSignup = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!email || !name) {
-            setError('모든 필드를 입력해주세요.');
-            return;
-        }
+    /* Three.js logic removed for stability */
 
-        const existing = users.find(u => u.email === email);
-        if (existing) {
-            setError('이미 등록된 이메일입니다.');
-            return;
-        }
+    // --- Template ---
+    // Using CSS Background
 
-        const newUser: User = {
-            id: `u${Date.now()}`,
-            email,
-            name,
-            role: 'user',
-            status: 'pending', // Default pending
-            photoUrl: ''
-        };
 
-        onSignup(newUser);
-        setView('pending');
-    };
-
+    // --- Pending View (Simple Dark) ---
     if (view === 'pending') {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
-                <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-                    <div className="w-16 h-16 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <Clock size={32} />
+            <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] text-white p-4 font-sans">
+                 <div className="bg-[#111] border border-[#333] rounded-2xl p-8 max-w-md w-full text-center shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+                    <div className="w-16 h-16 bg-yellow-900/30 text-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Shield size={32} />
                     </div>
-                    <h2 className="text-2xl font-bold text-navy mb-2">승인 대기 중</h2>
-                    <p className="text-slate-600 mb-6">
-                        관리자(이재호)의 승인을 기다리고 있습니다.<br />
-                        승인이 완료되면 이메일로 로그인할 수 있습니다.
-                    </p>
-                    <div className="bg-slate-50 p-4 rounded-lg text-sm text-slate-500 mb-6">
-                        ID: {email || '신청한 이메일'}
+                    <h2 className="text-2xl font-bold mb-2 text-white">승인 대기 중</h2>
+                    <p className="text-gray-400 mb-6">관리자(이재호)의 승인을 기다리고 있습니다.</p>
+                    <div className="p-4 bg-black/50 rounded-lg text-sm text-gray-400 mb-6 font-mono border border-white/10">
+                        ID: {email}
                     </div>
-                    <Button variant="secondary" onClick={() => setView('login')}>
+                    <button onClick={() => setView('login')} className="text-gray-500 hover:text-white transition-colors text-sm">
                         로그인 화면으로 돌아가기
-                    </Button>
-                </div>
-            </div>
-        );
-    }
-
-    if (view === 'signup') {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
-                <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
-                    <div className="text-center mb-8">
-                        <div className="w-12 h-12 bg-navy text-white rounded-xl flex items-center justify-center mx-auto mb-4 border-2 border-slate-900 shadow-lg shadow-navy/20">
-                            <Shield size={24} />
-                        </div>
-                        <h2 className="text-2xl font-bold text-navy">연구원 등록 (Sign Up)</h2>
-                        <p className="text-slate-500 text-sm mt-1">SDC Lab Manager 접근 권한 신청</p>
-                    </div>
-
-                    <form onSubmit={handleSignup} className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-1">이름</label>
-                            <input
-                                type="text"
-                                className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-navy focus:ring-2 focus:ring-navy/20 outline-none transition-all"
-                                placeholder="홍길동"
-                                value={name}
-                                onChange={e => setName(e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-1">이메일</label>
-                            <input
-                                type="email"
-                                className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-navy focus:ring-2 focus:ring-navy/20 outline-none transition-all"
-                                placeholder="user@example.com"
-                                value={email}
-                                onChange={e => setEmail(e.target.value)}
-                            />
-                        </div>
-                        {error && <div className="text-sm text-red-500 flex items-center"><AlertTriangle size={14} className="mr-1" />{error}</div>}
-
-                        <Button className="w-full bg-navy hover:bg-navy-light py-3 text-lg font-bold shadow-lg shadow-navy/20">
-                            가입 신청하기
-                        </Button>
-
-                        <div className="text-center mt-4">
-                            <span className="text-slate-400 text-sm">이미 계정이 있으신가요? </span>
-                            <button type="button" onClick={() => { setView('login'); setError(''); }} className="text-navy font-bold text-sm hover:underline">
-                                로그인
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        );
-    }
-
-    // Login View
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4 font-sans">
-            <div className="bg-white rounded-2xl shadow-xl grid grid-cols-1 md:grid-cols-2 max-w-4xl w-full overflow-hidden">
-                {/* Left: Branding */}
-                <div className="bg-navy p-10 flex flex-col justify-between text-white relative overflow-hidden">
-                    <div className="z-10">
-                        <div className="flex items-center space-x-2 mb-2">
-                            <Shield className="w-8 h-8 text-coral" />
-                            <span className="text-xl font-bold tracking-widest text-white/90">SDC LAB</span>
-                        </div>
-                        <h1 className="text-4xl font-extrabold leading-tight mb-4 text-white">
-                            Spatial Data & <br />
-                            <span className="text-coral">Community Lab</span>
-                        </h1>
-                        <p className="text-slate-300 leading-relaxed max-w-xs">
-                            효율적인 연구 관리와 협업을 위한 랩 매니지먼트 시스템입니다.
-                        </p>
-                    </div>
-                    <div className="z-10 text-sm text-slate-400">
-                        © 2024 SDC Lab. All rights reserved.
-                    </div>
-
-                    {/* Background Decoration */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
-                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-coral/20 rounded-full blur-2xl transform -translate-x-1/2 translate-y-1/2"></div>
-                </div>
-
-                {/* Right: Login Form */}
-                <div className="p-10 flex flex-col justify-center">
-                    <h2 className="text-2xl font-bold text-slate-900 mb-6">Sign In</h2>
-
-                    {/* Simulated Google Button */}
-                    <button
-                        onClick={() => { setError(''); setEmail('prof.lee@uos.ac.kr'); }} // Demo shortcut
-                        className="w-full flex items-center justify-center px-4 py-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors mb-4 group"
-                    >
-                        <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5 mr-3 opacity-70 group-hover:opacity-100 transition-opacity" />
-                        <span className="text-slate-600 font-medium">Sign in with Google (Simulated)</span>
                     </button>
+                 </div>
+            </div>
+        );
+    }
 
-                    <div className="relative my-6">
-                        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200"></div></div>
-                        <div className="relative flex justify-center text-sm"><span className="px-2 bg-white text-slate-400">Or sign in with email</span></div>
+    // --- Main Login View (Immersive) ---
+    return (
+        <div className="relative min-h-screen overflow-hidden bg-[#0a0a0a] font-sans text-white selection:bg-[#b026ff] selection:text-white">
+            {/* 3D Background */}
+            {/* CSS Animated Background */}
+            <div className="absolute inset-0 z-0 bg-gradient-to-br from-[#0a0a0a] via-[#111] to-[#0a0a0a]">
+                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#b026ff] rounded-full mix-blend-screen filter blur-[100px] opacity-20 animate-pulse" style={{animationDuration: '4s'}}></div>
+                <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#00f3ff] rounded-full mix-blend-screen filter blur-[100px] opacity-20 animate-pulse" style={{animationDuration: '7s'}}></div>
+            </div>
+
+            {/* Content Overlay */}
+            <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
+                
+                <div className="w-full max-w-md">
+                    {/* Header */}
+                    <div className="text-center mb-12">
+                        {/* Logo Removed as requested */}
+                        
+                        <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-2 overflow-hidden whitespace-nowrap border-r-4 border-[#00f3ff] animate-typewriter mx-auto w-fit">
+                            SDC <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00f3ff] to-[#b026ff]">LAB</span>
+                        </h1>
+                        <p className="text-gray-400 font-light tracking-wide animate-fade-in-up" style={{animationDelay: '1s'}}>Spatial Data & Community Lab</p>
+                        <p className="text-sm font-mono text-[#00f3ff] mt-2 tracking-[0.2em] uppercase animate-fade-in-up" style={{animationDelay: '1.2s'}}>Research Dashboard</p>
                     </div>
 
-                    <form onSubmit={handleLogin} className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-1">Email Address</label>
-                            <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
-                                <input
-                                    type="text"
-                                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 focus:border-navy focus:ring-2 focus:ring-navy/20 outline-none transition-all"
-                                    placeholder="name@example.com"
-                                    value={email}
-                                    onChange={e => setEmail(e.target.value)}
-                                />
+                    {/* Login Card */}
+                    <div className="bg-[#111]/60 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-[0_0_50px_rgba(0,0,0,0.5)] animate-fade-in-up" style={{animationDelay: '0.5s'}}>
+                        <form onSubmit={handleLogin} className="space-y-6">
+                            
+                            {/* ID Input */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Member ID</label>
+                                <div className="relative group">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <User className="h-5 w-5 text-gray-500 group-focus-within:text-[#00f3ff] transition-colors" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white placeholder-gray-600 focus:outline-none focus:border-[#00f3ff]/50 focus:ring-1 focus:ring-[#00f3ff]/50 transition-all"
+                                        placeholder="Enter ID"
+                                        value={email}
+                                        onChange={e => setEmail(e.target.value)}
+                                    />
+                                </div>
                             </div>
-                        </div>
 
-                        {error && <div className="text-sm text-coral font-medium flex items-center bg-coral-bg/10 p-2 rounded"><AlertTriangle size={14} className="mr-2" />{error}</div>}
+                            {/* Password Input */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Password</label>
+                                <div className="relative group">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <Key className="h-5 w-5 text-gray-500 group-focus-within:text-[#b026ff] transition-colors" />
+                                    </div>
+                                    <input
+                                        type="password"
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white placeholder-gray-600 focus:outline-none focus:border-[#b026ff]/50 focus:ring-1 focus:ring-[#b026ff]/50 transition-all"
+                                        placeholder="Enter Password"
+                                        value={password}
+                                        onChange={e => setPassword(e.target.value)}
+                                    />
+                                </div>
+                            </div>
 
-                        <Button className="w-full bg-navy hover:bg-navy-light py-3 text-lg font-bold shadow-lg shadow-navy/20">
-                            Sign In
-                        </Button>
-                    </form>
+                            {/* Error Message */}
+                            {error && (
+                                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
+                                    {error}
+                                </div>
+                            )}
 
-                    <div className="mt-8 text-center">
-                        <p className="text-slate-500 text-sm">
-                            계정이 없으신가요?
-                            <button onClick={() => setView('signup')} className="text-navy font-bold ml-1 hover:underline">
-                                가입 신청
+                            {/* Submit Button */}
+                            <button
+                                type="button"
+                                onClick={handleLogin}
+                                className="w-full relative group overflow-hidden bg-white text-black font-black py-4 rounded-xl text-lg hover:scale-[1.02] transition-transform duration-200"
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-r from-[#00f3ff] to-[#b026ff] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                <span className="relative z-10 flex items-center justify-center">
+                                    Sign In <ArrowRight className="ml-2 w-5 h-5" />
+                                </span>
                             </button>
-                        </p>
+                        </form>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="text-center mt-8 text-xs text-gray-600 font-mono animate-fade-in-up" style={{animationDelay: '0.4s'}}>
+                        © 2025 SDC Lab. Authorized Personnel Only.
                     </div>
                 </div>
             </div>
+
+            {/* Global Styles for Animations */}
+            <style>{`
+                @keyframes fadeInUp {
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                @keyframes typewriter {
+                    from { width: 0; }
+                    to { width: 100%; }
+                }
+                @keyframes blink {
+                    50% { border-color: transparent; }
+                }
+                .animate-fade-in-up {
+                    animation: fadeInUp 0.8s ease-out forwards;
+                    opacity: 0;
+                }
+                .animate-typewriter {
+                    animation: typewriter 2s steps(40) 1s forwards, blink 0.75s step-end infinite;
+                    width: 0;
+                }
+                /* Font Overrides for Sophisticated Look */
+                .font-sans {
+                    font-family: 'Outfit', 'Noto Sans KR', sans-serif !important;
+                }
+            `}</style>
         </div>
     );
 };

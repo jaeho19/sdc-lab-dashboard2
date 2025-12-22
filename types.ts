@@ -1,4 +1,3 @@
-
 export enum MemberRole {
   PostDoc = 'Post-doc',
   PhD = 'PhD',
@@ -21,15 +20,17 @@ export interface Member {
   expectedGraduation: string;
   status: MemberStatus;
   label?: string; // e.g., "Part-time", "Integrated"
-  researchInterests?: string; // Added from image context
+  researchInterests?: string; 
+  currentProjects?: string; 
+  phoneNumber?: string;
 }
 
 export enum ResearchType {
-  NewResearch = '신진연구',     // Changed from 'New Research'
-  Individual = '개별연구',      // Changed from 'Individual'
-  Thesis = '학위논문',          // Changed from 'Thesis' for consistency
-  Modification = '논문수정',    // Changed from 'Modification' for consistency
-  Submission = '논문투고'       // Changed from 'Submission' for consistency
+  NewResearch = '신진연구',     
+  Individual = '개별연구',      
+  Thesis = '학위논문',          
+  Modification = '논문수정',    
+  Submission = '논문투고'       
 }
 
 export enum ResearchStatus {
@@ -39,19 +40,104 @@ export enum ResearchStatus {
   Accepted = 'Accepted'          // 게재 확정
 }
 
-export interface ResearchRecord {
+export type ResearchStatusTag = 'On Track' | 'At Risk' | 'Delayed' | 'On Hold' | 'Under Review' | 'Completed';
+
+// --- NEW PAPER MODEL ---
+export interface PaperAuthor {
+  id: string;
+  name: string;
+  role: '1저자' | '교신저자' | '공저자';
+  responsibilities: string[]; // e.g. "Data Collection", "Analysis"
+  order: number;
+}
+
+export interface PaperStage {
+  id: string;
+  stageType: string; // e.g., "문헌조사", "방법론설계"
+  weight: number; // 0-100 (percentage)
+  completed: boolean;
+  completedDate?: string; // YYYY-MM-DD
+  order: number;
+  checklist: { id: string; text: string; completed: boolean }[];
+  memo?: string;
+}
+
+export interface Paper {
+  id: string;
+  studentId: string; // Linked to Member ID
+  title: string;
+  targetJournal?: string;
+  deadline?: string; // YYYY-MM-DD
+  progress: number; // 0-100 (Auto-calculated)
+  
+  stages: PaperStage[];
+  authors: PaperAuthor[];
+  
+  statusTag?: ResearchStatusTag; // For color coding (On Track, etc.)
+  createdAt?: string;
+  updatedAt?: string;
+}
+// -----------------------
+
+export interface Milestone {
   id: string;
   title: string;
+  isCompleted: boolean;
+  weight: number; // Percentage contribution to total progress
+  order: number;
+}
+
+export interface Attachment {
+  id: string;
+  name: string;
+  url: string; // URL or fake path
+  type: 'file' | 'link';
+  date: string;
+}
+
+export interface Collaborator {
+  id: string;
+  name: string;
+  role: 'First Author' | 'Corresponding Author' | 'Co-Author';
+  isExternal?: boolean;
+}
+
+export interface ActivityLog {
+  id: string;
+  date: string; // ISO String
+  content: string;
+  authorId?: string; // Optional if automated
+  type?: 'log' | 'milestone' | 'status_change';
+}
+
+// Keeping for backward compatibility or migration
+export interface ResearchRecord extends Paper {
+  // Alias or Extend Paper to satisfy existing code if needed
+  // However, we will try to move to 'Paper' where possible.
+  // For now, let's keep ResearchRecord as a legacy type but map it to Paper if we can.
+  // Or simpler: Just keep ResearchRecord as is for now and let the new module use Paper.
+  // But wait, ResearchRecord IS used in App.tsx. 
+  // Let's redefine ResearchRecord to compatible with Paper or just separate them?
+  // The system uses ResearchRecord[] in App.tsx. 
+  // Let's make ResearchRecord include Paper fields.
   type: ResearchType;
-  status: ResearchStatus;
+  status: ResearchStatus; 
   assignedMemberId: string;
-  targetJournal?: string;
-  deadline?: string;
+  statusTag?: ResearchStatusTag;
+  
   description?: string;
-  fileAttachment?: string; // Filename or fake URL
-  progress: number; // 0-100
-  checklist?: string[]; // IDs of completed writing steps
-  reviewChecklist?: string[]; // IDs of completed review steps
+  startDate?: string;
+  
+  activityLog?: ActivityLog[];
+  attachments?: Attachment[];
+  collaborators?: Collaborator[];
+  
+  milestones?: Milestone[]; // Legacy milestones
+  
+  // Extended Meta
+  fundingAgency?: string;
+  grantNumber?: string;
+  submissionDate?: string; 
 }
 
 export interface LabProject {

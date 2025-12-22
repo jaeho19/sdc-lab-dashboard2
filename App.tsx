@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import MemberDirectory from './components/MemberDirectory';
-import ResearchList from './components/ResearchList';
+import ResearchList from './components/ResearchList'; 
+
 import CalendarView from './components/CalendarView';
 import ProjectList from './components/ProjectList';
 import MeetingLogs from './components/MeetingLogs';
@@ -11,7 +11,7 @@ import AuthSystem from './components/AuthSystem';
 import AdminPanel from './components/AdminPanel';
 import { Member, CalendarEvent, Category, MeetingLog, ResearchRecord, User } from './types';
 
-import { Settings, Menu } from 'lucide-react';
+import { Settings, Menu, Calendar as CalendarIcon, LogOut } from 'lucide-react';
 
 // Mock Data
 import {
@@ -26,7 +26,7 @@ import {
 
 // Version control for data. Incrementing this forces a reset of local storage
 // to ensure users see the latest mock data changes and clear corrupted data.
-const DATA_VERSION = '1.5';
+const DATA_VERSION = '1.11'; // Increment loop
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -178,6 +178,7 @@ const App: React.FC = () => {
             members={members}
             categories={categories}
             onNavigate={setActiveTab}
+            onLogout={handleLogout}
           />
         );
       case 'members':
@@ -193,9 +194,11 @@ const App: React.FC = () => {
             onAddResearch={handleAddResearch}
             onUpdateResearch={handleUpdateResearch}
             onDeleteResearch={handleDeleteResearch}
+            currentUser={currentUser}
           />
         );
       case 'research':
+        // Legacy list (can be removed later if 'projects' replaces it entirely)
         return (
           <ResearchList
             research={research}
@@ -213,12 +216,7 @@ const App: React.FC = () => {
             currentUser={currentUser}
           />
         );
-      case 'projects':
-        return (
-          <ProjectList
-            projects={projects}
-          />
-        );
+
       case 'calendar':
         return (
           <CalendarView
@@ -230,7 +228,7 @@ const App: React.FC = () => {
           />
         );
       default:
-        return <Dashboard events={events} research={research} members={members} categories={categories} onNavigate={setActiveTab} />;
+        return <Dashboard events={events} research={research} members={members} categories={categories} onNavigate={setActiveTab} onLogout={handleLogout} />;
     }
   };
 
@@ -285,6 +283,25 @@ const App: React.FC = () => {
 
       <main className="md:pl-64 min-h-screen transition-all duration-300 pt-0">
         <div className="max-w-7xl mx-auto p-4 md:p-8">
+           {/* Global Header: Date & Logout */}
+           <div className="flex justify-between items-center mb-6">
+              {/* Spacer for Title (pages handle their own title) or Breadcrumbs if added later */}
+              <div className="flex-1"></div> 
+              <div className="flex items-center gap-3">
+                <div className="hidden md:flex text-sm font-medium text-navy bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200 items-center">
+                  <CalendarIcon className="w-4 h-4 mr-2 text-sage" />
+                  {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                </div>
+                <button
+                    onClick={handleLogout}
+                    className="flex items-center text-sm font-bold text-coral bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200 hover:bg-coral-bg hover:border-coral transition-colors"
+                >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                </button>
+              </div>
+           </div>
+
           {renderContent()}
         </div>
       </main>
