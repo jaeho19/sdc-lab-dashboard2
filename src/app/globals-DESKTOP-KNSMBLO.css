@@ -1,0 +1,178 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 47.4% 22.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 47.4% 22.2%;
+
+    --card: 210 40% 98%;
+    --card-foreground: 222.2 47.4% 22.2%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+
+    --primary: 160 84% 39%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 22.2%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 22.2%;
+
+    --destructive: 350 89% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --ring: 160 84% 39%;
+
+    --radius: 0.5rem;
+
+    --font-pretendard: "Pretendard Variable", "Pretendard", -apple-system,
+      BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI",
+      "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji",
+      "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+    --font-inter: "Inter", sans-serif;
+  }
+
+  .dark {
+    --background: 222.2 47.4% 11.2%;
+    --foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --popover: 222.2 47.4% 11.2%;
+    --popover-foreground: 210 40% 98%;
+
+    --card: 222.2 47.4% 11.2%;
+    --card-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+
+    --primary: 160 84% 39%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 350 89% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --ring: 160 84% 39%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-pretendard), var(--font-inter), sans-serif;
+  }
+}
+
+/* 스크롤바 스타일링 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* FullCalendar 커스텀 스타일 */
+.fc {
+  --fc-border-color: hsl(var(--border));
+  --fc-button-bg-color: hsl(var(--primary));
+  --fc-button-border-color: hsl(var(--primary));
+  --fc-button-hover-bg-color: hsl(var(--primary) / 0.9);
+  --fc-button-hover-border-color: hsl(var(--primary) / 0.9);
+  --fc-button-active-bg-color: hsl(var(--primary) / 0.8);
+  --fc-button-active-border-color: hsl(var(--primary) / 0.8);
+  --fc-today-bg-color: hsl(var(--primary) / 0.1);
+  --fc-event-border-color: transparent;
+  --fc-page-bg-color: transparent;
+  font-family: var(--font-pretendard), var(--font-inter), sans-serif;
+}
+
+.fc .fc-button {
+  @apply rounded-md text-sm font-medium shadow-sm;
+  padding: 0.5rem 1rem;
+}
+
+.fc .fc-button:focus {
+  @apply ring-2 ring-ring ring-offset-2;
+  box-shadow: none;
+}
+
+.fc .fc-toolbar-title {
+  @apply text-xl font-bold;
+}
+
+.fc .fc-col-header-cell {
+  @apply py-3 text-sm font-medium text-muted-foreground;
+}
+
+.fc .fc-daygrid-day {
+  @apply transition-colors;
+}
+
+.fc .fc-daygrid-day:hover {
+  @apply bg-muted/50;
+}
+
+.fc .fc-daygrid-day-number {
+  @apply p-2 text-sm;
+}
+
+.fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+  @apply font-bold text-primary;
+}
+
+.fc .fc-event {
+  @apply rounded-md px-2 py-0.5 text-xs font-medium cursor-pointer;
+  border: none;
+}
+
+.fc .fc-event:hover {
+  @apply opacity-90;
+}
+
+.fc .fc-daygrid-event-dot {
+  display: none;
+}
+
+.fc .fc-daygrid-more-link {
+  @apply text-xs text-muted-foreground hover:text-foreground;
+}
+
+.fc .fc-highlight {
+  @apply bg-primary/20;
+}
+
+.fc .fc-day-other .fc-daygrid-day-number {
+  @apply text-muted-foreground/50;
+}

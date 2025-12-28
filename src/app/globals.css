@@ -1,0 +1,361 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 160 84% 39%;
+    --radius: 0.5rem;
+
+    /* Sidebar - 다크 네이비 (#1e293b) */
+    --sidebar-background: 222.2 47.4% 17.3%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 160 84% 39%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 217.2 32.6% 25%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217.2 32.6% 25%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 160 84% 39%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Pretendard 폰트 (CDN) */
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+}
+
+/* Paperlogy 폰트 (한글용) */
+@font-face {
+  font-family: "Paperlogy";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-4Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+  unicode-range: U+AC00-D7A3; /* 한글 영역 */
+}
+
+/* Arial Latin (영문용) */
+@font-face {
+  font-family: "ArialLatin";
+  src: local("Arial");
+  unicode-range: U+0020-007E; /* 기본 ASCII 문자 (영문, 숫자, 기호) */
+}
+
+/* 연구 흐름도 기본 스타일 */
+.flowchart-content {
+  font-family: "ArialLatin", "Paperlogy", sans-serif !important;
+  line-height: 1.8;
+  font-size: 0.95rem;
+}
+
+/* 본문 단락 스타일 */
+.flowchart-content p {
+  margin-bottom: 0.8em;
+  line-height: 1.8;
+}
+
+/* 리스트 스타일 - 들여쓰기 및 간격 */
+.flowchart-content ul,
+.flowchart-content ol {
+  margin-top: 0.5em;
+  margin-bottom: 1em;
+  padding-left: 1.5em;
+}
+
+.flowchart-content li {
+  margin-bottom: 0.4em;
+  line-height: 1.7;
+}
+
+.flowchart-content li > ul,
+.flowchart-content li > ol {
+  margin-top: 0.3em;
+  margin-bottom: 0.3em;
+}
+
+/* 연구 흐름도 컬러풀 헤딩 스타일 */
+/* H1 - 최상위 (들여쓰기 없음) */
+.flowchart-content h1 {
+  font-family: "ArialLatin", "Paperlogy", sans-serif !important;
+  color: #D62D6B !important;
+  font-size: 1.75em !important;
+  line-height: 1.3 !important;
+  margin-top: 2em !important;
+  margin-bottom: 0.8em !important;
+  padding-top: 0.5em;
+  font-weight: 700;
+  border-bottom: 2px solid #D62D6B40;
+  padding-bottom: 0.4em;
+}
+
+.flowchart-content h1:first-child {
+  margin-top: 0 !important;
+}
+
+/* H2 - 주요 섹션 */
+.flowchart-content h2 {
+  font-family: "ArialLatin", "Paperlogy", sans-serif !important;
+  color: #AD6F2B !important;
+  font-size: 1.45em !important;
+  line-height: 1.35 !important;
+  margin-top: 1.8em !important;
+  margin-bottom: 0.7em !important;
+  padding-left: 0.5em;
+  font-weight: 600;
+  border-bottom: 1px solid #AD6F2B30;
+  border-left: 4px solid #AD6F2B;
+  padding-bottom: 0.3em;
+}
+
+/* H2 다음 콘텐츠 들여쓰기 */
+.flowchart-content h2 + p,
+.flowchart-content h2 + ul,
+.flowchart-content h2 + ol {
+  padding-left: 0.5em;
+}
+
+/* H3 - 하위 섹션 */
+.flowchart-content h3 {
+  font-family: "ArialLatin", "Paperlogy", sans-serif !important;
+  color: #E8BB43 !important;
+  font-size: 1.25em !important;
+  line-height: 1.4 !important;
+  margin-top: 1.5em !important;
+  margin-bottom: 0.6em !important;
+  padding-left: 1em;
+  font-weight: 600;
+  border-left: 3px solid #E8BB43;
+}
+
+/* H3 다음 콘텐츠 들여쓰기 */
+.flowchart-content h3 + p,
+.flowchart-content h3 + ul,
+.flowchart-content h3 + ol {
+  padding-left: 1em;
+}
+
+/* H4 - 세부 항목 */
+.flowchart-content h4 {
+  font-family: "ArialLatin", "Paperlogy", sans-serif !important;
+  color: #83B366 !important;
+  font-size: 1.1em !important;
+  line-height: 1.45 !important;
+  margin-top: 1.3em !important;
+  margin-bottom: 0.5em !important;
+  padding-left: 1.5em;
+  font-weight: 600;
+  border-left: 2px solid #83B366;
+}
+
+/* H4 다음 콘텐츠 들여쓰기 */
+.flowchart-content h4 + p,
+.flowchart-content h4 + ul,
+.flowchart-content h4 + ol {
+  padding-left: 1.5em;
+}
+
+/* H5 - 상세 항목 */
+.flowchart-content h5 {
+  font-family: "ArialLatin", "Paperlogy", sans-serif !important;
+  color: #4185CC !important;
+  font-size: 1em !important;
+  line-height: 1.5 !important;
+  margin-top: 1.1em !important;
+  margin-bottom: 0.4em !important;
+  padding-left: 2em;
+  font-weight: 600;
+}
+
+/* H5 다음 콘텐츠 들여쓰기 */
+.flowchart-content h5 + p,
+.flowchart-content h5 + ul,
+.flowchart-content h5 + ol {
+  padding-left: 2em;
+}
+
+/* H6 - 최하위 항목 */
+.flowchart-content h6 {
+  font-family: "ArialLatin", "Paperlogy", sans-serif !important;
+  color: #916DB3 !important;
+  font-size: 0.95em !important;
+  line-height: 1.5 !important;
+  margin-top: 1em !important;
+  margin-bottom: 0.35em !important;
+  padding-left: 2.5em;
+  font-weight: 600;
+  font-style: italic;
+}
+
+/* H6 다음 콘텐츠 들여쓰기 */
+.flowchart-content h6 + p,
+.flowchart-content h6 + ul,
+.flowchart-content h6 + ol {
+  padding-left: 2.5em;
+}
+
+/* 코드 블록 스타일 */
+.flowchart-content pre {
+  margin: 1em 0;
+  padding: 1em;
+  border-radius: 0.5em;
+  overflow-x: auto;
+}
+
+/* 인라인 코드 */
+.flowchart-content code:not(pre code) {
+  padding: 0.2em 0.4em;
+  border-radius: 0.25em;
+  font-size: 0.9em;
+}
+
+/* 인용문 스타일 */
+.flowchart-content blockquote {
+  margin: 1em 0;
+  padding: 0.5em 1em;
+  border-left: 4px solid #d1d5db;
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: 0 0.25em 0.25em 0;
+}
+
+.flowchart-content blockquote p {
+  margin: 0;
+}
+
+/* 테이블 스타일 */
+.flowchart-content table {
+  margin: 1em 0;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.flowchart-content th,
+.flowchart-content td {
+  padding: 0.5em 0.75em;
+  border: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.flowchart-content th {
+  background-color: rgba(0, 0, 0, 0.03);
+  font-weight: 600;
+}
+
+/* 구분선 스타일 */
+.flowchart-content hr {
+  margin: 2em 0;
+  border: none;
+  border-top: 2px solid #e5e7eb;
+}
+
+/* 다크 모드에서 헤딩 색상 밝게 조정 */
+.dark .flowchart-content h1 {
+  color: #E94B80 !important;
+  border-bottom-color: #E94B8040;
+}
+
+.dark .flowchart-content h2 {
+  color: #C98545 !important;
+  border-bottom-color: #C9854540;
+  border-left-color: #C98545;
+}
+
+.dark .flowchart-content h3 {
+  color: #F0C85A !important;
+  border-left-color: #F0C85A;
+}
+
+.dark .flowchart-content h4 {
+  color: #9BC97A !important;
+  border-left-color: #9BC97A;
+}
+
+.dark .flowchart-content h5 {
+  color: #5A9DE0 !important;
+}
+
+.dark .flowchart-content h6 {
+  color: #A685C9 !important;
+}
+
+/* 다크 모드 인용문 */
+.dark .flowchart-content blockquote {
+  border-left-color: #4b5563;
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* 다크 모드 테이블 */
+.dark .flowchart-content th,
+.dark .flowchart-content td {
+  border-color: #374151;
+}
+
+.dark .flowchart-content th {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* 다크 모드 구분선 */
+.dark .flowchart-content hr {
+  border-top-color: #374151;
+}
+
+/* 수식 스타일링 */
+.flowchart-content .katex-display {
+  margin: 1em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.flowchart-content .katex {
+  font-size: 1.1em;
+}
