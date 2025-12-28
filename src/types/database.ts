@@ -9,6 +9,7 @@ export type ProjectStatus = "preparing" | "in_progress" | "under_review" | "revi
 export type EventCategory = "meeting" | "deadline" | "seminar" | "holiday" | "personal" | "other";
 export type FileEntityType = "project" | "mentoring";
 export type NotificationType = "deadline" | "comment" | "like" | "project_update";
+export type PeerReviewStatus = "pending" | "processing" | "completed" | "error";
 
 export interface Member {
   id: string;
@@ -142,6 +143,18 @@ export interface Notification {
   link: string | null;
   is_read: boolean;
   created_at: string;
+}
+
+export interface PeerReview {
+  id: string;
+  member_id: string;
+  project_id: string | null;
+  title: string;
+  content: string;
+  review_result: string | null;
+  review_status: PeerReviewStatus;
+  created_at: string;
+  updated_at: string;
 }
 
 // Supabase Database 타입 정의
@@ -448,6 +461,32 @@ export interface Database {
         };
         Relationships: [];
       };
+      peer_reviews: {
+        Row: PeerReview;
+        Insert: {
+          id?: string;
+          member_id: string;
+          project_id?: string | null;
+          title: string;
+          content: string;
+          review_result?: string | null;
+          review_status?: PeerReviewStatus;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          member_id?: string;
+          project_id?: string | null;
+          title?: string;
+          content?: string;
+          review_result?: string | null;
+          review_status?: PeerReviewStatus;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -464,6 +503,7 @@ export interface Database {
       event_category: EventCategory;
       file_entity_type: FileEntityType;
       notification_type: NotificationType;
+      peer_review_status: PeerReviewStatus;
     };
     CompositeTypes: {
       [_ in never]: never;

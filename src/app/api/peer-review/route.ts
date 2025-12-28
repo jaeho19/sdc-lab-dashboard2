@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
+import type { PeerReview, PeerReviewStatus } from "@/types/database";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -134,7 +135,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create peer review record with pending status
-    const { data: review, error: insertError } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: review, error: insertError } = await (supabase as any)
       .from("peer_reviews")
       .insert({
         member_id: user.id,
@@ -144,7 +146,7 @@ export async function POST(request: NextRequest) {
         review_status: "processing",
       })
       .select()
-      .single();
+      .single() as { data: PeerReview | null; error: Error | null };
 
     if (insertError) {
       console.error("Insert error:", insertError);
@@ -177,13 +179,14 @@ ${content}`,
       message.content[0].type === "text" ? message.content[0].text : "";
 
     // Update the review with the result
-    const { error: updateError } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: updateError } = await (supabase as any)
       .from("peer_reviews")
       .update({
         review_result: reviewResult,
         review_status: "completed",
       })
-      .eq("id", review.id);
+      .eq("id", review!.id);
 
     if (updateError) {
       console.error("Update error:", updateError);
@@ -194,7 +197,7 @@ ${content}`,
     }
 
     return NextResponse.json({
-      id: review.id,
+      id: review!.id,
       reviewResult,
       status: "completed",
     });
@@ -221,7 +224,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's peer reviews
-    const { data: reviews, error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: reviews, error } = await (supabase as any)
       .from("peer_reviews")
       .select(
         `

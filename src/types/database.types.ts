@@ -65,6 +65,8 @@ export type WeeklyGoalStatus = "pending" | "completed";
 
 export type FileEntityType = "project" | "mentoring_post" | "flowchart";
 
+export type PeerReviewStatus = "pending" | "processing" | "completed" | "error";
+
 export interface Database {
   public: {
     Tables: {
@@ -551,6 +553,41 @@ export interface Database {
           is_completed?: boolean;
           completed_at?: string | null;
           sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      peer_reviews: {
+        Row: {
+          id: string;
+          member_id: string;
+          project_id: string | null;
+          title: string;
+          content: string;
+          review_result: string | null;
+          review_status: PeerReviewStatus;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          member_id: string;
+          project_id?: string | null;
+          title: string;
+          content: string;
+          review_result?: string | null;
+          review_status?: PeerReviewStatus;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          member_id?: string;
+          project_id?: string | null;
+          title?: string;
+          content?: string;
+          review_result?: string | null;
+          review_status?: PeerReviewStatus;
           created_at?: string;
           updated_at?: string;
         };
