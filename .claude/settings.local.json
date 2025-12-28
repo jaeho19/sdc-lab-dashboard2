@@ -43,7 +43,14 @@
       "Bash(node:*)",
       "Bash(npx supabase:*)",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nInitial commit: SDC Lab Dashboard\n\n- Next.js 15 + TypeScript + Tailwind CSS + shadcn/ui\n- Supabase for authentication and database\n- Dashboard, Members, Research, Calendar, Mentoring pages\n- Research project management with milestones and checklists\n- Weekly goals and project timeline features\n- Research flowchart with markdown editor and KaTeX support\n- Colorful heading styles \\(Obsidian-inspired\\)\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(gh auth status:*)",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(unzip:*)"
     ]
   }
 }

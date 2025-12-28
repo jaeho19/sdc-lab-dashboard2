@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   Menu,
   UserCheck,
+  Bot,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ const navigation = [
   { name: "Research", href: "/research", icon: FileText },
   { name: "Calendar", href: "/calendar", icon: Calendar },
   { name: "Mentoring", href: "/mentoring", icon: MessageSquare },
+  { name: "AI Peer Review", href: "/peer-review", icon: Bot },
 ];
 
 const adminNavigation = [
