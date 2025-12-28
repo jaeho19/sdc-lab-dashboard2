@@ -26,27 +26,27 @@ export default async function CalendarPage() {
   }>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Calendar</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Calendar</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             연구실 일정을 확인하고 관리하세요.
           </p>
         </div>
       </div>
 
       {/* Category Legend */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5 md:gap-2">
         {Object.entries(CALENDAR_CATEGORY_CONFIG).map(([key, config]) => (
           <Badge
             key={key}
             variant="outline"
-            className="flex items-center gap-1.5"
+            className="flex items-center gap-1 md:gap-1.5 text-xs"
           >
             <div
-              className="w-2.5 h-2.5 rounded-full"
+              className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full"
               style={{ backgroundColor: config.color }}
             />
             {config.label}
@@ -58,7 +58,7 @@ export default async function CalendarPage() {
       <CalendarView events={eventList} />
 
       {/* Usage Hint */}
-      <p className="text-sm text-muted-foreground text-center">
+      <p className="text-xs md:text-sm text-muted-foreground text-center px-2">
         날짜를 클릭하여 새 일정을 추가하거나, 일정을 드래그하여 날짜를 변경할 수
         있습니다.
       </p>

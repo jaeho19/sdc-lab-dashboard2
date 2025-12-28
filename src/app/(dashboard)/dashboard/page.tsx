@@ -124,24 +124,24 @@ export default async function DashboardPage() {
       : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-sm md:text-base text-muted-foreground">
           SDC Lab 연구실 현황을 한눈에 확인하세요.
         </p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">활동 연구원</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 md:p-6 md:pb-2">
+            <CardTitle className="text-xs md:text-sm font-medium">활동 연구원</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{memberList.length}명</div>
+          <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
+            <div className="text-xl md:text-2xl font-bold">{memberList.length}명</div>
             <p className="text-xs text-muted-foreground">
               풀타임 + 파트타임
             </p>
@@ -149,12 +149,12 @@ export default async function DashboardPage() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">진행 중 연구</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 md:p-6 md:pb-2">
+            <CardTitle className="text-xs md:text-sm font-medium">진행 중 연구</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{activeProjectsCount}건</div>
+          <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
+            <div className="text-xl md:text-2xl font-bold">{activeProjectsCount}건</div>
             <p className="text-xs text-muted-foreground">
               전체 {projectList.length}건
             </p>
@@ -162,48 +162,48 @@ export default async function DashboardPage() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">평균 진행률</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 md:p-6 md:pb-2">
+            <CardTitle className="text-xs md:text-sm font-medium">평균 진행률</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{avgProgress}%</div>
+          <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
+            <div className="text-xl md:text-2xl font-bold">{avgProgress}%</div>
             <Progress value={avgProgress} className="mt-2 h-2" />
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">이번 주 일정</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 md:p-6 md:pb-2">
+            <CardTitle className="text-xs md:text-sm font-medium">이번 주 일정</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{eventList.length}건</div>
+          <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
+            <div className="text-xl md:text-2xl font-bold">{eventList.length}건</div>
             <p className="text-xs text-muted-foreground">다가오는 일정</p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2">
         {/* 진행 중 연구 */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
+          <CardHeader className="p-4 md:p-6">
+            <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+              <FileText className="h-4 w-4 md:h-5 md:w-5" />
               진행 중인 연구
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
+            <div className="space-y-3 md:space-y-4">
               {projectList.slice(0, 5).map((project) => (
                 <Link
                   key={project.id}
                   href={`/research/${project.id}`}
                   className="block"
                 >
-                  <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center justify-between p-2 md:p-3 rounded-lg border hover:bg-muted/50 transition-colors gap-2">
                     <div className="space-y-1 flex-1 min-w-0">
-                      <p className="font-medium truncate">{project.title}</p>
+                      <p className="font-medium truncate text-sm md:text-base">{project.title}</p>
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-xs">
                           {getProjectStatusLabel(project.status)}
@@ -215,7 +215,7 @@ export default async function DashboardPage() {
                     </div>
                     <Progress
                       value={project.overall_progress}
-                      className="w-20 h-2"
+                      className="w-16 md:w-20 h-2 shrink-0"
                     />
                   </div>
                 </Link>
@@ -231,35 +231,35 @@ export default async function DashboardPage() {
 
         {/* 다가오는 일정 */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
+          <CardHeader className="p-4 md:p-6">
+            <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+              <Clock className="h-4 w-4 md:h-5 md:w-5" />
               다가오는 일정
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
+            <div className="space-y-3 md:space-y-4">
               {eventList.map((event) => (
                 <div
                   key={event.id}
-                  className="flex items-center gap-4 p-3 rounded-lg border"
+                  className="flex items-center gap-3 md:gap-4 p-2 md:p-3 rounded-lg border"
                 >
                   <div className="flex-shrink-0">
-                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex flex-col items-center justify-center">
-                      <span className="text-xs text-primary font-medium">
+                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-primary/10 flex flex-col items-center justify-center">
+                      <span className="text-[10px] md:text-xs text-primary font-medium">
                         {new Date(event.start_date).toLocaleDateString(
                           "ko-KR",
                           { month: "short" }
                         )}
                       </span>
-                      <span className="text-lg font-bold text-primary">
+                      <span className="text-base md:text-lg font-bold text-primary">
                         {new Date(event.start_date).getDate()}
                       </span>
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{event.title}</p>
-                    <div className="flex items-center gap-2">
+                    <p className="font-medium truncate text-sm md:text-base">{event.title}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant="secondary" className="text-xs">
                         {getCalendarCategoryLabel(event.category)}
                       </Badge>
@@ -287,35 +287,35 @@ export default async function DashboardPage() {
 
       {/* 최근 멘토링 */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5" />
+        <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6">
+          <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+            <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5" />
             최근 멘토링 기록
           </CardTitle>
-          <Link href="/mentoring" className="text-sm text-primary hover:underline">
+          <Link href="/mentoring" className="text-xs md:text-sm text-primary hover:underline">
             전체 보기
           </Link>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
+        <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
+          <div className="space-y-3 md:space-y-4">
             {mentoringList.map((post) => (
               <Link
                 key={post.id}
                 href={`/mentoring/${post.id}`}
                 className="block"
               >
-                <div className="p-4 rounded-lg border hover:bg-muted/50 transition-colors">
+                <div className="p-3 md:p-4 rounded-lg border hover:bg-muted/50 transition-colors">
                   {/* Author info */}
-                  <div className="flex items-start gap-3 mb-3">
-                    <Avatar className="h-10 w-10">
+                  <div className="flex items-start gap-2 md:gap-3 mb-2 md:mb-3">
+                    <Avatar className="h-8 w-8 md:h-10 md:w-10">
                       <AvatarImage src={post.author?.avatar_url || undefined} />
-                      <AvatarFallback className="bg-sidebar-primary text-white text-sm">
+                      <AvatarFallback className="bg-sidebar-primary text-white text-xs md:text-sm">
                         {post.author ? getInitials(post.author.name) : "?"}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-sm md:text-base">
                           {post.author?.name || "Unknown"}
                         </span>
                         {post.author?.position && (

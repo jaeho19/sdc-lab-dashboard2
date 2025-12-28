@@ -359,3 +359,46 @@
 .flowchart-content .katex {
   font-size: 1.1em;
 }
+
+/* FullCalendar 모바일 스타일 */
+.calendar-mobile .fc {
+  font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+  .calendar-mobile .fc {
+    font-size: 0.75rem;
+  }
+
+  .calendar-mobile .fc .fc-toolbar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .calendar-mobile .fc .fc-toolbar-title {
+    font-size: 1rem;
+  }
+
+  .calendar-mobile .fc .fc-button {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .calendar-mobile .fc .fc-daygrid-day-number {
+    font-size: 0.75rem;
+    padding: 2px 4px;
+  }
+
+  .calendar-mobile .fc .fc-col-header-cell-cushion {
+    font-size: 0.7rem;
+  }
+
+  .calendar-mobile .fc .fc-daygrid-event {
+    font-size: 0.65rem;
+    padding: 1px 2px;
+  }
+
+  .calendar-mobile .fc .fc-daygrid-more-link {
+    font-size: 0.65rem;
+  }
+}

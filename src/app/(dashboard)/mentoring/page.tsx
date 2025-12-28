@@ -156,18 +156,18 @@ export default function MentoringPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Community Feed</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Community Feed</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             Share and discuss research progress
           </p>
         </div>
         <Link href="/mentoring/new">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
+          <Button size="sm" className="md:h-10 md:px-4 md:text-base">
+            <Plus className="h-4 w-4 mr-1 md:mr-2" />
             New Post
           </Button>
         </Link>
@@ -181,33 +181,33 @@ export default function MentoringPage() {
             placeholder="Search posts..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 text-sm md:text-base"
           />
         </div>
       </form>
 
       {/* Posts List */}
-      <div className="space-y-4">
+      <div className="space-y-3 md:space-y-4">
         {isLoading ? (
           <Card>
-            <CardContent className="py-12">
-              <div className="text-center text-muted-foreground">
+            <CardContent className="py-8 md:py-12">
+              <div className="text-center text-muted-foreground text-sm md:text-base">
                 로딩 중...
               </div>
             </CardContent>
           </Card>
         ) : posts.length === 0 ? (
           <Card>
-            <CardContent className="py-12">
+            <CardContent className="py-8 md:py-12">
               <div className="text-center">
-                <p className="text-muted-foreground mb-4">
+                <p className="text-muted-foreground mb-4 text-sm md:text-base">
                   {searchQuery
                     ? "검색 결과가 없습니다."
                     : "멘토링 기록이 없습니다."}
                 </p>
                 {!searchQuery && (
                   <Link href="/mentoring/new">
-                    <Button>
+                    <Button size="sm" className="md:h-10 md:px-4 md:text-base">
                       <Plus className="h-4 w-4 mr-2" />
                       첫 기록 작성하기
                     </Button>
@@ -222,14 +222,14 @@ export default function MentoringPage() {
               key={post.id}
               className="hover:shadow-md transition-shadow"
             >
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-4">
+              <CardContent className="pt-4 md:pt-6 p-3 md:p-6">
+                <div className="flex items-start gap-2 md:gap-4">
                   <Link href={`/members/${post.author?.id}`}>
-                    <Avatar className="h-12 w-12">
+                    <Avatar className="h-10 w-10 md:h-12 md:w-12">
                       <AvatarImage
                         src={post.author?.avatar_url || undefined}
                       />
-                      <AvatarFallback className="bg-sidebar-primary text-white">
+                      <AvatarFallback className="bg-sidebar-primary text-white text-sm md:text-base">
                         {post.author ? getInitials(post.author.name) : "?"}
                       </AvatarFallback>
                     </Avatar>
@@ -238,15 +238,15 @@ export default function MentoringPage() {
                   <div className="flex-1 min-w-0">
                     {/* Header with author and menu */}
                     <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 md:gap-2 flex-wrap">
                         <Link
                           href={`/members/${post.author?.id}`}
-                          className="font-semibold hover:underline"
+                          className="font-semibold hover:underline text-sm md:text-base"
                         >
                           {post.author?.name || "Unknown"}
                         </Link>
                         {post.meeting_date && (
-                          <span className="text-sm text-muted-foreground">
+                          <span className="text-xs md:text-sm text-muted-foreground">
                             {formatDate(post.meeting_date)}
                           </span>
                         )}
@@ -274,30 +274,30 @@ export default function MentoringPage() {
 
                     {/* Content */}
                     <Link href={`/mentoring/${post.id}`}>
-                      <p className="text-muted-foreground line-clamp-3 mb-3 cursor-pointer hover:text-foreground transition-colors">
+                      <p className="text-muted-foreground line-clamp-3 mb-2 md:mb-3 cursor-pointer hover:text-foreground transition-colors text-sm md:text-base">
                         {post.content}
                       </p>
                     </Link>
 
                     {/* Next Steps */}
                     {post.next_steps && post.next_steps.length > 0 && (
-                      <div className="bg-muted/50 rounded-lg p-3 mb-3">
-                        <div className="flex items-center gap-2 mb-2">
-                          <CheckSquare className="h-4 w-4 text-primary" />
-                          <span className="font-medium text-sm">NEXT STEPS</span>
+                      <div className="bg-muted/50 rounded-lg p-2 md:p-3 mb-2 md:mb-3">
+                        <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2">
+                          <CheckSquare className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary" />
+                          <span className="font-medium text-xs md:text-sm">NEXT STEPS</span>
                         </div>
-                        <ul className="space-y-1">
+                        <ul className="space-y-0.5 md:space-y-1">
                           {post.next_steps.slice(0, 3).map((step, index) => (
                             <li
                               key={index}
-                              className="text-sm text-muted-foreground flex items-center gap-2"
+                              className="text-xs md:text-sm text-muted-foreground flex items-start gap-1.5 md:gap-2"
                             >
-                              <span className="text-muted-foreground">•</span>
-                              {step}
+                              <span className="text-muted-foreground mt-0.5">•</span>
+                              <span>{step}</span>
                             </li>
                           ))}
                           {post.next_steps.length > 3 && (
-                            <li className="text-sm text-muted-foreground">
+                            <li className="text-xs md:text-sm text-muted-foreground">
                               +{post.next_steps.length - 3} more...
                             </li>
                           )}
@@ -306,50 +306,50 @@ export default function MentoringPage() {
                     )}
 
                     {/* Actions */}
-                    <div className="flex items-center gap-1 pt-2 border-t">
+                    <div className="flex items-center gap-0.5 md:gap-1 pt-2 border-t">
                       <LikeButton
                         postId={post.id}
                         likesCount={post.likes_count}
                         userLiked={post.user_liked}
                       />
                       <Link href={`/mentoring/${post.id}`}>
-                        <Button variant="ghost" size="sm" className="gap-2">
-                          <MessageCircle className="h-4 w-4" />
-                          <span>{post.comments?.length || 0}</span>
+                        <Button variant="ghost" size="sm" className="gap-1 md:gap-2 h-8 px-2 md:px-3">
+                          <MessageCircle className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                          <span className="text-xs md:text-sm">{post.comments?.length || 0}</span>
                         </Button>
                       </Link>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="gap-2"
+                        className="gap-1 md:gap-2 h-8 px-2 md:px-3"
                         onClick={() => handleShare(post.id)}
                       >
-                        <Share2 className="h-4 w-4" />
-                        <span>공유</span>
+                        <Share2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                        <span className="text-xs md:text-sm hidden sm:inline">공유</span>
                       </Button>
                     </div>
 
                     {/* Comments */}
                     {post.comments && post.comments.length > 0 && (
-                      <div className="mt-3 pt-3 border-t space-y-2">
+                      <div className="mt-2 md:mt-3 pt-2 md:pt-3 border-t space-y-1.5 md:space-y-2">
                         {post.comments.slice(0, 2).map((comment) => (
-                          <div key={comment.id} className="flex items-start gap-2">
-                            <Avatar className="h-7 w-7">
+                          <div key={comment.id} className="flex items-start gap-1.5 md:gap-2">
+                            <Avatar className="h-6 w-6 md:h-7 md:w-7">
                               <AvatarImage src={comment.author?.avatar_url || undefined} />
                               <AvatarFallback className="bg-muted text-xs">
                                 {comment.author ? getInitials(comment.author.name) : "?"}
                               </AvatarFallback>
                             </Avatar>
-                            <div className="flex-1 min-w-0 bg-muted/50 rounded-lg px-3 py-2">
-                              <div className="flex items-center gap-2 mb-0.5">
-                                <span className="text-sm font-medium">
+                            <div className="flex-1 min-w-0 bg-muted/50 rounded-lg px-2 md:px-3 py-1.5 md:py-2">
+                              <div className="flex items-center gap-1.5 md:gap-2 mb-0.5 flex-wrap">
+                                <span className="text-xs md:text-sm font-medium">
                                   {comment.author?.name || "Unknown"}
                                 </span>
                                 <span className="text-xs text-muted-foreground">
                                   {formatDate(comment.created_at)}
                                 </span>
                               </div>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-xs md:text-sm text-muted-foreground">
                                 {comment.content}
                               </p>
                             </div>
@@ -357,7 +357,7 @@ export default function MentoringPage() {
                         ))}
                         {post.comments.length > 2 && (
                           <Link href={`/mentoring/${post.id}`}>
-                            <p className="text-sm text-primary hover:underline pl-9">
+                            <p className="text-xs md:text-sm text-primary hover:underline pl-7 md:pl-9">
                               +{post.comments.length - 2}개 댓글 더보기
                             </p>
                           </Link>

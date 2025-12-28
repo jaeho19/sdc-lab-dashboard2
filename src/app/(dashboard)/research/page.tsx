@@ -172,20 +172,20 @@ export default async function ResearchPage() {
     return (
       <Card className="hover:shadow-lg transition-all duration-200">
         {/* 헤더: 연구원 정보 */}
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-3">
+        <CardHeader className="pb-2 md:pb-3 p-4 md:p-6">
+          <div className="flex items-center gap-2 md:gap-3">
             <Link href={`/members/${member.id}`}>
-              <Avatar className="h-12 w-12 ring-2 ring-offset-2 ring-primary/10 hover:ring-primary/30 transition-all">
+              <Avatar className="h-10 w-10 md:h-12 md:w-12 ring-2 ring-offset-2 ring-primary/10 hover:ring-primary/30 transition-all">
                 <AvatarImage src={member.avatar_url || undefined} />
-                <AvatarFallback className="bg-sidebar-primary text-white">
+                <AvatarFallback className="bg-sidebar-primary text-white text-sm md:text-base">
                   {getInitials(member.name)}
                 </AvatarFallback>
               </Avatar>
             </Link>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Link href={`/members/${member.id}`}>
-                  <h3 className="font-semibold hover:text-primary transition-colors">
+                  <h3 className="font-semibold hover:text-primary transition-colors text-sm md:text-base">
                     {member.name}
                   </h3>
                 </Link>
@@ -194,13 +194,13 @@ export default async function ResearchPage() {
                 </Badge>
               </div>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-sm text-muted-foreground">
+                <span className="text-xs md:text-sm text-muted-foreground">
                   {projects.length}개 연구 진행중
                 </span>
                 {projects.length > 0 && (
                   <>
-                    <span className="text-muted-foreground">•</span>
-                    <span className="text-sm font-medium">평균 {totalProgress}%</span>
+                    <span className="text-muted-foreground hidden sm:inline">•</span>
+                    <span className="text-xs md:text-sm font-medium hidden sm:inline">평균 {totalProgress}%</span>
                   </>
                 )}
               </div>
@@ -209,9 +209,9 @@ export default async function ResearchPage() {
         </CardHeader>
 
         {/* 본문: 프로젝트 목록 */}
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 p-4 md:p-6 md:pt-0">
           {projects.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-2 md:space-y-3">
               {projects.map((project) => {
                 const dday = getDday(project.target_date);
                 return (
@@ -220,10 +220,10 @@ export default async function ResearchPage() {
                     href={`/research/${project.id}`}
                     className="block"
                   >
-                    <div className="p-3 rounded-lg border hover:border-primary/50 hover:bg-muted/30 transition-all group">
+                    <div className="p-2 md:p-3 rounded-lg border hover:border-primary/50 hover:bg-muted/30 transition-all group">
                       {/* 프로젝트 제목 및 상태 */}
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <h4 className="text-sm font-medium line-clamp-2 group-hover:text-primary transition-colors flex-1">
+                      <div className="flex items-start justify-between gap-2 mb-1.5 md:mb-2">
+                        <h4 className="text-xs md:text-sm font-medium line-clamp-2 group-hover:text-primary transition-colors flex-1">
                           {project.title}
                         </h4>
                         <Badge className={`${getStatusColor(project.status)} text-xs shrink-0`}>
@@ -232,30 +232,30 @@ export default async function ResearchPage() {
                       </div>
 
                       {/* 진행률 */}
-                      <div className="flex items-center gap-2 mb-2">
-                        <Progress value={project.overall_progress} className="h-2 flex-1" />
+                      <div className="flex items-center gap-2 mb-1.5 md:mb-2">
+                        <Progress value={project.overall_progress} className="h-1.5 md:h-2 flex-1" />
                         <span className="text-xs font-semibold w-10 text-right">
                           {project.overall_progress}%
                         </span>
                       </div>
 
                       {/* 기한 및 저널 정보 */}
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2 md:gap-3 text-xs text-muted-foreground flex-wrap">
                         {project.target_date && (
                           <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            <span>{formatDate(project.target_date)}</span>
+                            <span className="hidden sm:inline">{formatDate(project.target_date)}</span>
                             {dday && (
                               <span className={`font-semibold ${dday.color}`}>
-                                ({dday.text})
+                                {dday.text}
                               </span>
                             )}
                           </div>
                         )}
                         {project.target_journal && (
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 hidden md:flex">
                             <Target className="h-3 w-3" />
-                            <span className="truncate max-w-[120px]">
+                            <span className="truncate max-w-[100px] lg:max-w-[120px]">
                               {project.target_journal}
                             </span>
                           </div>
@@ -267,7 +267,7 @@ export default async function ResearchPage() {
               })}
             </div>
           ) : (
-            <div className="py-4 text-center text-sm text-muted-foreground bg-muted/30 rounded-lg">
+            <div className="py-3 md:py-4 text-center text-xs md:text-sm text-muted-foreground bg-muted/30 rounded-lg">
               진행 중인 연구가 없습니다
             </div>
           )}
@@ -282,21 +282,21 @@ export default async function ResearchPage() {
 
     return (
       <Card className="hover:shadow-md transition-all duration-200">
-        <CardContent className="py-4">
+        <CardContent className="py-3 md:py-4 px-3 md:px-6">
           <Link href={`/members/${member.id}`}>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10">
+              <div className="flex items-center gap-2 md:gap-3">
+                <Avatar className="h-8 w-8 md:h-10 md:w-10">
                   <AvatarImage src={member.avatar_url || undefined} />
-                  <AvatarFallback className="bg-sidebar-primary text-white text-sm">
+                  <AvatarFallback className="bg-sidebar-primary text-white text-xs md:text-sm">
                     {getInitials(member.name)}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h3 className="font-medium hover:text-primary transition-colors">
+                  <h3 className="font-medium hover:text-primary transition-colors text-sm md:text-base">
                     {member.name}
                   </h3>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 md:gap-2">
                     <Badge variant="outline" className="text-xs">
                       {getPositionLabel(member.position)}
                     </Badge>
@@ -315,18 +315,18 @@ export default async function ResearchPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Research</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Research</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             연구원별 연구 프로젝트 현황
           </p>
         </div>
         <Link href="/research/new">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
+          <Button size="sm" className="md:h-10 md:px-4 md:text-base">
+            <Plus className="h-4 w-4 mr-1 md:mr-2" />
             새 프로젝트
           </Button>
         </Link>
@@ -334,22 +334,22 @@ export default async function ResearchPage() {
 
       {/* FULL-TIME Section */}
       <section>
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
           <div className="h-px flex-1 bg-border" />
-          <h2 className="text-lg font-semibold text-muted-foreground px-4">
+          <h2 className="text-sm md:text-lg font-semibold text-muted-foreground px-2 md:px-4">
             FULL-TIME
           </h2>
           <div className="h-px flex-1 bg-border" />
         </div>
 
-        <div className="grid gap-6 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
           {fullTimeMembers.map((member) => (
             <ResearcherCard key={member.id} member={member} />
           ))}
         </div>
 
         {fullTimeMembers.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="text-center py-8 text-muted-foreground text-sm md:text-base">
             풀타임 연구원이 없습니다.
           </div>
         )}
@@ -358,15 +358,15 @@ export default async function ResearchPage() {
       {/* PART-TIME Section */}
       {partTimeMembers.length > 0 && (
         <section>
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
             <div className="h-px flex-1 bg-border" />
-            <h2 className="text-lg font-semibold text-muted-foreground px-4">
+            <h2 className="text-sm md:text-lg font-semibold text-muted-foreground px-2 md:px-4">
               PART-TIME
             </h2>
             <div className="h-px flex-1 bg-border" />
           </div>
 
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {partTimeMembers.map((member) => (
               <PartTimeCard key={member.id} member={member} />
             ))}

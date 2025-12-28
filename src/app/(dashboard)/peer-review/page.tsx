@@ -142,32 +142,32 @@ export default function PeerReviewPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Bot className="h-7 w-7 text-purple-500" />
+        <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+          <Bot className="h-6 w-6 md:h-7 md:w-7 text-purple-500" />
           AI Peer Review
         </h1>
-        <p className="text-muted-foreground mt-1">
+        <p className="text-sm md:text-base text-muted-foreground mt-1">
           Claude AI를 활용한 연구 동료 심사 서비스
         </p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="new" className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
+        <TabsList className="grid w-full max-w-xs md:max-w-md grid-cols-2">
+          <TabsTrigger value="new" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+            <Plus className="h-3.5 w-3.5 md:h-4 md:w-4" />
             새 리뷰 요청
           </TabsTrigger>
-          <TabsTrigger value="history" className="flex items-center gap-2">
-            <History className="h-4 w-4" />
+          <TabsTrigger value="history" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+            <History className="h-3.5 w-3.5 md:h-4 md:w-4" />
             리뷰 기록
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="new" className="mt-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <TabsContent value="new" className="mt-4 md:mt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             {/* Input Form */}
             <Card>
               <CardHeader>

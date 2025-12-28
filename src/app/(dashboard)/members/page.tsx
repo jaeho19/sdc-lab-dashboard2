@@ -94,21 +94,21 @@ export default async function MembersPage() {
   const renderMemberCard = (member: Member) => (
     <Link key={member.id} href={`/members/${member.id}`}>
       <Card className="hover:shadow-lg transition-all duration-200 cursor-pointer border-0 bg-gradient-to-br from-white to-slate-50">
-        <CardContent className="pt-6">
+        <CardContent className="pt-4 md:pt-6">
           <div className="flex flex-col items-center text-center">
-            <Avatar className="h-24 w-24 mb-4 ring-2 ring-offset-2 ring-slate-200">
+            <Avatar className="h-20 w-20 md:h-24 md:w-24 mb-3 md:mb-4 ring-2 ring-offset-2 ring-slate-200">
               <AvatarImage src={member.avatar_url || undefined} />
-              <AvatarFallback className="text-lg bg-gradient-to-br from-slate-600 to-slate-800 text-white">
+              <AvatarFallback className="text-base md:text-lg bg-gradient-to-br from-slate-600 to-slate-800 text-white">
                 {getInitials(member.name)}
               </AvatarFallback>
             </Avatar>
-            <h3 className="font-semibold text-lg text-slate-800">{member.name}</h3>
-            <p className="text-sm text-slate-500 mb-3">{member.email}</p>
+            <h3 className="font-semibold text-base md:text-lg text-slate-800">{member.name}</h3>
+            <p className="text-xs md:text-sm text-slate-500 mb-2 md:mb-3 truncate max-w-full">{member.email}</p>
             <Badge variant={getPositionBadgeVariant(member.position)}>
               {getPositionLabel(member.position)}
             </Badge>
             {member.enrollment_year && (
-              <p className="text-xs text-slate-400 mt-3">
+              <p className="text-xs text-slate-400 mt-2 md:mt-3">
                 {member.enrollment_year}년 입학
                 {member.expected_graduation_year &&
                   ` · ${member.expected_graduation_year}년 졸업예정`}
@@ -121,39 +121,39 @@ export default async function MembersPage() {
   );
 
   const renderPositionGroup = (position: string, positionMembers: Member[]) => (
-    <div key={position} className="space-y-4">
+    <div key={position} className="space-y-3 md:space-y-4">
       <div className="flex items-center gap-2">
         <Badge variant={getPositionBadgeVariant(position)}>
           {getPositionLabel(position)}
         </Badge>
-        <span className="text-sm text-muted-foreground">
+        <span className="text-xs md:text-sm text-muted-foreground">
           {positionMembers.length}명
         </span>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid gap-3 md:gap-4 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {positionMembers.map(renderMemberCard)}
       </div>
     </div>
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Members</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Members</h1>
+        <p className="text-sm md:text-base text-muted-foreground">
           SDC Lab 연구원 ({members.length}명)
         </p>
       </div>
 
       {/* Professor Section */}
       {professors.length > 0 && (
-        <div className="space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-1 bg-gradient-to-b from-blue-800 to-blue-900 rounded-full" />
-            <h2 className="text-xl font-semibold text-slate-700">Professor</h2>
+        <div className="space-y-4 md:space-y-6">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="h-6 md:h-8 w-1 bg-gradient-to-b from-blue-800 to-blue-900 rounded-full" />
+            <h2 className="text-lg md:text-xl font-semibold text-slate-700">Professor</h2>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pl-4">
+          <div className="grid gap-3 md:gap-4 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pl-2 md:pl-4">
             {professors.map(renderMemberCard)}
           </div>
         </div>
@@ -161,15 +161,15 @@ export default async function MembersPage() {
 
       {/* Full-Time Section */}
       {fullTimeMembers.length > 0 && (
-        <div className="space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-1 bg-gradient-to-b from-blue-500 to-blue-700 rounded-full" />
-            <h2 className="text-xl font-semibold text-slate-700">Full-Time</h2>
-            <span className="text-sm text-muted-foreground">
+        <div className="space-y-4 md:space-y-6">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="h-6 md:h-8 w-1 bg-gradient-to-b from-blue-500 to-blue-700 rounded-full" />
+            <h2 className="text-lg md:text-xl font-semibold text-slate-700">Full-Time</h2>
+            <span className="text-xs md:text-sm text-muted-foreground">
               {fullTimeMembers.length}명
             </span>
           </div>
-          <div className="space-y-6 pl-4">
+          <div className="space-y-4 md:space-y-6 pl-2 md:pl-4">
             {fullTimeGroups.map(([position, positionMembers]) =>
               renderPositionGroup(position, positionMembers)
             )}
@@ -179,15 +179,15 @@ export default async function MembersPage() {
 
       {/* Part-Time Section */}
       {partTimeMembers.length > 0 && (
-        <div className="space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-1 bg-gradient-to-b from-slate-400 to-slate-600 rounded-full" />
-            <h2 className="text-xl font-semibold text-slate-700">Part-Time</h2>
-            <span className="text-sm text-muted-foreground">
+        <div className="space-y-4 md:space-y-6">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="h-6 md:h-8 w-1 bg-gradient-to-b from-slate-400 to-slate-600 rounded-full" />
+            <h2 className="text-lg md:text-xl font-semibold text-slate-700">Part-Time</h2>
+            <span className="text-xs md:text-sm text-muted-foreground">
               {partTimeMembers.length}명
             </span>
           </div>
-          <div className="space-y-6 pl-4">
+          <div className="space-y-4 md:space-y-6 pl-2 md:pl-4">
             {partTimeGroups.map(([position, positionMembers]) =>
               renderPositionGroup(position, positionMembers)
             )}

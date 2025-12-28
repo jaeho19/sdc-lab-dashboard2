@@ -96,15 +96,15 @@ export function CalendarView({ events }: CalendarViewProps) {
 
   return (
     <>
-      <div className="bg-white rounded-lg border p-4">
+      <div className="bg-white rounded-lg border p-2 md:p-4 calendar-mobile">
         <FullCalendar
           plugins={[dayGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
           locale="ko"
           headerToolbar={{
-            left: "prev,next today",
+            left: "prev,next",
             center: "title",
-            right: "dayGridMonth,dayGridWeek",
+            right: "today",
           }}
           buttonText={{
             today: "오늘",
@@ -115,13 +115,13 @@ export function CalendarView({ events }: CalendarViewProps) {
           selectable={true}
           selectMirror={true}
           editable={true}
-          dayMaxEvents={3}
+          dayMaxEvents={2}
           weekends={true}
           select={handleDateSelect}
           eventClick={handleEventClick}
           eventDrop={handleEventDrop}
           height="auto"
-          aspectRatio={1.8}
+          aspectRatio={1.2}
           eventDisplay="block"
           eventTimeFormat={{
             hour: "2-digit",
