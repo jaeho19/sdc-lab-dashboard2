@@ -50,7 +50,8 @@
       "Bash(git branch:*)",
       "Bash(git push:*)",
       "Bash(git commit:*)",
-      "Bash(unzip:*)"
+      "Bash(unzip:*)",
+      "Bash(git rm:*)"
     ]
   }
 }
