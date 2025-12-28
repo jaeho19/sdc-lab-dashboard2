@@ -45,6 +45,7 @@ Thumbs.db
 
 # Test screenshots
 *.png
+!public/images/*.png
 scripts/test-*.py
 
 # Supabase
