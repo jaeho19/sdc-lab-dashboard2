@@ -13,6 +13,7 @@ export type ProjectFormData = {
   target_journal?: string;
   deadline?: string;
   status: string;
+  submission_status?: string;
 };
 
 export type ActionResult = {
@@ -126,6 +127,7 @@ export async function updateProject(
   if (formData.target_journal !== undefined) updateData.target_journal = formData.target_journal || null;
   if (formData.deadline !== undefined) updateData.target_date = formData.deadline || null;
   if (formData.status !== undefined) updateData.status = formData.status;
+  if (formData.submission_status !== undefined) updateData.submission_status = formData.submission_status;
 
   const { error } = await supabase
     .from("research_projects")

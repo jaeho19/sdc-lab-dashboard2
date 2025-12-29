@@ -69,12 +69,22 @@ export type PeerReviewStatus = "pending" | "processing" | "completed" | "error";
 
 // 투고 상태 (진행률 100% 이후)
 export type SubmissionStatus =
-  | "not_submitted"      // 아직 투고 전 (진행 중인 연구)
-  | "under_review"       // 최초 투고 후 심사 대기/진행 중
-  | "major_revision"     // 대폭 수정 요청받음
-  | "minor_revision"     // 소폭 수정 요청받음
-  | "revision_submitted" // 수정본 재투고 완료, 재심사 중
-  | "accepted";          // 게재 확정
+  | "not_submitted"      // Not yet submitted
+  // Under Review Phase
+  | "submitted"          // Submission completed
+  | "under_review"       // Review in progress
+  // Review Result
+  | "minor_revision"     // Minor revision requested
+  | "major_revision"     // Major revision requested
+  | "rejected"           // Publication rejected
+  // Revision / Resubmission
+  | "under_revision"     // Revision in progress
+  | "resubmitted"        // Resubmission completed
+  | "under_2nd_review"   // 2nd review in progress
+  // Final
+  | "accepted"           // Publication accepted
+  | "in_press"           // Editing/printing in progress
+  | "published";         // Publication completed
 
 export interface Database {
   public: {

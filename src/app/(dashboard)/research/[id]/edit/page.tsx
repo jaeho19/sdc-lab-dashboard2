@@ -9,14 +9,17 @@ import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { updateProject, deleteProject } from "@/lib/actions/research";
 import { createClient } from "@/lib/supabase/client";
-import { ArrowLeft, Trash2, Target, BookOpen } from "lucide-react";
+import { ArrowLeft, Trash2, Target, BookOpen, Send } from "lucide-react";
 import Link from "next/link";
+import { SUBMISSION_STATUS_CATEGORIES } from "@/lib/utils";
 
 const categories = [
   { value: "thesis", label: "학위논문" },
@@ -56,6 +59,7 @@ export default function EditResearchPage() {
   const [targetJournal, setTargetJournal] = useState("");
   const [deadline, setDeadline] = useState("");
   const [status, setStatus] = useState("preparing");
+  const [submissionStatus, setSubmissionStatus] = useState("not_submitted");
 
   useEffect(() => {
     async function loadProject() {
@@ -75,6 +79,7 @@ export default function EditResearchPage() {
           target_journal: string | null;
           deadline: string | null;
           status: string;
+          submission_status: string | null;
         };
         setTitle(p.title);
         setCategory(p.category);
@@ -83,6 +88,7 @@ export default function EditResearchPage() {
         setTargetJournal(p.target_journal || "");
         setDeadline(p.deadline || "");
         setStatus(p.status);
+        setSubmissionStatus(p.submission_status || "not_submitted");
       }
       setIsLoading(false);
     }
@@ -109,6 +115,7 @@ export default function EditResearchPage() {
       target_journal: targetJournal || undefined,
       deadline: deadline || undefined,
       status,
+      submission_status: submissionStatus,
     });
 
     if (result.error) {
@@ -299,6 +306,72 @@ export default function EditResearchPage() {
                   투고 또는 제출 목표일을 입력하세요.
                 </p>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Submission Status */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Send className="h-5 w-5" />
+              Submission Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Current Status</Label>
+              <Select
+                value={submissionStatus}
+                onValueChange={setSubmissionStatus}
+                disabled={isSaving}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select submission status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="not_submitted">Not Submitted</SelectItem>
+
+                  <SelectGroup>
+                    <SelectLabel>{SUBMISSION_STATUS_CATEGORIES.under_review.label}</SelectLabel>
+                    {SUBMISSION_STATUS_CATEGORIES.under_review.options.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+
+                  <SelectGroup>
+                    <SelectLabel>{SUBMISSION_STATUS_CATEGORIES.review_result.label}</SelectLabel>
+                    {SUBMISSION_STATUS_CATEGORIES.review_result.options.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+
+                  <SelectGroup>
+                    <SelectLabel>{SUBMISSION_STATUS_CATEGORIES.revision.label}</SelectLabel>
+                    {SUBMISSION_STATUS_CATEGORIES.revision.options.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+
+                  <SelectGroup>
+                    <SelectLabel>{SUBMISSION_STATUS_CATEGORIES.final.label}</SelectLabel>
+                    {SUBMISSION_STATUS_CATEGORIES.final.options.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Select the current submission/review status of this research project.
+              </p>
             </div>
           </CardContent>
         </Card>

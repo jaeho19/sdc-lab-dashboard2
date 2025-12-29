@@ -13,7 +13,6 @@ import {
   Heart,
   MessageCircle,
   CheckSquare,
-  Send,
 } from "lucide-react";
 import {
   formatDate,
@@ -21,11 +20,10 @@ import {
   getCalendarCategoryLabel,
   getInitials,
   getPositionLabel,
-  getSubmissionStatusLabel,
-  getSubmissionStatusColor,
 } from "@/lib/utils";
 import type { SubmissionStatus } from "@/types/database.types";
 import Link from "next/link";
+import { SubmittedProjectsCard } from "@/components/features/SubmittedProjectsCard";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -250,50 +248,8 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* 투고 중인 연구 (투고 후) */}
-        <Card>
-          <CardHeader className="p-4 md:p-6">
-            <CardTitle className="flex items-center gap-2 text-base md:text-lg">
-              <Send className="h-4 w-4 md:h-5 md:w-5" />
-              투고 중인 연구
-              <Badge variant="secondary" className="ml-auto text-xs">
-                {submittedProjects.length}건
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
-            <div className="space-y-3 md:space-y-4">
-              {submittedProjects.slice(0, 5).map((project) => (
-                <Link
-                  key={project.id}
-                  href={`/research/${project.id}`}
-                  className="block"
-                >
-                  <div className="flex items-center justify-between p-2 md:p-3 rounded-lg border hover:bg-muted/50 transition-colors gap-2">
-                    <div className="space-y-1 flex-1 min-w-0">
-                      <p className="font-medium truncate text-sm md:text-base">{project.title}</p>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Badge className={`text-xs ${getSubmissionStatusColor(project.submission_status)}`}>
-                          {getSubmissionStatusLabel(project.submission_status)}
-                        </Badge>
-                        {project.target_journal && (
-                          <span className="text-xs text-muted-foreground truncate">
-                            {project.target_journal}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-              {submittedProjects.length === 0 && (
-                <p className="text-center text-muted-foreground py-4">
-                  투고 중인 연구가 없습니다.
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        {/* 투고 중인 연구 (투고 후) - 클라이언트 컴포넌트 */}
+        <SubmittedProjectsCard projects={submittedProjects} />
       </div>
 
       {/* 2행: 다가오는 일정 (전체 너비) */}

@@ -177,16 +177,63 @@ export function getAuthorRoleLabel(role: string): string {
   return labels[role] || role;
 }
 
-// 투고 상태 설정
+// 투고 상태 설정 (카테고리별 그룹화)
+export const SUBMISSION_STATUS_CATEGORIES = {
+  under_review: {
+    label: "Under Review",
+    options: [
+      { value: "submitted", label: "Submitted", description: "Submission completed" },
+      { value: "under_review", label: "Under Review", description: "Review in progress" },
+    ],
+  },
+  review_result: {
+    label: "Review Result",
+    options: [
+      { value: "minor_revision", label: "Minor Revision", description: "Minor revision requested" },
+      { value: "major_revision", label: "Major Revision", description: "Major revision requested" },
+      { value: "rejected", label: "Rejected", description: "Publication rejected" },
+    ],
+  },
+  revision: {
+    label: "Revision / Resubmission",
+    options: [
+      { value: "under_revision", label: "Under Revision", description: "Revision in progress" },
+      { value: "resubmitted", label: "Resubmitted", description: "Resubmission completed" },
+      { value: "under_2nd_review", label: "Under 2nd Review", description: "2nd review in progress" },
+    ],
+  },
+  final: {
+    label: "Final",
+    options: [
+      { value: "accepted", label: "Accepted", description: "Publication accepted" },
+      { value: "in_press", label: "In Press", description: "Editing/printing in progress" },
+      { value: "published", label: "Published", description: "Publication completed" },
+    ],
+  },
+} as const;
+
+// 투고 상태 설정 (플랫 구조 - 기존 호환성 유지)
 export const SUBMISSION_STATUS_CONFIG = {
   not_submitted: {
-    label: "투고 전",
+    label: "Not Submitted",
     color: "bg-gray-100 text-gray-700",
     badgeVariant: "secondary" as const,
   },
+  // Under Review Phase
+  submitted: {
+    label: "Submitted",
+    color: "bg-blue-100 text-blue-700",
+    badgeVariant: "default" as const,
+  },
   under_review: {
-    label: "심사 중",
+    label: "Under Review",
     color: "bg-yellow-100 text-yellow-700",
+    badgeVariant: "default" as const,
+  },
+  // Review Result
+  minor_revision: {
+    label: "Minor Revision",
+    color: "bg-cyan-100 text-cyan-700",
     badgeVariant: "default" as const,
   },
   major_revision: {
@@ -194,19 +241,41 @@ export const SUBMISSION_STATUS_CONFIG = {
     color: "bg-orange-100 text-orange-700",
     badgeVariant: "destructive" as const,
   },
-  minor_revision: {
-    label: "Minor Revision",
-    color: "bg-blue-100 text-blue-700",
+  rejected: {
+    label: "Rejected",
+    color: "bg-red-100 text-red-700",
+    badgeVariant: "destructive" as const,
+  },
+  // Revision / Resubmission
+  under_revision: {
+    label: "Under Revision",
+    color: "bg-amber-100 text-amber-700",
     badgeVariant: "default" as const,
   },
-  revision_submitted: {
-    label: "수정본 제출",
-    color: "bg-purple-100 text-purple-700",
+  resubmitted: {
+    label: "Resubmitted",
+    color: "bg-indigo-100 text-indigo-700",
     badgeVariant: "default" as const,
   },
+  under_2nd_review: {
+    label: "Under 2nd Review",
+    color: "bg-violet-100 text-violet-700",
+    badgeVariant: "default" as const,
+  },
+  // Final
   accepted: {
-    label: "게재 확정",
+    label: "Accepted",
     color: "bg-green-100 text-green-700",
+    badgeVariant: "default" as const,
+  },
+  in_press: {
+    label: "In Press",
+    color: "bg-emerald-100 text-emerald-700",
+    badgeVariant: "default" as const,
+  },
+  published: {
+    label: "Published",
+    color: "bg-teal-100 text-teal-700",
     badgeVariant: "default" as const,
   },
 } as const;
