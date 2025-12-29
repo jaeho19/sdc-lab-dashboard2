@@ -13,6 +13,7 @@ import {
   Heart,
   MessageCircle,
   CheckSquare,
+  Send,
 } from "lucide-react";
 import {
   formatDate,
@@ -20,7 +21,10 @@ import {
   getCalendarCategoryLabel,
   getInitials,
   getPositionLabel,
+  getSubmissionStatusLabel,
+  getSubmissionStatusColor,
 } from "@/lib/utils";
+import type { SubmissionStatus } from "@/types/database.types";
 import Link from "next/link";
 
 export default async function DashboardPage() {
@@ -79,7 +83,20 @@ export default async function DashboardPage() {
     status: string;
     overall_progress: number;
     updated_at: string;
+    submission_status: SubmissionStatus;
+    target_journal: string | null;
   }>;
+
+  // 진행 중인 연구 (아직 투고 전)
+  const inProgressProjects = projectList.filter(
+    (p) => p.submission_status === "not_submitted" || !p.submission_status
+  );
+
+  // 투고 중인 연구 (투고 후)
+  const submittedProjects = projectList.filter(
+    (p) => p.submission_status && p.submission_status !== "not_submitted"
+  );
+
   const eventList = (upcomingEvents || []) as Array<{
     id: string;
     title: string;
@@ -184,18 +201,22 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
+      {/* 1행: 진행 중인 연구 + 투고 중인 연구 (2열) */}
       <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2">
-        {/* 진행 중 연구 */}
+        {/* 진행 중인 연구 (투고 전) */}
         <Card>
           <CardHeader className="p-4 md:p-6">
             <CardTitle className="flex items-center gap-2 text-base md:text-lg">
               <FileText className="h-4 w-4 md:h-5 md:w-5" />
               진행 중인 연구
+              <Badge variant="secondary" className="ml-auto text-xs">
+                {inProgressProjects.length}건
+              </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
             <div className="space-y-3 md:space-y-4">
-              {projectList.slice(0, 5).map((project) => (
+              {inProgressProjects.slice(0, 5).map((project) => (
                 <Link
                   key={project.id}
                   href={`/research/${project.id}`}
@@ -220,7 +241,7 @@ export default async function DashboardPage() {
                   </div>
                 </Link>
               ))}
-              {projectList.length === 0 && (
+              {inProgressProjects.length === 0 && (
                 <p className="text-center text-muted-foreground py-4">
                   진행 중인 연구가 없습니다.
                 </p>
@@ -229,61 +250,109 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* 다가오는 일정 */}
+        {/* 투고 중인 연구 (투고 후) */}
         <Card>
           <CardHeader className="p-4 md:p-6">
             <CardTitle className="flex items-center gap-2 text-base md:text-lg">
-              <Clock className="h-4 w-4 md:h-5 md:w-5" />
-              다가오는 일정
+              <Send className="h-4 w-4 md:h-5 md:w-5" />
+              투고 중인 연구
+              <Badge variant="secondary" className="ml-auto text-xs">
+                {submittedProjects.length}건
+              </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
             <div className="space-y-3 md:space-y-4">
-              {eventList.map((event) => (
-                <div
-                  key={event.id}
-                  className="flex items-center gap-3 md:gap-4 p-2 md:p-3 rounded-lg border"
+              {submittedProjects.slice(0, 5).map((project) => (
+                <Link
+                  key={project.id}
+                  href={`/research/${project.id}`}
+                  className="block"
                 >
-                  <div className="flex-shrink-0">
-                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-primary/10 flex flex-col items-center justify-center">
-                      <span className="text-[10px] md:text-xs text-primary font-medium">
-                        {new Date(event.start_date).toLocaleDateString(
-                          "ko-KR",
-                          { month: "short" }
+                  <div className="flex items-center justify-between p-2 md:p-3 rounded-lg border hover:bg-muted/50 transition-colors gap-2">
+                    <div className="space-y-1 flex-1 min-w-0">
+                      <p className="font-medium truncate text-sm md:text-base">{project.title}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge className={`text-xs ${getSubmissionStatusColor(project.submission_status)}`}>
+                          {getSubmissionStatusLabel(project.submission_status)}
+                        </Badge>
+                        {project.target_journal && (
+                          <span className="text-xs text-muted-foreground truncate">
+                            {project.target_journal}
+                          </span>
                         )}
-                      </span>
-                      <span className="text-base md:text-lg font-bold text-primary">
-                        {new Date(event.start_date).getDate()}
-                      </span>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate text-sm md:text-base">{event.title}</p>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="secondary" className="text-xs">
-                        {getCalendarCategoryLabel(event.category)}
-                      </Badge>
-                      {!event.all_day && (
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(event.start_date).toLocaleTimeString(
-                            "ko-KR",
-                            { hour: "2-digit", minute: "2-digit" }
-                          )}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                </Link>
               ))}
-              {eventList.length === 0 && (
+              {submittedProjects.length === 0 && (
                 <p className="text-center text-muted-foreground py-4">
-                  다가오는 일정이 없습니다.
+                  투고 중인 연구가 없습니다.
                 </p>
               )}
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* 2행: 다가오는 일정 (전체 너비) */}
+      <Card>
+        <CardHeader className="p-4 md:p-6">
+          <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+            <Clock className="h-4 w-4 md:h-5 md:w-5" />
+            다가오는 일정
+            <Badge variant="secondary" className="ml-auto text-xs">
+              {eventList.length}건
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
+          <div className="grid gap-3 md:gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {eventList.map((event) => (
+              <div
+                key={event.id}
+                className="flex items-center gap-3 md:gap-4 p-2 md:p-3 rounded-lg border"
+              >
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-primary/10 flex flex-col items-center justify-center">
+                    <span className="text-[10px] md:text-xs text-primary font-medium">
+                      {new Date(event.start_date).toLocaleDateString(
+                        "ko-KR",
+                        { month: "short" }
+                      )}
+                    </span>
+                    <span className="text-base md:text-lg font-bold text-primary">
+                      {new Date(event.start_date).getDate()}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate text-sm md:text-base">{event.title}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant="secondary" className="text-xs">
+                      {getCalendarCategoryLabel(event.category)}
+                    </Badge>
+                    {!event.all_day && (
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(event.start_date).toLocaleTimeString(
+                          "ko-KR",
+                          { hour: "2-digit", minute: "2-digit" }
+                        )}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+            {eventList.length === 0 && (
+              <p className="text-center text-muted-foreground py-4 col-span-full">
+                다가오는 일정이 없습니다.
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* 최근 멘토링 */}
       <Card>

@@ -38,13 +38,18 @@ import {
   getProjectTypeLabel,
   getAuthorRoleLabel,
   formatDate,
+  getSubmissionStatusLabel,
+  getSubmissionStatusColor,
+  SUBMISSION_STATUS_CONFIG,
 } from "@/lib/utils";
 import {
   toggleChecklistItem,
   addProjectAuthor,
   deleteProjectAuthor,
   updateProject,
+  updateSubmissionStatus,
 } from "@/lib/actions/research";
+import type { SubmissionStatus } from "@/types/database.types";
 import {
   ArrowLeft,
   Edit,
@@ -78,6 +83,8 @@ interface Project {
   status: string;
   overall_progress: number;
   flowchart_md: string | null;
+  submission_status: SubmissionStatus;
+  submitted_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -431,6 +438,47 @@ export default function ResearchDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* 투고 상태 섹션 (진행률 100% 또는 투고 후에만 표시) */}
+          {(project.overall_progress === 100 || project.submission_status !== "not_submitted") && (
+            <div className="mt-6 pt-6 border-t">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">투고 상태</p>
+                  <Badge className={getSubmissionStatusColor(project.submission_status)}>
+                    {getSubmissionStatusLabel(project.submission_status)}
+                  </Badge>
+                  {project.submitted_at && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      투고일: {formatDate(project.submitted_at)}
+                    </p>
+                  )}
+                </div>
+                {project.submission_status !== "not_submitted" && (
+                  <Select
+                    value={project.submission_status}
+                    onValueChange={async (value) => {
+                      await updateSubmissionStatus(id, value);
+                      fetchData();
+                    }}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="상태 변경" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(SUBMISSION_STATUS_CONFIG)
+                        .filter(([key]) => key !== "not_submitted")
+                        .map(([key, config]) => (
+                          <SelectItem key={key} value={key}>
+                            {config.label}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

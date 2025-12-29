@@ -27,7 +27,7 @@ import {
   deleteWeeklyGoal,
 } from "@/lib/actions/research";
 import { MILESTONE_STAGES } from "@/lib/utils";
-import { Plus, Trash2, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Trash2, Loader2, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import type { MilestoneStage } from "@/types/database.types";
 
 interface WeeklyGoal {
@@ -92,6 +92,7 @@ export function WeeklyGoals({ projectId, goals, onRefresh }: WeeklyGoalsProps) {
   const [newLinkedStage, setNewLinkedStage] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const weekRange = useMemo(() => getWeekRange(), []);
 
@@ -110,20 +111,28 @@ export function WeeklyGoals({ projectId, goals, onRefresh }: WeeklyGoalsProps) {
   const handleAddGoal = async () => {
     if (!newContent.trim() || !newDeadline) return;
     setSaving(true);
+    setError(null);
 
     const linkedStage = newLinkedStage && newLinkedStage !== "none" ? newLinkedStage : undefined;
-    await addWeeklyGoal(
+    const result = await addWeeklyGoal(
       projectId,
       newContent,
       newDeadline,
       linkedStage
     );
 
+    setSaving(false);
+
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+
     setNewContent("");
     setNewDeadline("");
     setNewLinkedStage("");
+    setError(null);
     setIsAddDialogOpen(false);
-    setSaving(false);
     onRefresh();
   };
 
@@ -155,7 +164,10 @@ export function WeeklyGoals({ projectId, goals, onRefresh }: WeeklyGoalsProps) {
               ({weekRange.label})
             </span>
           </CardTitle>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+            setIsAddDialogOpen(open);
+            if (open) setError(null);
+          }}>
             <DialogTrigger asChild>
               <Button size="sm">
                 <Plus className="h-4 w-4 mr-1" />
@@ -166,6 +178,12 @@ export function WeeklyGoals({ projectId, goals, onRefresh }: WeeklyGoalsProps) {
               <DialogHeader>
                 <DialogTitle>주간 목표 추가</DialogTitle>
               </DialogHeader>
+              {error && (
+                <div className="flex items-center gap-2 rounded-md bg-red-50 p-3 text-sm text-red-600">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>{error}</span>
+                </div>
+              )}
               <div className="space-y-4 pt-4">
                 <div className="space-y-2">
                   <Label>할 일 내용</Label>

@@ -177,6 +177,52 @@ export function getAuthorRoleLabel(role: string): string {
   return labels[role] || role;
 }
 
+// 투고 상태 설정
+export const SUBMISSION_STATUS_CONFIG = {
+  not_submitted: {
+    label: "투고 전",
+    color: "bg-gray-100 text-gray-700",
+    badgeVariant: "secondary" as const,
+  },
+  under_review: {
+    label: "심사 중",
+    color: "bg-yellow-100 text-yellow-700",
+    badgeVariant: "default" as const,
+  },
+  major_revision: {
+    label: "Major Revision",
+    color: "bg-orange-100 text-orange-700",
+    badgeVariant: "destructive" as const,
+  },
+  minor_revision: {
+    label: "Minor Revision",
+    color: "bg-blue-100 text-blue-700",
+    badgeVariant: "default" as const,
+  },
+  revision_submitted: {
+    label: "수정본 제출",
+    color: "bg-purple-100 text-purple-700",
+    badgeVariant: "default" as const,
+  },
+  accepted: {
+    label: "게재 확정",
+    color: "bg-green-100 text-green-700",
+    badgeVariant: "default" as const,
+  },
+} as const;
+
+export type SubmissionStatusKey = keyof typeof SUBMISSION_STATUS_CONFIG;
+
+// 투고 상태 라벨
+export function getSubmissionStatusLabel(status: string): string {
+  return SUBMISSION_STATUS_CONFIG[status as SubmissionStatusKey]?.label || status;
+}
+
+// 투고 상태 색상 클래스
+export function getSubmissionStatusColor(status: string): string {
+  return SUBMISSION_STATUS_CONFIG[status as SubmissionStatusKey]?.color || "bg-gray-100 text-gray-700";
+}
+
 // 6단계 마일스톤 정의 (투고까지 100%)
 export const MILESTONE_STAGES = [
   {

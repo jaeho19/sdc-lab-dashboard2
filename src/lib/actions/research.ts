@@ -456,7 +456,12 @@ export async function addWeeklyGoal(
 
   if (error) {
     console.error("Weekly goal creation error:", error);
-    return { error: "주간 목표 추가 중 오류가 발생했습니다." };
+    console.error("Error details - code:", error.code, "message:", error.message, "details:", error.details);
+
+    if (error.code === "42501") {
+      return { error: "권한이 없습니다. 프로젝트 멤버 또는 생성자만 목표를 추가할 수 있습니다." };
+    }
+    return { error: `주간 목표 추가 중 오류가 발생했습니다: ${error.message}` };
   }
 
   revalidatePath(`/research/${projectId}`);
@@ -592,5 +597,63 @@ export async function updateFlowchart(
   }
 
   revalidatePath(`/research/${projectId}`);
+  return { success: true };
+}
+
+// ============================================
+// 투고 상태 관련 액션
+// ============================================
+
+// 투고 상태 업데이트
+export async function updateSubmissionStatus(
+  projectId: string,
+  submissionStatus: string,
+  targetJournal?: string
+): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "로그인이 필요합니다." };
+  }
+
+  const updateData: Record<string, unknown> = {
+    submission_status: submissionStatus,
+  };
+
+  // 투고 전 → 투고 상태로 변경 시 submitted_at 설정
+  if (submissionStatus !== "not_submitted") {
+    const { data: project } = await supabase
+      .from("research_projects")
+      .select("submission_status, submitted_at")
+      .eq("id", projectId)
+      .single();
+
+    const projectData = project as { submission_status: string; submitted_at: string | null } | null;
+    if (projectData && projectData.submission_status === "not_submitted" && !projectData.submitted_at) {
+      updateData.submitted_at = new Date().toISOString();
+    }
+  }
+
+  // 타겟 저널 업데이트
+  if (targetJournal !== undefined) {
+    updateData.target_journal = targetJournal || null;
+  }
+
+  const { error } = await supabase
+    .from("research_projects")
+    .update(updateData as never)
+    .eq("id", projectId);
+
+  if (error) {
+    console.error("Submission status update error:", error);
+    return { error: "투고 상태 변경 중 오류가 발생했습니다." };
+  }
+
+  revalidatePath(`/research/${projectId}`);
+  revalidatePath("/dashboard");
   return { success: true };
 }

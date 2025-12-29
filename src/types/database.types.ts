@@ -67,6 +67,15 @@ export type FileEntityType = "project" | "mentoring_post" | "flowchart";
 
 export type PeerReviewStatus = "pending" | "processing" | "completed" | "error";
 
+// 투고 상태 (진행률 100% 이후)
+export type SubmissionStatus =
+  | "not_submitted"      // 아직 투고 전 (진행 중인 연구)
+  | "under_review"       // 최초 투고 후 심사 대기/진행 중
+  | "major_revision"     // 대폭 수정 요청받음
+  | "minor_revision"     // 소폭 수정 요청받음
+  | "revision_submitted" // 수정본 재투고 완료, 재심사 중
+  | "accepted";          // 게재 확정
+
 export interface Database {
   public: {
     Tables: {
@@ -141,6 +150,8 @@ export interface Database {
           first_author: string | null;
           co_authors: string | null;
           corresponding_author: string | null;
+          submission_status: SubmissionStatus;
+          submitted_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -158,6 +169,8 @@ export interface Database {
           first_author?: string | null;
           co_authors?: string | null;
           corresponding_author?: string | null;
+          submission_status?: SubmissionStatus;
+          submitted_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -175,6 +188,8 @@ export interface Database {
           first_author?: string | null;
           co_authors?: string | null;
           corresponding_author?: string | null;
+          submission_status?: SubmissionStatus;
+          submitted_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
