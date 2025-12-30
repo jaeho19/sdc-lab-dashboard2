@@ -191,7 +191,9 @@ export default function ResearchDetailPage() {
       const isAdmin = member?.position === "professor";
       const isCreator = p.created_by === user.id;
       console.log("isAdmin:", isAdmin, "isCreator:", isCreator);
-      setCanDelete(isAdmin || isCreator);
+      const canDeleteValue = isAdmin || isCreator;
+      console.log("Setting canDelete to:", canDeleteValue);
+      setCanDelete(canDeleteValue);
     }
 
     // 마일스톤 및 체크리스트
@@ -360,6 +362,8 @@ export default function ResearchDetailPage() {
               <Edit className="h-4 w-4 mr-2" />
               수정
             </Button>
+            {/* Debug: canDelete state */}
+            {console.log("Rendering: canDelete =", canDelete)}
             {canDelete && (
               <DeleteProjectButton
                 projectId={id}
