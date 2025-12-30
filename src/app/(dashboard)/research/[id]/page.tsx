@@ -177,16 +177,20 @@ export default function ResearchDetailPage() {
 
     // 삭제 권한 확인
     const { data: { user } } = await supabase.auth.getUser();
+    console.log("Current user:", user?.id, user?.email);
+    console.log("Project created_by:", p.created_by);
     if (user) {
-      const { data: memberData } = await supabase
+      const { data: memberData, error: memberError } = await supabase
         .from("members")
-        .select("position")
-        .eq("id", user.id)
+        .select("position, user_id")
+        .eq("user_id", user.id)
         .single();
 
-      const member = memberData as { position: string } | null;
+      console.log("Member lookup result:", memberData, memberError);
+      const member = memberData as { position: string; user_id: string } | null;
       const isAdmin = member?.position === "professor";
       const isCreator = p.created_by === user.id;
+      console.log("isAdmin:", isAdmin, "isCreator:", isCreator);
       setCanDelete(isAdmin || isCreator);
     }
 
