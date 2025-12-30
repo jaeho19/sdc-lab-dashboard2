@@ -74,6 +74,19 @@ export async function createProject(
 
   const projectData = project as { id: string };
 
+  // 프로젝트 생성자를 first_author로 project_members에 추가
+  const { error: memberError } = await supabase
+    .from("project_members")
+    .insert({
+      project_id: projectData.id,
+      member_id: memberData.id,
+      role: "first_author",
+    } as never);
+
+  if (memberError) {
+    console.error("Project member creation error:", memberError);
+  }
+
   // 6단계 마일스톤 및 체크리스트 생성
   for (let i = 0; i < MILESTONE_STAGES.length; i++) {
     const stage = MILESTONE_STAGES[i];
