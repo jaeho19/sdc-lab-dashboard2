@@ -177,23 +177,17 @@ export default function ResearchDetailPage() {
 
     // 삭제 권한 확인
     const { data: { user } } = await supabase.auth.getUser();
-    console.log("Current user:", user?.id, user?.email);
-    console.log("Project created_by:", p.created_by);
     if (user && user.email) {
-      const { data: memberData, error: memberError } = await supabase
+      const { data: memberData } = await supabase
         .from("members")
         .select("position")
         .eq("email", user.email)
         .single();
 
-      console.log("Member lookup result:", memberData, memberError);
       const member = memberData as { position: string } | null;
       const isAdmin = member?.position === "professor";
       const isCreator = p.created_by === user.id;
-      console.log("isAdmin:", isAdmin, "isCreator:", isCreator);
-      const canDeleteValue = isAdmin || isCreator;
-      console.log("Setting canDelete to:", canDeleteValue);
-      setCanDelete(canDeleteValue);
+      setCanDelete(isAdmin || isCreator);
     }
 
     // 마일스톤 및 체크리스트
@@ -362,8 +356,6 @@ export default function ResearchDetailPage() {
               <Edit className="h-4 w-4 mr-2" />
               수정
             </Button>
-            {/* Debug: canDelete state */}
-            {console.log("Rendering: canDelete =", canDelete)}
             {canDelete && (
               <DeleteProjectButton
                 projectId={id}
