@@ -25,10 +25,21 @@ export default function LoginPage() {
     setIsLoading(true);
     setError(null);
 
-    const result = await login(formData);
+    try {
+      const result = await login(formData);
 
-    if (result?.error) {
-      setError(result.error);
+      if (result?.error) {
+        setError(result.error);
+        setIsLoading(false);
+      } else if (result?.redirectTo) {
+        router.push(result.redirectTo);
+      } else {
+        setError("로그인 처리 중 오류가 발생했습니다.");
+        setIsLoading(false);
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
       setIsLoading(false);
     }
   }
@@ -46,7 +57,11 @@ export default function LoginPage() {
           서울시립대학교 Spatial Data & Community Lab
         </CardDescription>
       </CardHeader>
-      <form action={handleSubmit}>
+      <form onSubmit={async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+        await handleSubmit(formData);
+      }}>
         <CardContent className="space-y-4">
           {error && (
             <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
