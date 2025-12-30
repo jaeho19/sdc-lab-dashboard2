@@ -263,7 +263,10 @@ export async function deleteProject(id: string, redirectPath?: string): Promise<
   }
 
   revalidatePath("/research");
+  revalidatePath("/dashboard");
+  revalidatePath("/members");
   if (redirectPath) {
+    revalidatePath(redirectPath);
     redirect(redirectPath);
   } else {
     redirect("/research");
