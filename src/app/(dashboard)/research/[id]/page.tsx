@@ -179,15 +179,15 @@ export default function ResearchDetailPage() {
     const { data: { user } } = await supabase.auth.getUser();
     console.log("Current user:", user?.id, user?.email);
     console.log("Project created_by:", p.created_by);
-    if (user) {
+    if (user && user.email) {
       const { data: memberData, error: memberError } = await supabase
         .from("members")
-        .select("position, user_id")
-        .eq("user_id", user.id)
+        .select("position")
+        .eq("email", user.email)
         .single();
 
       console.log("Member lookup result:", memberData, memberError);
-      const member = memberData as { position: string; user_id: string } | null;
+      const member = memberData as { position: string } | null;
       const isAdmin = member?.position === "professor";
       const isCreator = p.created_by === user.id;
       console.log("isAdmin:", isAdmin, "isCreator:", isCreator);

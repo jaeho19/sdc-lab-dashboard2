@@ -51,7 +51,21 @@
       "Bash(git push:*)",
       "Bash(git commit:*)",
       "Bash(unzip:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "WebFetch(domain:sdc-lab-dashboard2.netlify.app)",
+      "WebFetch(domain:sdclab-dashboard.netlify.app)",
+      "WebFetch(domain:sdc-lab-dashboard.netlify.app)",
+      "WebFetch(domain:app.netlify.com)",
+      "WebFetch(domain:jaeho19-sdc-lab-dashboard2.netlify.app)",
+      "WebFetch(domain:main--sdc-lab-dashboard2.netlify.app)",
+      "WebFetch(domain:hilarious-marshmallow-cf8352.netlify.app)",
+      "Bash(gh api:*)",
+      "WebFetch(domain:localhost)",
+      "Bash(git diff:*)",
+      "Bash(git fetch:*)",
+      "Bash(npx netlify-cli:*)",
+      "Bash(git checkout:*)",
+      "Bash(tasklist:*)"
     ]
   }
 }

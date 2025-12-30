@@ -63,7 +63,7 @@ export async function updateSession(request: NextRequest) {
     const { data: member } = await supabase
       .from("members")
       .select("status, position")
-      .eq("user_id", user.id)
+      .eq("id", user.id)
       .single();
 
     const memberData = member as { status: string; position: string } | null;
