@@ -8,6 +8,10 @@ import { getInitials, getPositionLabel, formatDate } from "@/lib/utils";
 import { Plus, Calendar, Target, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
+// Disable caching to always fetch fresh data
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // 직책별 정렬 순서
 const positionOrder: Record<string, number> = {
   professor: 1,
