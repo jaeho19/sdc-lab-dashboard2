@@ -18,7 +18,7 @@ export default async function AdminApprovalsPage() {
   const { data: currentMember } = await supabase
     .from("members")
     .select("position")
-    .eq("user_id", user.id)
+    .eq("id", user.id)
     .single();
 
   const memberData = currentMember as { position: string } | null;

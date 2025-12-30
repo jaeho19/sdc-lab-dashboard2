@@ -10,6 +10,7 @@ type MemberInsert = Database["public"]["Tables"]["members"]["Insert"];
 export type AuthResult = {
   error?: string;
   success?: boolean;
+  redirectTo?: string;
 };
 
 export async function login(formData: FormData): Promise<AuthResult> {
@@ -45,14 +46,14 @@ export async function login(formData: FormData): Promise<AuthResult> {
   }
 
   if (member.status === "pending") {
-    redirect("/pending-approval");
+    return { success: true, redirectTo: "/pending-approval" };
   }
 
   if (member.status === "leave") {
     return { error: "휴학 상태입니다. 관리자에게 문의하세요." };
   }
 
-  redirect("/dashboard");
+  return { success: true, redirectTo: "/dashboard" };
 }
 
 export async function signup(formData: FormData): Promise<AuthResult> {
@@ -105,9 +106,9 @@ export async function signup(formData: FormData): Promise<AuthResult> {
     return { error: "사용자 생성에 실패했습니다." };
   }
 
-  // 멤버 레코드 생성
+  // 멤버 레코드 생성 (members.id = auth.users.id)
   const memberData: MemberInsert = {
-    user_id: authData.user.id,
+    id: authData.user.id,
     name,
     email,
     position,
@@ -150,7 +151,7 @@ export async function approveMember(memberId: string): Promise<AuthResult> {
   const { data: currentMemberData } = await supabase
     .from("members")
     .select("position")
-    .eq("user_id", user.id)
+    .eq("id", user.id)
     .single();
 
   const currentMember = currentMemberData as { position: string } | null;
@@ -188,7 +189,7 @@ export async function rejectMember(memberId: string): Promise<AuthResult> {
   const { data: currentMemberData2 } = await supabase
     .from("members")
     .select("position")
-    .eq("user_id", user.id)
+    .eq("id", user.id)
     .single();
 
   const currentMember2 = currentMemberData2 as { position: string } | null;
@@ -197,10 +198,10 @@ export async function rejectMember(memberId: string): Promise<AuthResult> {
     return { error: "관리자 권한이 필요합니다." };
   }
 
-  // 멤버 정보 조회 (user_id 가져오기)
+  // 멤버 정보 조회 (members.id = auth.users.id)
   const { data: memberToReject } = await supabase
     .from("members")
-    .select("user_id")
+    .select("id")
     .eq("id", memberId)
     .single();
 
@@ -238,7 +239,7 @@ export async function updateMemberProfile(
   const { data: currentMember } = await supabase
     .from("members")
     .select("id, position")
-    .eq("user_id", user.id)
+    .eq("id", user.id)
     .single() as { data: { id: string; position: string } | null };
 
   if (!currentMember) {

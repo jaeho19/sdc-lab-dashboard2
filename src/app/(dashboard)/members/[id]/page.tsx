@@ -51,7 +51,7 @@ export default async function MemberDetailPage({
     const { data: currentMember } = await supabase
       .from("members")
       .select("id, position")
-      .eq("user_id", user.id)
+      .eq("id", user.id)
       .single() as { data: { id: string; position: string } | null };
 
     if (currentMember) {
