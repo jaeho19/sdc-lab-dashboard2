@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { MILESTONE_STAGES } from "@/lib/utils";
@@ -212,21 +212,24 @@ export async function deleteProject(id: string, redirectPath?: string): Promise<
     return { error: "프로젝트를 삭제할 권한이 없습니다." };
   }
 
+  // Use service role client to bypass RLS for deletion
+  const adminClient = createServiceRoleClient();
+
   // 1. 프로젝트 멤버 삭제
-  await supabase
+  await adminClient
     .from("project_members")
     .delete()
     .eq("project_id", id);
 
   // 2. 마일스톤 조회 및 체크리스트 삭제
-  const { data: milestones } = await supabase
+  const { data: milestones } = await adminClient
     .from("milestones")
     .select("id")
     .eq("project_id", id);
 
   if (milestones && milestones.length > 0) {
     for (const milestone of milestones as { id: string }[]) {
-      await supabase
+      await adminClient
         .from("checklist_items")
         .delete()
         .eq("milestone_id", milestone.id);
@@ -234,25 +237,25 @@ export async function deleteProject(id: string, redirectPath?: string): Promise<
   }
 
   // 3. 마일스톤 삭제
-  await supabase
+  await adminClient
     .from("milestones")
     .delete()
     .eq("project_id", id);
 
   // 4. 주간 목표 삭제
-  await supabase
+  await adminClient
     .from("weekly_goals")
     .delete()
     .eq("project_id", id);
 
   // 5. 저자 정보 삭제
-  await supabase
+  await adminClient
     .from("project_authors")
     .delete()
     .eq("project_id", id);
 
   // 6. 프로젝트 삭제
-  const { error } = await supabase
+  const { error } = await adminClient
     .from("research_projects")
     .delete()
     .eq("id", id);
