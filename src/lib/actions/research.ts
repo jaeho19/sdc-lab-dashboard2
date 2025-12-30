@@ -170,8 +170,8 @@ export async function updateProject(
   return { success: true };
 }
 
-// 프로젝트 삭제
-export async function deleteProject(id: string): Promise<ActionResult> {
+// 프로젝트 삭제 (관리자 또는 프로젝트 생성자)
+export async function deleteProject(id: string, redirectPath?: string): Promise<ActionResult> {
   const supabase = await createClient();
 
   const {
@@ -182,7 +182,7 @@ export async function deleteProject(id: string): Promise<ActionResult> {
     return { error: "로그인이 필요합니다." };
   }
 
-  // 관리자 권한 확인
+  // 현재 사용자 정보 조회
   const { data: member } = await supabase
     .from("members")
     .select("position")
@@ -191,8 +191,25 @@ export async function deleteProject(id: string): Promise<ActionResult> {
 
   const memberData = member as { position: string } | null;
 
-  if (!memberData || memberData.position !== "professor") {
-    return { error: "관리자 권한이 필요합니다." };
+  if (!memberData) {
+    return { error: "연구원 정보를 찾을 수 없습니다." };
+  }
+
+  const isAdmin = memberData.position === "professor";
+
+  // 프로젝트 생성자 확인
+  const { data: project } = await supabase
+    .from("research_projects")
+    .select("created_by")
+    .eq("id", id)
+    .single();
+
+  const projectData = project as { created_by: string } | null;
+  const isCreator = projectData?.created_by === user.id;
+
+  // 관리자 또는 생성자만 삭제 가능
+  if (!isAdmin && !isCreator) {
+    return { error: "프로젝트를 삭제할 권한이 없습니다." };
   }
 
   const { error } = await supabase
@@ -205,7 +222,11 @@ export async function deleteProject(id: string): Promise<ActionResult> {
   }
 
   revalidatePath("/research");
-  redirect("/research");
+  if (redirectPath) {
+    redirect(redirectPath);
+  } else {
+    redirect("/research");
+  }
 }
 
 // 체크리스트 항목 토글

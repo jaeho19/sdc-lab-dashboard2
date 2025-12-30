@@ -17,6 +17,7 @@ import { Mail, GraduationCap, Calendar, FileText, Sparkles, Pencil, Plus, Clock,
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import type { Database } from "@/types/database.types";
+import { DeleteProjectButton } from "@/components/features/DeleteProjectButton";
 
 type Member = Database["public"]["Tables"]["members"]["Row"];
 
@@ -46,8 +47,11 @@ export default async function MemberDetailPage({
   // 현재 로그인한 사용자 확인
   const { data: { user } } = await supabase.auth.getUser();
   let canEdit = false;
+  let isAdmin = false;
+  let currentUserId: string | null = null;
 
   if (user) {
+    currentUserId = user.id;
     const { data: currentMember } = await supabase
       .from("members")
       .select("id, position")
@@ -55,7 +59,7 @@ export default async function MemberDetailPage({
       .single() as { data: { id: string; position: string } | null };
 
     if (currentMember) {
-      const isAdmin = currentMember.position === "professor";
+      isAdmin = currentMember.position === "professor";
       const isOwner = currentMember.id === id;
       canEdit = isAdmin || isOwner;
     }
@@ -71,7 +75,8 @@ export default async function MemberDetailPage({
         id,
         title,
         status,
-        overall_progress
+        overall_progress,
+        created_by
       )
     `
     )
@@ -101,6 +106,7 @@ export default async function MemberDetailPage({
       title: string;
       status: string;
       overall_progress: number;
+      created_by: string;
     } | null;
   }>;
 
@@ -251,11 +257,19 @@ export default async function MemberDetailPage({
       <div className="grid gap-6 md:grid-cols-2">
         {/* Research Articles */}
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
               Research Articles
             </CardTitle>
+            {canEdit && (
+              <Link href="/research/new">
+                <Button variant="outline" size="sm">
+                  <Plus className="h-4 w-4 mr-1" />
+                  새 프로젝트
+                </Button>
+              </Link>
+            )}
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -263,20 +277,30 @@ export default async function MemberDetailPage({
                 const project = pm.research_projects;
                 if (!project) return null;
                 return (
-                  <Link
+                  <div
                     key={index}
-                    href={`/research/${project.id}`}
-                    className="block"
+                    className="p-3 rounded-lg border hover:bg-muted/50 transition-colors"
                   >
-                    <div className="p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium truncate flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <Link href={`/research/${project.id}`} className="flex-1 min-w-0">
+                        <h4 className="font-medium truncate hover:text-primary transition-colors">
                           {project.title}
                         </h4>
-                        <Badge variant="outline" className="ml-2 shrink-0">
+                      </Link>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Badge variant="outline">
                           {getRoleLabel(pm.role)}
                         </Badge>
+                        {(isAdmin || project.created_by === currentUserId) && (
+                          <DeleteProjectButton
+                            projectId={project.id}
+                            projectTitle={project.title}
+                            redirectPath={`/members/${id}`}
+                          />
+                        )}
                       </div>
+                    </div>
+                    <Link href={`/research/${project.id}`}>
                       <div className="flex items-center gap-2">
                         <Badge variant="secondary" className="text-xs">
                           {getProjectStatusLabel(project.status)}
@@ -291,8 +315,8 @@ export default async function MemberDetailPage({
                           {project.overall_progress}%
                         </span>
                       </div>
-                    </div>
-                  </Link>
+                    </Link>
+                  </div>
                 );
               })}
               {projectList.length === 0 && (
