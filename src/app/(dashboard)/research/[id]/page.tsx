@@ -70,6 +70,7 @@ import Link from "next/link";
 import { WeeklyGoals } from "@/components/features/research/weekly-goals";
 import { ProjectTimeline } from "@/components/features/research/project-timeline";
 import { ResearchFlowchart } from "@/components/features/research/research-flowchart";
+import { DeleteProjectButton } from "@/components/features/DeleteProjectButton";
 import type { MilestoneStage } from "@/types/database.types";
 
 interface Project {
@@ -87,6 +88,7 @@ interface Project {
   submitted_at: string | null;
   created_at: string;
   updated_at: string;
+  created_by: string;
 }
 
 interface ChecklistItem {
@@ -135,6 +137,7 @@ export default function ResearchDetailPage() {
   const [weeklyGoals, setWeeklyGoals] = useState<WeeklyGoal[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [canDelete, setCanDelete] = useState(false);
 
   // 편집 상태
   const [isEditingHeader, setIsEditingHeader] = useState(false);
@@ -171,6 +174,21 @@ export default function ResearchDetailPage() {
     setEditType(p.project_type || "general");
     setEditJournal(p.target_journal || "");
     setEditDeadline(p.target_date || "");
+
+    // 삭제 권한 확인
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: memberData } = await supabase
+        .from("members")
+        .select("position")
+        .eq("id", user.id)
+        .single();
+
+      const member = memberData as { position: string } | null;
+      const isAdmin = member?.position === "professor";
+      const isCreator = p.created_by === user.id;
+      setCanDelete(isAdmin || isCreator);
+    }
 
     // 마일스톤 및 체크리스트
     const { data: milestonesData, error: milestonesError } = await supabase
@@ -333,10 +351,19 @@ export default function ResearchDetailPage() {
           )}
         </div>
         {!isEditingHeader ? (
-          <Button variant="outline" onClick={() => setIsEditingHeader(true)}>
-            <Edit className="h-4 w-4 mr-2" />
-            수정
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsEditingHeader(true)}>
+              <Edit className="h-4 w-4 mr-2" />
+              수정
+            </Button>
+            {canDelete && (
+              <DeleteProjectButton
+                projectId={id}
+                projectTitle={project.title}
+                redirectPath="/research"
+              />
+            )}
+          </div>
         ) : (
           <div className="flex gap-2">
             <Button onClick={handleSaveHeader} disabled={saving}>
