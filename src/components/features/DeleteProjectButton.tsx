@@ -59,7 +59,7 @@ export function DeleteProjectButton({
           <Trash2 className="h-4 w-4" />
         </Button>
       </AlertDialogTrigger>
-      <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+      <AlertDialogContent onClick={(e: React.MouseEvent) => e.stopPropagation()}>
         <AlertDialogHeader>
           <AlertDialogTitle>프로젝트 삭제</AlertDialogTitle>
           <AlertDialogDescription>
