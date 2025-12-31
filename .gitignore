@@ -51,3 +51,6 @@ scripts/test-*.py
 # Supabase
 supabase/.temp/
 nul
+
+# Local Netlify folder
+.netlify

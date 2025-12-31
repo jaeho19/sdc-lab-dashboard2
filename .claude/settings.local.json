@@ -65,7 +65,9 @@
       "Bash(git fetch:*)",
       "Bash(npx netlify-cli:*)",
       "Bash(git checkout:*)",
-      "Bash(tasklist:*)"
+      "Bash(tasklist:*)",
+      "Bash(netlify status:*)",
+      "Bash(git reset:*)"
     ]
   }
 }
