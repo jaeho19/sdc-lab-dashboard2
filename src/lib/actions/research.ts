@@ -34,15 +34,15 @@ export async function createProject(
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (!user?.email) {
     return { error: "로그인이 필요합니다." };
   }
 
-  // 현재 사용자의 member 정보 조회
+  // 현재 사용자의 member 정보 조회 (email로 조회)
   const { data: member } = await supabase
     .from("members")
     .select("id")
-    .eq("id", user.id)
+    .eq("email", user.email)
     .single();
 
   const memberData = member as { id: string } | null;
@@ -222,18 +222,18 @@ export async function deleteProject(id: string, redirectPath?: string): Promise<
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (!user?.email) {
     return { error: "로그인이 필요합니다." };
   }
 
-  // 현재 사용자 정보 조회
+  // 현재 사용자 정보 조회 (email로 조회)
   const { data: member } = await supabase
     .from("members")
-    .select("position")
-    .eq("id", user.id)
+    .select("id, position")
+    .eq("email", user.email)
     .single();
 
-  const memberData = member as { position: string } | null;
+  const memberData = member as { id: string; position: string } | null;
 
   if (!memberData) {
     return { error: "연구원 정보를 찾을 수 없습니다." };
