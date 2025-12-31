@@ -669,6 +669,50 @@ export async function deleteWeeklyGoal(
   return { success: true };
 }
 
+// 주간 목표 수정
+export async function updateWeeklyGoal(
+  goalId: string,
+  projectId: string,
+  content: string,
+  deadline: string,
+  linkedStage?: string | null
+): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "로그인이 필요합니다." };
+  }
+
+  if (!content.trim()) {
+    return { error: "목표 내용을 입력해주세요." };
+  }
+
+  if (!deadline) {
+    return { error: "마감일을 선택해주세요." };
+  }
+
+  const { error } = await supabase
+    .from("weekly_goals")
+    .update({
+      content: content.trim(),
+      deadline,
+      linked_stage: linkedStage || null,
+    } as never)
+    .eq("id", goalId);
+
+  if (error) {
+    console.error("Weekly goal update error:", error);
+    return { error: "주간 목표 수정 중 오류가 발생했습니다." };
+  }
+
+  revalidatePath(`/research/${projectId}`);
+  return { success: true };
+}
+
 // ============================================
 // 마일스톤 일정 관련 액션
 // ============================================

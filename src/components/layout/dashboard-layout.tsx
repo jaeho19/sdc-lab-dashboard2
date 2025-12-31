@@ -6,6 +6,7 @@ import { Bell } from "lucide-react";
 import { Sidebar, MobileMenuTrigger } from "./sidebar";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { GlobalSearch } from "@/components/global-search";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database.types";
 
@@ -43,6 +44,7 @@ export function DashboardLayout({ member, notificationCount = 0, children }: Das
           </div>
         </div>
         <div className="flex items-center gap-1">
+          <GlobalSearch />
           <ThemeToggle />
           <Button variant="ghost" size="icon" className="relative" asChild>
             <Link href="/notifications">
@@ -66,6 +68,7 @@ export function DashboardLayout({ member, notificationCount = 0, children }: Das
         )}
       >
         <div className="flex items-center gap-1">
+          <GlobalSearch />
           <ThemeToggle />
           <Button variant="ghost" size="icon" className="relative" asChild>
             <Link href="/notifications">

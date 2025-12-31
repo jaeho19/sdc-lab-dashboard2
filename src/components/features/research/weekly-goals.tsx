@@ -25,9 +25,10 @@ import {
   addWeeklyGoal,
   toggleWeeklyGoal,
   deleteWeeklyGoal,
+  updateWeeklyGoal,
 } from "@/lib/actions/research";
 import { MILESTONE_STAGES } from "@/lib/utils";
-import { Plus, Trash2, Loader2, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
+import { Plus, Trash2, Loader2, ChevronDown, ChevronUp, AlertCircle, Edit2 } from "lucide-react";
 import type { MilestoneStage } from "@/types/database.types";
 
 interface WeeklyGoal {
@@ -94,6 +95,14 @@ export function WeeklyGoals({ projectId, goals, onRefresh }: WeeklyGoalsProps) {
   const [showCompleted, setShowCompleted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Edit state
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<WeeklyGoal | null>(null);
+  const [editContent, setEditContent] = useState("");
+  const [editDeadline, setEditDeadline] = useState("");
+  const [editLinkedStage, setEditLinkedStage] = useState<string>("");
+  const [editError, setEditError] = useState<string | null>(null);
+
   const weekRange = useMemo(() => getWeekRange(), []);
 
   const sortedGoals = useMemo(() => {
@@ -144,6 +153,41 @@ export function WeeklyGoals({ projectId, goals, onRefresh }: WeeklyGoalsProps) {
   const handleDeleteGoal = async (goalId: string) => {
     if (!confirm("정말로 이 목표를 삭제하시겠습니까?")) return;
     await deleteWeeklyGoal(goalId, projectId);
+    onRefresh();
+  };
+
+  const handleOpenEditDialog = (goal: WeeklyGoal) => {
+    setEditingGoal(goal);
+    setEditContent(goal.content);
+    setEditDeadline(goal.deadline);
+    setEditLinkedStage(goal.linked_stage || "none");
+    setEditError(null);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditGoal = async () => {
+    if (!editingGoal || !editContent.trim() || !editDeadline) return;
+    setSaving(true);
+    setEditError(null);
+
+    const linkedStage = editLinkedStage && editLinkedStage !== "none" ? editLinkedStage : null;
+    const result = await updateWeeklyGoal(
+      editingGoal.id,
+      projectId,
+      editContent,
+      editDeadline,
+      linkedStage
+    );
+
+    setSaving(false);
+
+    if (result.error) {
+      setEditError(result.error);
+      return;
+    }
+
+    setIsEditDialogOpen(false);
+    setEditingGoal(null);
     onRefresh();
   };
 
@@ -284,6 +328,14 @@ export function WeeklyGoals({ projectId, goals, onRefresh }: WeeklyGoalsProps) {
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                    onClick={() => handleOpenEditDialog(goal)}
+                  >
+                    <Edit2 className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     className="h-6 w-6 opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600"
                     onClick={() => handleDeleteGoal(goal.id)}
                   >
@@ -337,6 +389,14 @@ export function WeeklyGoals({ projectId, goals, onRefresh }: WeeklyGoalsProps) {
                       <Button
                         variant="ghost"
                         size="icon"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                        onClick={() => handleOpenEditDialog(goal)}
+                      >
+                        <Edit2 className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         className="h-6 w-6 opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600"
                         onClick={() => handleDeleteGoal(goal.id)}
                       >
@@ -349,6 +409,79 @@ export function WeeklyGoals({ projectId, goals, onRefresh }: WeeklyGoalsProps) {
           </>
         )}
       </CardContent>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+        setIsEditDialogOpen(open);
+        if (!open) {
+          setEditingGoal(null);
+          setEditError(null);
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>주간 목표 수정</DialogTitle>
+          </DialogHeader>
+          {editError && (
+            <div className="flex items-center gap-2 rounded-md bg-red-50 p-3 text-sm text-red-600">
+              <AlertCircle className="h-4 w-4" />
+              <span>{editError}</span>
+            </div>
+          )}
+          <div className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label>할 일 내용</Label>
+              <Input
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                placeholder="목표 내용을 입력하세요"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>마감일</Label>
+              <Input
+                type="date"
+                value={editDeadline}
+                onChange={(e) => setEditDeadline(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>연결 단계 (선택)</Label>
+              <Select
+                value={editLinkedStage}
+                onValueChange={setEditLinkedStage}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="단계 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">선택 안 함</SelectItem>
+                  {MILESTONE_STAGES.map((stage, index) => (
+                    <SelectItem key={stage.key} value={stage.key}>
+                      {index + 1}단계 - {stage.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button
+                onClick={handleEditGoal}
+                disabled={!editContent.trim() || !editDeadline || saving}
+              >
+                {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                저장
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsEditDialogOpen(false)}
+              >
+                취소
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

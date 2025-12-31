@@ -19,6 +19,7 @@ import { LikeButton } from "@/components/features/mentoring/like-button";
 import { CommentSection } from "@/components/features/mentoring/comment-section";
 import { ProfessorComment } from "@/components/features/mentoring/professor-comment";
 import { FileDownloadButton } from "@/components/features/mentoring/file-download-button";
+import { FileUpload } from "@/components/features/mentoring/file-upload";
 import { DeletePostButton } from "@/components/features/mentoring/delete-post-button";
 import { ShareButton } from "@/components/features/mentoring/share-button";
 
@@ -286,6 +287,9 @@ export default async function MentoringDetailPage({
                   </div>
                 </div>
               )}
+
+              {/* File Upload - for author or professor */}
+              {canEdit && <FileUpload postId={id} />}
 
               {/* Actions */}
               <div className="flex items-center gap-2 pt-4 border-t">

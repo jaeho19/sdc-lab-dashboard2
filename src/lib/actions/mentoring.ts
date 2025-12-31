@@ -282,3 +282,113 @@ export async function addProfessorComment(
   revalidatePath(`/mentoring/${postId}`);
   return { success: true };
 }
+
+export async function uploadMentoringFile(
+  postId: string,
+  formData: FormData
+): Promise<MentoringFormState> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user || !user.email) {
+    return { error: "로그인이 필요합니다." };
+  }
+
+  // Check if user is professor
+  const { data: member } = await supabase
+    .from("members")
+    .select("id, position")
+    .eq("email", user.email)
+    .single();
+
+  if (!member) {
+    return { error: "회원 정보를 찾을 수 없습니다." };
+  }
+
+  const memberData = member as { id: string; position: string };
+
+  // Check if post exists
+  const { data: post } = await supabase
+    .from("mentoring_posts")
+    .select("id, author_id")
+    .eq("id", postId)
+    .single();
+
+  if (!post) {
+    return { error: "멘토링 기록을 찾을 수 없습니다." };
+  }
+
+  const postData = post as { id: string; author_id: string };
+  const isAuthor = memberData.id === postData.author_id;
+  const isAdmin = memberData.position === "professor";
+
+  // Only author or professor can upload files
+  if (!isAuthor && !isAdmin) {
+    return { error: "파일 업로드 권한이 없습니다." };
+  }
+
+  const file = formData.get("file") as File;
+  if (!file) {
+    return { error: "파일을 선택해주세요." };
+  }
+
+  // Validate file type
+  const allowedTypes = [
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "image/png",
+    "image/jpeg",
+  ];
+
+  if (!allowedTypes.includes(file.type)) {
+    return { error: "허용되지 않는 파일 형식입니다. (PDF, DOCX, XLSX, PPTX, PNG, JPG만 허용)" };
+  }
+
+  // Validate file size (10MB)
+  if (file.size > 10 * 1024 * 1024) {
+    return { error: "파일 크기는 10MB를 초과할 수 없습니다." };
+  }
+
+  // Generate unique filename
+  const timestamp = Date.now();
+  const randomStr = Math.random().toString(36).substring(2, 8);
+  const ext = file.name.split(".").pop();
+  const filename = `${postId}/${timestamp}_${randomStr}.${ext}`;
+
+  // Upload to storage
+  const { error: uploadError } = await supabase.storage
+    .from("mentoring-files")
+    .upload(filename, file);
+
+  if (uploadError) {
+    console.error("File upload error:", uploadError);
+    return { error: "파일 업로드에 실패했습니다." };
+  }
+
+  // Save file metadata
+  const { error: dbError } = (await supabase.from("files").insert({
+    filename: filename,
+    original_filename: file.name,
+    storage_path: filename,
+    mime_type: file.type,
+    file_size: file.size,
+    entity_type: "mentoring",
+    entity_id: postId,
+    uploaded_by: memberData.id,
+  } as never)) as { error: unknown };
+
+  if (dbError) {
+    console.error("File metadata save error:", dbError);
+    // Try to delete uploaded file
+    await supabase.storage.from("mentoring-files").remove([filename]);
+    return { error: "파일 정보 저장에 실패했습니다." };
+  }
+
+  revalidatePath(`/mentoring/${postId}`);
+  return { success: true };
+}
