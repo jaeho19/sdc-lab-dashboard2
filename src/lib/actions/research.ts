@@ -4,6 +4,7 @@ import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { MILESTONE_STAGES } from "@/lib/utils";
+import { createProjectUpdateNotification } from "@/lib/actions/notifications";
 
 export type ProjectFormData = {
   title: string;
@@ -146,6 +147,15 @@ export async function updateProject(
     return { error: "로그인이 필요합니다." };
   }
 
+  // 기존 프로젝트 정보 조회 (상태 변경 확인용)
+  const { data: existingProject } = await supabase
+    .from("research_projects")
+    .select("title, status")
+    .eq("id", id)
+    .single();
+
+  const existing = existingProject as { title: string; status: string } | null;
+
   const updateData: Record<string, unknown> = {};
   if (formData.title !== undefined) updateData.title = formData.title;
   if (formData.category !== undefined) updateData.category = formData.category;
@@ -163,6 +173,40 @@ export async function updateProject(
 
   if (error) {
     return { error: "프로젝트 수정 중 오류가 발생했습니다." };
+  }
+
+  // 상태 변경 시 프로젝트 멤버들에게 알림 발송
+  if (formData.status !== undefined && existing && formData.status !== existing.status) {
+    const statusLabels: Record<string, string> = {
+      preparing: "준비 중",
+      in_progress: "진행 중",
+      under_review: "심사 중",
+      revision: "수정 중",
+      completed: "완료",
+      on_hold: "보류",
+    };
+
+    const updateType = `상태가 "${statusLabels[formData.status] || formData.status}"(으)로 변경`;
+
+    // 프로젝트 멤버 조회
+    const { data: members } = await supabase
+      .from("project_members")
+      .select("member_id")
+      .eq("project_id", id);
+
+    if (members) {
+      for (const member of members as { member_id: string }[]) {
+        // 자신에게는 알림을 보내지 않음
+        if (member.member_id !== user.id) {
+          await createProjectUpdateNotification(
+            member.member_id,
+            id,
+            existing.title,
+            updateType
+          );
+        }
+      }
+    }
   }
 
   revalidatePath(`/research/${id}`);

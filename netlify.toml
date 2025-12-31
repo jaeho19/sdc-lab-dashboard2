@@ -1,9 +1,15 @@
 [build]
   command = "npm run build"
   publish = ".next"
+  functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "20"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# Scheduled Functions 설정
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["netlify/functions/**"]

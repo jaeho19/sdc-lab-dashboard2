@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import { getUnreadNotificationCount } from "@/lib/actions/notifications";
 import type { Database } from "@/types/database.types";
 
 type Member = Database["public"]["Tables"]["members"]["Row"];
@@ -36,5 +37,12 @@ export default async function DashboardRootLayout({
     redirect("/pending-approval");
   }
 
-  return <DashboardLayout member={member}>{children}</DashboardLayout>;
+  // 미읽은 알림 개수 가져오기
+  const notificationCount = await getUnreadNotificationCount();
+
+  return (
+    <DashboardLayout member={member} notificationCount={notificationCount}>
+      {children}
+    </DashboardLayout>
+  );
 }
