@@ -96,10 +96,11 @@ export async function createProject(
       .from("milestones")
       .insert({
         project_id: projectData.id,
-        stage: stage.key,
+        title: `${i + 1}단계: ${stage.label}`,
+        description: stage.key,
         weight: stage.weight,
-        is_current: i === 0, // 첫 번째 단계를 현재 단계로 설정
-        sort_order: i + 1,
+        order_index: i + 1,
+        progress: 0,
       } as never)
       .select()
       .single();
@@ -116,7 +117,7 @@ export async function createProject(
       milestone_id: milestoneData.id,
       content,
       is_completed: false,
-      sort_order: index + 1,
+      order_index: index + 1,
     }));
 
     const { error: checklistError } = await supabase
