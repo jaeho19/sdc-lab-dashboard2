@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { QueryProvider } from "@/lib/react-query/provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -49,11 +50,18 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <body className={`${inter.variable} ${paperlogy.variable} font-sans antialiased`} suppressHydrationWarning>
-        <QueryProvider>
-          <TooltipProvider>
-            {children}
-          </TooltipProvider>
-        </QueryProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <QueryProvider>
+            <TooltipProvider>
+              {children}
+            </TooltipProvider>
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

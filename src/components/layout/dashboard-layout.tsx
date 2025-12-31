@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Bell } from "lucide-react";
 import { Sidebar, MobileMenuTrigger } from "./sidebar";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database.types";
 
@@ -41,16 +42,19 @@ export function DashboardLayout({ member, notificationCount = 0, children }: Das
             <span className="font-semibold text-sm">SDC Lab</span>
           </div>
         </div>
-        <Button variant="ghost" size="icon" className="relative" asChild>
-          <Link href="/notifications">
-            <Bell className="h-5 w-5" />
-            {notificationCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-medium text-destructive-foreground">
-                {notificationCount > 9 ? "9+" : notificationCount}
-              </span>
-            )}
-          </Link>
-        </Button>
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <Button variant="ghost" size="icon" className="relative" asChild>
+            <Link href="/notifications">
+              <Bell className="h-5 w-5" />
+              {notificationCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-medium text-destructive-foreground">
+                  {notificationCount > 9 ? "9+" : notificationCount}
+                </span>
+              )}
+            </Link>
+          </Button>
+        </div>
       </header>
 
       {/* Desktop Header */}
@@ -61,16 +65,19 @@ export function DashboardLayout({ member, notificationCount = 0, children }: Das
           "right-0"
         )}
       >
-        <Button variant="ghost" size="icon" className="relative" asChild>
-          <Link href="/notifications">
-            <Bell className="h-5 w-5" />
-            {notificationCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-medium text-destructive-foreground">
-                {notificationCount > 9 ? "9+" : notificationCount}
-              </span>
-            )}
-          </Link>
-        </Button>
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <Button variant="ghost" size="icon" className="relative" asChild>
+            <Link href="/notifications">
+              <Bell className="h-5 w-5" />
+              {notificationCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-medium text-destructive-foreground">
+                  {notificationCount > 9 ? "9+" : notificationCount}
+                </span>
+              )}
+            </Link>
+          </Button>
+        </div>
       </header>
 
       {/* Main Content */}
