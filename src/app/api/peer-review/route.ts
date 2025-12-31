@@ -121,8 +121,24 @@ export async function POST(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (!user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Get member by email
+    const { data: memberData } = await supabase
+      .from("members")
+      .select("id")
+      .eq("email", user.email)
+      .single();
+
+    const member = memberData as { id: string } | null;
+
+    if (!member) {
+      return NextResponse.json(
+        { error: "연구원 정보를 찾을 수 없습니다." },
+        { status: 404 }
+      );
     }
 
     const { title, content, projectId } = await request.json();
@@ -139,7 +155,7 @@ export async function POST(request: NextRequest) {
     const { data: review, error: insertError } = await (supabase as any)
       .from("peer_reviews")
       .insert({
-        member_id: user.id,
+        member_id: member.id,
         project_id: projectId || null,
         title,
         content,
@@ -219,8 +235,24 @@ export async function GET(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (!user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Get member by email
+    const { data: memberData } = await supabase
+      .from("members")
+      .select("id")
+      .eq("email", user.email)
+      .single();
+
+    const member = memberData as { id: string } | null;
+
+    if (!member) {
+      return NextResponse.json(
+        { error: "연구원 정보를 찾을 수 없습니다." },
+        { status: 404 }
+      );
     }
 
     // Get user's peer reviews
@@ -233,7 +265,7 @@ export async function GET(request: NextRequest) {
         project:research_projects(id, title)
       `
       )
-      .eq("member_id", user.id)
+      .eq("member_id", member.id)
       .order("created_at", { ascending: false });
 
     if (error) {
