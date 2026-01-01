@@ -70,7 +70,11 @@
       "Bash(git reset:*)",
       "Bash(npm start)",
       "Bash(timeout:*)",
-      "WebFetch(domain:resend.com)"
+      "WebFetch(domain:resend.com)",
+      "Bash(netlify functions:list:*)",
+      "Bash(netlify api:*)",
+      "Bash(netlify env:list:*)",
+      "Bash(netlify env:get:*)"
     ]
   }
 }

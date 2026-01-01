@@ -97,11 +97,11 @@ export async function GET(request: Request) {
 
   const supabase = createServiceClient();
 
-  // 현재 날짜 기준으로 D-7, D-3, D-1, D-Day 체크
+  // 현재 날짜 기준으로 D-3, D-1 체크
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const targetDays = [7, 3, 1, 0];
+  const targetDays = [3, 1];
   let notificationCount = 0;
   let emailCount = 0;
   const results: string[] = [];
