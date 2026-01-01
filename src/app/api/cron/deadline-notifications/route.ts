@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { sendEmail, getDeadlineEmailTemplate } from "@/lib/email";
 
 // Supabase 서비스 롤 클라이언트 (RLS 우회)
 function createServiceClient() {
@@ -9,14 +10,19 @@ function createServiceClient() {
   );
 }
 
-// 마감일 알림 생성
+// 사이트 URL
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://sdclab-dashboard.netlify.app";
+
+// 마감일 알림 생성 및 이메일 발송
 async function createDeadlineNotification(
   supabase: ReturnType<typeof createServiceClient>,
   memberId: string,
+  memberEmail: string,
+  memberName: string,
   projectId: string,
   projectTitle: string,
   daysUntilDeadline: number
-) {
+): Promise<{ notificationCreated: boolean; emailSent: boolean }> {
   const deadlineText =
     daysUntilDeadline === 0
       ? "오늘"
@@ -26,6 +32,7 @@ async function createDeadlineNotification(
 
   const title = `마감일 알림: ${projectTitle}`;
   const message = `"${projectTitle}" 프로젝트의 마감일이 ${deadlineText}입니다.`;
+  const projectUrl = `${SITE_URL}/research/${projectId}`;
 
   // 중복 알림 확인
   const today = new Date().toISOString().split("T")[0];
@@ -38,10 +45,11 @@ async function createDeadlineNotification(
     .gte("created_at", today);
 
   if (existing && existing.length > 0) {
-    return false; // 이미 알림 있음
+    return { notificationCreated: false, emailSent: false }; // 이미 알림 있음
   }
 
-  const { error } = await supabase.from("notifications").insert({
+  // 인앱 알림 생성
+  const { error: notifError } = await supabase.from("notifications").insert({
     member_id: memberId,
     type: "deadline",
     title,
@@ -50,7 +58,32 @@ async function createDeadlineNotification(
     is_read: false,
   });
 
-  return !error;
+  const notificationCreated = !notifError;
+
+  // 이메일 발송
+  let emailSent = false;
+  if (process.env.RESEND_API_KEY) {
+    const { html, text } = getDeadlineEmailTemplate({
+      memberName,
+      projectTitle,
+      daysUntilDeadline,
+      projectUrl,
+    });
+
+    const emailResult = await sendEmail({
+      to: memberEmail,
+      subject: `[SDC Lab] ${title}`,
+      html,
+      text,
+    });
+
+    emailSent = emailResult.success;
+    if (!emailResult.success) {
+      console.error(`Email failed for ${memberEmail}:`, emailResult.error);
+    }
+  }
+
+  return { notificationCreated, emailSent };
 }
 
 export async function GET(request: Request) {
@@ -69,7 +102,8 @@ export async function GET(request: Request) {
   today.setHours(0, 0, 0, 0);
 
   const targetDays = [7, 3, 1, 0];
-  let createdCount = 0;
+  let notificationCount = 0;
+  let emailCount = 0;
   const results: string[] = [];
 
   for (const days of targetDays) {
@@ -77,7 +111,7 @@ export async function GET(request: Request) {
     targetDate.setDate(targetDate.getDate() + days);
     const targetDateStr = targetDate.toISOString().split("T")[0];
 
-    // 해당 날짜가 마감일인 프로젝트 조회
+    // 해당 날짜가 마감일인 프로젝트 조회 (멤버 정보 포함)
     const { data: projects, error: projectError } = await supabase
       .from("research_projects")
       .select(
@@ -86,7 +120,12 @@ export async function GET(request: Request) {
         title,
         target_date,
         project_members (
-          member_id
+          member_id,
+          members (
+            id,
+            name,
+            email
+          )
         )
       `
       )
@@ -103,32 +142,66 @@ export async function GET(request: Request) {
       continue;
     }
 
-    let dayCount = 0;
-    for (const project of projects) {
-      const members = (project.project_members || []) as { member_id: string }[];
+    let dayNotifCount = 0;
+    let dayEmailCount = 0;
 
-      for (const member of members) {
-        const created = await createDeadlineNotification(
-          supabase,
-          member.member_id,
-          project.id,
-          project.title,
-          days
-        );
-        if (created) {
-          createdCount++;
-          dayCount++;
+    for (const project of projects) {
+      type ProjectMember = {
+        member_id: string;
+        members: {
+          id: string;
+          name: string;
+          email: string;
+        } | {
+          id: string;
+          name: string;
+          email: string;
+        }[] | null;
+      };
+
+      const projectMembers = (project.project_members || []) as ProjectMember[];
+
+      for (const pm of projectMembers) {
+        if (!pm.members) continue;
+
+        // Supabase에서 단일 객체 또는 배열로 반환될 수 있음
+        const member = Array.isArray(pm.members) ? pm.members[0] : pm.members;
+        if (!member) continue;
+
+        const { notificationCreated, emailSent } =
+          await createDeadlineNotification(
+            supabase,
+            member.id,
+            member.email,
+            member.name,
+            project.id,
+            project.title,
+            days
+          );
+
+        if (notificationCreated) {
+          notificationCount++;
+          dayNotifCount++;
+        }
+        if (emailSent) {
+          emailCount++;
+          dayEmailCount++;
         }
       }
     }
-    results.push(`D-${days}: ${dayCount} notifications for ${projects.length} projects`);
+
+    results.push(
+      `D-${days}: ${dayNotifCount} notifications, ${dayEmailCount} emails for ${projects.length} projects`
+    );
   }
 
   return NextResponse.json({
     success: true,
-    created: createdCount,
+    notifications: notificationCount,
+    emails: emailCount,
     timestamp: new Date().toISOString(),
     details: results,
+    emailEnabled: !!process.env.RESEND_API_KEY,
   });
 }
 

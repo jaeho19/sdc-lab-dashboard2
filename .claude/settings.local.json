@@ -67,7 +67,9 @@
       "Bash(git checkout:*)",
       "Bash(tasklist:*)",
       "Bash(netlify status:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(npm start)",
+      "Bash(timeout:*)"
     ]
   }
 }
