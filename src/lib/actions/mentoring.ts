@@ -3,14 +3,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import {
-  sendEmail,
-  getCommentEmailTemplate,
-  getLikeEmailTemplate,
-} from "@/lib/email";
-
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://sdclab-dashboard.netlify.app";
 
 export interface MentoringFormState {
   error?: string;
@@ -181,37 +173,19 @@ export async function addComment(
     return { error: "댓글 작성에 실패했습니다." };
   }
 
-  // 게시물 작성자에게 이메일 알림 발송
+  // 게시물 작성자에게 인앱 알림 발송
   try {
     const { data: post } = await supabase
       .from("mentoring_posts")
-      .select("id, meeting_date, author_id, members:author_id(id, name, email)")
+      .select("id, author_id")
       .eq("id", postId)
       .single();
 
     if (post) {
-      const postData = post as {
-        id: string;
-        meeting_date: string;
-        author_id: string;
-        members: { id: string; name: string; email: string } | null;
-      };
+      const postData = post as { id: string; author_id: string };
 
       // 본인 게시물에 댓글 달면 알림 안 보냄
-      if (postData.members && postData.author_id !== memberData.id) {
-        const postTitle = `멘토링 기록 (${postData.meeting_date})`;
-        const commentPreview =
-          content.length > 50 ? content.slice(0, 50) + "..." : content;
-
-        const { html, text } = getCommentEmailTemplate({
-          memberName: postData.members.name,
-          commenterName: memberData.name,
-          postTitle,
-          commentPreview,
-          postUrl: `${SITE_URL}/mentoring/${postId}`,
-        });
-
-        // 인앱 알림도 생성
+      if (postData.author_id !== memberData.id) {
         await supabase.from("notifications").insert({
           member_id: postData.author_id,
           type: "comment",
@@ -220,19 +194,10 @@ export async function addComment(
           link: `/mentoring/${postId}`,
           is_read: false,
         } as never);
-
-        // 이메일 발송
-        await sendEmail({
-          to: postData.members.email,
-          subject: `[SDC Lab] ${memberData.name}님이 댓글을 남겼습니다`,
-          html,
-          text,
-        });
       }
     }
-  } catch (emailError) {
-    console.error("Comment email notification error:", emailError);
-    // 이메일 실패해도 댓글은 성공으로 처리
+  } catch (notifError) {
+    console.error("Comment notification error:", notifError);
   }
 
   revalidatePath(`/mentoring/${postId}`);
@@ -322,36 +287,19 @@ export async function toggleLike(postId: string): Promise<MentoringFormState> {
       return { error: "좋아요에 실패했습니다." };
     }
 
-    // 게시물 작성자에게 이메일 알림 발송 (좋아요 추가 시에만)
+    // 게시물 작성자에게 인앱 알림 발송 (좋아요 추가 시에만)
     try {
       const { data: post } = await supabase
         .from("mentoring_posts")
-        .select(
-          "id, meeting_date, author_id, members:author_id(id, name, email)"
-        )
+        .select("id, author_id")
         .eq("id", postId)
         .single();
 
       if (post) {
-        const postData = post as {
-          id: string;
-          meeting_date: string;
-          author_id: string;
-          members: { id: string; name: string; email: string } | null;
-        };
+        const postData = post as { id: string; author_id: string };
 
         // 본인 게시물에 좋아요하면 알림 안 보냄
-        if (postData.members && postData.author_id !== currentMemberData.id) {
-          const postTitle = `멘토링 기록 (${postData.meeting_date})`;
-
-          const { html, text } = getLikeEmailTemplate({
-            memberName: postData.members.name,
-            likerName: currentMemberData.name,
-            postTitle,
-            postUrl: `${SITE_URL}/mentoring/${postId}`,
-          });
-
-          // 인앱 알림도 생성
+        if (postData.author_id !== currentMemberData.id) {
           await supabase.from("notifications").insert({
             member_id: postData.author_id,
             type: "like",
@@ -360,19 +308,10 @@ export async function toggleLike(postId: string): Promise<MentoringFormState> {
             link: `/mentoring/${postId}`,
             is_read: false,
           } as never);
-
-          // 이메일 발송
-          await sendEmail({
-            to: postData.members.email,
-            subject: `[SDC Lab] ${currentMemberData.name}님이 게시물을 좋아합니다`,
-            html,
-            text,
-          });
         }
       }
-    } catch (emailError) {
-      console.error("Like email notification error:", emailError);
-      // 이메일 실패해도 좋아요는 성공으로 처리
+    } catch (notifError) {
+      console.error("Like notification error:", notifError);
     }
   }
 

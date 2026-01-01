@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { sendEmail, getDeadlineEmailTemplate } from "@/lib/email";
 
 // Supabase 서비스 롤 클라이언트 (RLS 우회)
 function createServiceClient() {
@@ -10,29 +9,19 @@ function createServiceClient() {
   );
 }
 
-// 사이트 URL
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://sdclab-dashboard.netlify.app";
-
-// 마감일 알림 생성 및 이메일 발송
+// 마감일 인앱 알림 생성
 async function createDeadlineNotification(
   supabase: ReturnType<typeof createServiceClient>,
   memberId: string,
-  memberEmail: string,
-  memberName: string,
   projectId: string,
   projectTitle: string,
   daysUntilDeadline: number
-): Promise<{ notificationCreated: boolean; emailSent: boolean }> {
+): Promise<boolean> {
   const deadlineText =
-    daysUntilDeadline === 0
-      ? "오늘"
-      : daysUntilDeadline === 1
-      ? "내일"
-      : `${daysUntilDeadline}일 후`;
+    daysUntilDeadline === 1 ? "내일" : `${daysUntilDeadline}일 후`;
 
   const title = `마감일 알림: ${projectTitle}`;
   const message = `"${projectTitle}" 프로젝트의 마감일이 ${deadlineText}입니다.`;
-  const projectUrl = `${SITE_URL}/research/${projectId}`;
 
   // 중복 알림 확인
   const today = new Date().toISOString().split("T")[0];
@@ -45,11 +34,11 @@ async function createDeadlineNotification(
     .gte("created_at", today);
 
   if (existing && existing.length > 0) {
-    return { notificationCreated: false, emailSent: false }; // 이미 알림 있음
+    return false; // 이미 알림 있음
   }
 
   // 인앱 알림 생성
-  const { error: notifError } = await supabase.from("notifications").insert({
+  const { error } = await supabase.from("notifications").insert({
     member_id: memberId,
     type: "deadline",
     title,
@@ -58,32 +47,7 @@ async function createDeadlineNotification(
     is_read: false,
   });
 
-  const notificationCreated = !notifError;
-
-  // 이메일 발송
-  let emailSent = false;
-  if (process.env.RESEND_API_KEY) {
-    const { html, text } = getDeadlineEmailTemplate({
-      memberName,
-      projectTitle,
-      daysUntilDeadline,
-      projectUrl,
-    });
-
-    const emailResult = await sendEmail({
-      to: memberEmail,
-      subject: `[SDC Lab] ${title}`,
-      html,
-      text,
-    });
-
-    emailSent = emailResult.success;
-    if (!emailResult.success) {
-      console.error(`Email failed for ${memberEmail}:`, emailResult.error);
-    }
-  }
-
-  return { notificationCreated, emailSent };
+  return !error;
 }
 
 export async function GET(request: Request) {
@@ -103,7 +67,6 @@ export async function GET(request: Request) {
 
   const targetDays = [3, 1];
   let notificationCount = 0;
-  let emailCount = 0;
   const results: string[] = [];
 
   for (const days of targetDays) {
@@ -122,9 +85,7 @@ export async function GET(request: Request) {
         project_members (
           member_id,
           members (
-            id,
-            name,
-            email
+            id
           )
         )
       `
@@ -143,20 +104,11 @@ export async function GET(request: Request) {
     }
 
     let dayNotifCount = 0;
-    let dayEmailCount = 0;
 
     for (const project of projects) {
       type ProjectMember = {
         member_id: string;
-        members: {
-          id: string;
-          name: string;
-          email: string;
-        } | {
-          id: string;
-          name: string;
-          email: string;
-        }[] | null;
+        members: { id: string } | { id: string }[] | null;
       };
 
       const projectMembers = (project.project_members || []) as ProjectMember[];
@@ -168,40 +120,31 @@ export async function GET(request: Request) {
         const member = Array.isArray(pm.members) ? pm.members[0] : pm.members;
         if (!member) continue;
 
-        const { notificationCreated, emailSent } =
-          await createDeadlineNotification(
-            supabase,
-            member.id,
-            member.email,
-            member.name,
-            project.id,
-            project.title,
-            days
-          );
+        const created = await createDeadlineNotification(
+          supabase,
+          member.id,
+          project.id,
+          project.title,
+          days
+        );
 
-        if (notificationCreated) {
+        if (created) {
           notificationCount++;
           dayNotifCount++;
-        }
-        if (emailSent) {
-          emailCount++;
-          dayEmailCount++;
         }
       }
     }
 
     results.push(
-      `D-${days}: ${dayNotifCount} notifications, ${dayEmailCount} emails for ${projects.length} projects`
+      `D-${days}: ${dayNotifCount} notifications for ${projects.length} projects`
     );
   }
 
   return NextResponse.json({
     success: true,
     notifications: notificationCount,
-    emails: emailCount,
     timestamp: new Date().toISOString(),
     details: results,
-    emailEnabled: !!process.env.RESEND_API_KEY,
   });
 }
 
