@@ -3,6 +3,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import {
+  sendEmail,
+  getCommentEmailTemplate,
+  getLikeEmailTemplate,
+} from "@/lib/email";
+
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://sdclab-dashboard.netlify.app";
 
 export interface MentoringFormState {
   error?: string;
@@ -147,7 +155,7 @@ export async function addComment(
   // user email로 member id 찾기
   const { data: member } = await supabase
     .from("members")
-    .select("id")
+    .select("id, name")
     .eq("email", user.email)
     .single();
 
@@ -155,7 +163,7 @@ export async function addComment(
     return { error: "회원 정보를 찾을 수 없습니다." };
   }
 
-  const memberData = member as { id: string };
+  const memberData = member as { id: string; name: string };
   const content = formData.get("content") as string;
 
   if (!content) {
@@ -171,6 +179,60 @@ export async function addComment(
   if (error) {
     console.error("Add comment error:", error);
     return { error: "댓글 작성에 실패했습니다." };
+  }
+
+  // 게시물 작성자에게 이메일 알림 발송
+  try {
+    const { data: post } = await supabase
+      .from("mentoring_posts")
+      .select("id, meeting_date, author_id, members:author_id(id, name, email)")
+      .eq("id", postId)
+      .single();
+
+    if (post) {
+      const postData = post as {
+        id: string;
+        meeting_date: string;
+        author_id: string;
+        members: { id: string; name: string; email: string } | null;
+      };
+
+      // 본인 게시물에 댓글 달면 알림 안 보냄
+      if (postData.members && postData.author_id !== memberData.id) {
+        const postTitle = `멘토링 기록 (${postData.meeting_date})`;
+        const commentPreview =
+          content.length > 50 ? content.slice(0, 50) + "..." : content;
+
+        const { html, text } = getCommentEmailTemplate({
+          memberName: postData.members.name,
+          commenterName: memberData.name,
+          postTitle,
+          commentPreview,
+          postUrl: `${SITE_URL}/mentoring/${postId}`,
+        });
+
+        // 인앱 알림도 생성
+        await supabase.from("notifications").insert({
+          member_id: postData.author_id,
+          type: "comment",
+          title: "새 댓글",
+          message: `${memberData.name}님이 회원님의 게시물에 댓글을 남겼습니다.`,
+          link: `/mentoring/${postId}`,
+          is_read: false,
+        } as never);
+
+        // 이메일 발송
+        await sendEmail({
+          to: postData.members.email,
+          subject: `[SDC Lab] ${memberData.name}님이 댓글을 남겼습니다`,
+          html,
+          text,
+        });
+      }
+    }
+  } catch (emailError) {
+    console.error("Comment email notification error:", emailError);
+    // 이메일 실패해도 댓글은 성공으로 처리
   }
 
   revalidatePath(`/mentoring/${postId}`);
@@ -212,16 +274,29 @@ export async function toggleLike(postId: string): Promise<MentoringFormState> {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (!user || !user.email) {
     return { error: "로그인이 필요합니다." };
   }
+
+  // 현재 사용자 정보 가져오기
+  const { data: currentMember } = await supabase
+    .from("members")
+    .select("id, name")
+    .eq("email", user.email)
+    .single();
+
+  if (!currentMember) {
+    return { error: "회원 정보를 찾을 수 없습니다." };
+  }
+
+  const currentMemberData = currentMember as { id: string; name: string };
 
   // 좋아요 존재 여부 확인
   const { data: existingLike } = (await supabase
     .from("mentoring_likes")
     .select("id")
     .eq("post_id", postId)
-    .eq("member_id", user.id)
+    .eq("member_id", currentMemberData.id)
     .single()) as { data: { id: string } | null; error: unknown };
 
   if (existingLike) {
@@ -239,12 +314,65 @@ export async function toggleLike(postId: string): Promise<MentoringFormState> {
     // 좋아요 추가
     const { error } = (await supabase.from("mentoring_likes").insert({
       post_id: postId,
-      member_id: user.id,
+      member_id: currentMemberData.id,
     } as never)) as { error: unknown };
 
     if (error) {
       console.error("Like error:", error);
       return { error: "좋아요에 실패했습니다." };
+    }
+
+    // 게시물 작성자에게 이메일 알림 발송 (좋아요 추가 시에만)
+    try {
+      const { data: post } = await supabase
+        .from("mentoring_posts")
+        .select(
+          "id, meeting_date, author_id, members:author_id(id, name, email)"
+        )
+        .eq("id", postId)
+        .single();
+
+      if (post) {
+        const postData = post as {
+          id: string;
+          meeting_date: string;
+          author_id: string;
+          members: { id: string; name: string; email: string } | null;
+        };
+
+        // 본인 게시물에 좋아요하면 알림 안 보냄
+        if (postData.members && postData.author_id !== currentMemberData.id) {
+          const postTitle = `멘토링 기록 (${postData.meeting_date})`;
+
+          const { html, text } = getLikeEmailTemplate({
+            memberName: postData.members.name,
+            likerName: currentMemberData.name,
+            postTitle,
+            postUrl: `${SITE_URL}/mentoring/${postId}`,
+          });
+
+          // 인앱 알림도 생성
+          await supabase.from("notifications").insert({
+            member_id: postData.author_id,
+            type: "like",
+            title: "좋아요",
+            message: `${currentMemberData.name}님이 회원님의 게시물을 좋아합니다.`,
+            link: `/mentoring/${postId}`,
+            is_read: false,
+          } as never);
+
+          // 이메일 발송
+          await sendEmail({
+            to: postData.members.email,
+            subject: `[SDC Lab] ${currentMemberData.name}님이 게시물을 좋아합니다`,
+            html,
+            text,
+          });
+        }
+      }
+    } catch (emailError) {
+      console.error("Like email notification error:", emailError);
+      // 이메일 실패해도 좋아요는 성공으로 처리
     }
   }
 

@@ -69,7 +69,8 @@
       "Bash(netlify status:*)",
       "Bash(git reset:*)",
       "Bash(npm start)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "WebFetch(domain:resend.com)"
     ]
   }
 }

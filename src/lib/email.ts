@@ -240,3 +240,70 @@ ${commenterName}님이 회원님의 게시물에 댓글을 남겼습니다.
 
   return { html, text };
 }
+
+// 좋아요 알림 이메일 템플릿
+export function getLikeEmailTemplate(params: {
+  memberName: string;
+  likerName: string;
+  postTitle: string;
+  postUrl: string;
+}) {
+  const { memberName, likerName, postTitle, postUrl } = params;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; background-color: #f3f4f6;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <tr>
+            <td style="background-color: #1e293b; padding: 25px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 20px;">SDC Lab Dashboard</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 30px; text-align: center;">
+              <div style="font-size: 48px; margin-bottom: 20px;">❤️</div>
+              <p style="color: #374151; font-size: 16px; margin: 0 0 15px;">
+                안녕하세요, <strong>${memberName}</strong>님!
+              </p>
+              <p style="color: #374151; font-size: 16px; margin: 0 0 20px;">
+                <strong>${likerName}</strong>님이 회원님의 게시물을 좋아합니다.
+              </p>
+              <div style="background-color: #fdf2f8; border: 1px solid #fbcfe8; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                <p style="color: #64748b; font-size: 12px; margin: 0 0 5px;">게시물</p>
+                <p style="color: #1e293b; font-size: 16px; font-weight: 600; margin: 0;">${postTitle}</p>
+              </div>
+              <a href="${postUrl}" style="display: inline-block; background-color: #ec4899; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                게시물 확인하기
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+
+  const text = `
+[SDC Lab Dashboard] 좋아요 알림
+
+안녕하세요, ${memberName}님!
+
+${likerName}님이 회원님의 게시물을 좋아합니다.
+
+게시물: ${postTitle}
+
+확인하기: ${postUrl}
+  `.trim();
+
+  return { html, text };
+}
