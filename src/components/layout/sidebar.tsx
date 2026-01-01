@@ -15,6 +15,10 @@ import {
   UserCheck,
   Bot,
   X,
+  ExternalLink,
+  Download,
+  Home,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -60,6 +64,21 @@ const navigation = [
 const adminNavigation = [
   { name: "회원 등록", href: "/admin/members", icon: UserCheck },
   { name: "가입 승인", href: "/admin/approvals", icon: Settings },
+];
+
+const externalLinks = [
+  {
+    name: "연구실 홈페이지",
+    href: "https://sdclab.netlify.app/",
+    icon: Home,
+    isExternal: true,
+  },
+  {
+    name: "사용 설명서",
+    href: "/SDC_Lab_Dashboard_사용설명서.pdf",
+    icon: BookOpen,
+    isDownload: true,
+  },
 ];
 
 // Shared sidebar content component
@@ -165,6 +184,50 @@ function SidebarContent({
             })}
           </>
         )}
+
+        {/* External Links Section */}
+        <Separator className="my-4" />
+        <div
+          className={cn(
+            "px-3 py-2 text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider",
+            isCollapsed && "sr-only"
+          )}
+        >
+          Links
+        </div>
+        {externalLinks.map((item) => {
+          const linkProps = item.isExternal
+            ? { target: "_blank", rel: "noopener noreferrer" }
+            : item.isDownload
+            ? { download: true }
+            : {};
+
+          return (
+            <a
+              key={item.name}
+              href={item.href}
+              onClick={onLinkClick}
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                "text-sidebar-foreground hover:bg-sidebar-accent"
+              )}
+              {...linkProps}
+            >
+              <item.icon className="h-5 w-5 shrink-0" />
+              {!isCollapsed && (
+                <span className="flex items-center gap-1.5">
+                  {item.name}
+                  {item.isExternal && (
+                    <ExternalLink className="h-3 w-3 opacity-60" />
+                  )}
+                  {item.isDownload && (
+                    <Download className="h-3 w-3 opacity-60" />
+                  )}
+                </span>
+              )}
+            </a>
+          );
+        })}
       </nav>
 
       {/* User Menu */}
