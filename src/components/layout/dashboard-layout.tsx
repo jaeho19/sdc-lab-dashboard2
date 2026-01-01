@@ -7,6 +7,7 @@ import { Sidebar, MobileMenuTrigger } from "./sidebar";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { GlobalSearch } from "@/components/global-search";
+import { WelcomeModal } from "@/components/features/welcome-modal";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database.types";
 
@@ -95,6 +96,9 @@ export function DashboardLayout({ member, notificationCount = 0, children }: Das
       >
         <div className="p-4 md:p-6">{children}</div>
       </main>
+
+      {/* Welcome Modal for first-time users */}
+      <WelcomeModal memberName={member.name} />
     </div>
   );
 }
