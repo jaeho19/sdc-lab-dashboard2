@@ -137,7 +137,7 @@ export default async function MemberPerformancePage({
     created_at: string;
   };
 
-  // 참여 프로젝트 + 마일스톤 + 체크리스트 조회
+  // 참여 프로젝트 조회 방법 1: project_members 테이블
   const { data: projectMembers } = await supabase
     .from("project_members")
     .select(
@@ -170,6 +170,72 @@ export default async function MemberPerformancePage({
     )
     .eq("member_id", id) as { data: ProjectMemberWithDetails[] | null };
 
+  // 참여 프로젝트 조회 방법 2: project_authors 테이블 (이름 기반)
+  type ProjectAuthorWithProject = {
+    role: string;
+    research_projects: {
+      id: string;
+      title: string;
+      status: string;
+      overall_progress: number;
+      deadline: string | null;
+      created_at: string;
+      milestones: Array<{
+        id: string;
+        stage: string;
+        weight: number;
+        start_date: string | null;
+        end_date: string | null;
+        completed_at: string | null;
+        sort_order: number | null;
+        checklist_items: Array<{
+          id: string;
+          content: string;
+          is_completed: boolean;
+          completed_at: string | null;
+        }>;
+      }>;
+    } | null;
+  };
+
+  const { data: projectAuthors } = await supabase
+    .from("project_authors")
+    .select(
+      `
+      role,
+      research_projects (
+        id,
+        title,
+        status,
+        overall_progress,
+        deadline,
+        created_at,
+        milestones (
+          id,
+          stage,
+          weight,
+          start_date,
+          end_date,
+          completed_at,
+          sort_order,
+          checklist_items (
+            id,
+            content,
+            is_completed,
+            completed_at
+          )
+        )
+      )
+    `
+    )
+    .eq("name", member.name) as { data: ProjectAuthorWithProject[] | null };
+
+  // 두 소스의 프로젝트 병합 (중복 제거)
+  const allProjectData = [
+    ...(projectMembers || []),
+    ...(projectAuthors || []),
+  ];
+
   // 최근 체크리스트 완료 활동 조회 (최근 30일)
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -189,11 +255,16 @@ export default async function MemberPerformancePage({
     .order("created_at", { ascending: false })
     .limit(10)) as { data: MentoringComment[] | null };
 
-  // 데이터 정리
-  const projects = (projectMembers || [])
+  // 데이터 정리 (중복 프로젝트 제거)
+  const seenProjectIds = new Set<string>();
+  const projects = allProjectData
     .map((pm) => {
       const project = pm.research_projects;
       if (!project) return null;
+
+      // 중복 프로젝트 제거
+      if (seenProjectIds.has(project.id)) return null;
+      seenProjectIds.add(project.id);
 
       return {
         ...project,
