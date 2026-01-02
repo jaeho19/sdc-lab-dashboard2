@@ -13,7 +13,7 @@ import {
   getProjectStatusLabel,
   formatDate,
 } from "@/lib/utils";
-import { Mail, GraduationCap, Calendar, FileText, Sparkles, Pencil, Plus, Clock, Plane, BookOpen as BookOpenIcon, Users } from "lucide-react";
+import { Mail, GraduationCap, Calendar, FileText, Sparkles, Pencil, Plus, Clock, Plane, BookOpen as BookOpenIcon, Users, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import type { Database } from "@/types/database.types";
@@ -163,14 +163,22 @@ export default async function MemberDetailPage({
             <div className="flex-1 text-center md:text-left">
               <div className="flex items-center justify-center md:justify-between gap-4">
                 <h1 className="text-3xl font-bold">{member.name}</h1>
-                {canEdit && (
-                  <Link href={`/members/${id}/edit`}>
+                <div className="flex gap-2">
+                  <Link href={`/members/${id}/performance`}>
                     <Button variant="outline" size="sm">
-                      <Pencil className="h-4 w-4 mr-2" />
-                      정보 수정
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      성과 현황
                     </Button>
                   </Link>
-                )}
+                  {canEdit && (
+                    <Link href={`/members/${id}/edit`}>
+                      <Button variant="outline" size="sm">
+                        <Pencil className="h-4 w-4 mr-2" />
+                        정보 수정
+                      </Button>
+                    </Link>
+                  )}
+                </div>
               </div>
               <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-2">
                 <Badge variant={getPositionBadgeVariant(member.position)}>
