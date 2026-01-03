@@ -40,6 +40,7 @@ import {
   MoreVertical,
   Pencil,
   Plus,
+  Search,
   Send,
   Trash2,
   Upload,
@@ -122,6 +123,7 @@ export default function ResearchNotesPage() {
   const [authorFilter, setAuthorFilter] = useState<string>("me"); // "me" = 본인, "all" = 전체, 또는 특정 member_id
   const [stageFilter, setStageFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>(getTodayDate());
+  const [keywordSearch, setKeywordSearch] = useState<string>("");
   const [members, setMembers] = useState<{ id: string; name: string }[]>([]);
 
   // 노트 작성 모달 상태
@@ -463,8 +465,22 @@ export default function ResearchNotesPage() {
     setDeletingCommentId(null);
   };
 
+  // 키워드 검색 필터링
+  const filteredNotes = keywordSearch.trim()
+    ? notes.filter((note) => {
+        const searchTerm = keywordSearch.trim().toLowerCase().replace(/^#/, "");
+        // 키워드에서 검색
+        const keywordMatch = note.keywords.some((k) =>
+          k.toLowerCase().includes(searchTerm)
+        );
+        // 제목에서도 검색
+        const titleMatch = note.title.toLowerCase().includes(searchTerm);
+        return keywordMatch || titleMatch;
+      })
+    : notes;
+
   // 날짜별 그룹화
-  const groupedNotes = notes.reduce((groups, note) => {
+  const groupedNotes = filteredNotes.reduce((groups, note) => {
     const date = note.created_at.split("T")[0];
     if (!groups[date]) {
       groups[date] = [];
@@ -475,9 +491,9 @@ export default function ResearchNotesPage() {
 
   const sortedDates = Object.keys(groupedNotes).sort((a, b) => b.localeCompare(a));
 
-  // 통계
-  const totalNotes = notes.length;
-  const stageStats = notes.reduce((acc, note) => {
+  // 통계 (필터링된 노트 기준)
+  const totalNotes = filteredNotes.length;
+  const stageStats = filteredNotes.reduce((acc, note) => {
     acc[note.stage] = (acc[note.stage] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
@@ -614,6 +630,28 @@ export default function ResearchNotesPage() {
               </Select>
             </div>
 
+            {/* 키워드 검색 */}
+            <div className="flex items-center gap-2">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="키워드 또는 제목 검색..."
+                value={keywordSearch}
+                onChange={(e) => setKeywordSearch(e.target.value)}
+                className="w-[200px]"
+              />
+              {keywordSearch && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setKeywordSearch("")}
+                  className="h-8 px-2"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+
             {/* 날짜 필터 - 기본값 오늘 */}
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -651,19 +689,33 @@ export default function ResearchNotesPage() {
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
-      ) : notes.length === 0 ? (
+      ) : filteredNotes.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="mb-4">
-              {dateFilter
-                ? `${new Date(dateFilter).toLocaleDateString("ko-KR")}에 작성된 연구노트가 없습니다.`
-                : "등록된 연구노트가 없습니다."}
-            </p>
-            <Button onClick={() => { resetForm(); setFormOpen(true); }}>
-              <Plus className="h-4 w-4 mr-2" />
-              첫 연구노트 작성하기
-            </Button>
+            {keywordSearch ? (
+              <>
+                <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="mb-4">
+                  "{keywordSearch}" 검색 결과가 없습니다.
+                </p>
+                <Button variant="outline" onClick={() => setKeywordSearch("")}>
+                  검색어 지우기
+                </Button>
+              </>
+            ) : (
+              <>
+                <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="mb-4">
+                  {dateFilter
+                    ? `${new Date(dateFilter).toLocaleDateString("ko-KR")}에 작성된 연구노트가 없습니다.`
+                    : "등록된 연구노트가 없습니다."}
+                </p>
+                <Button onClick={() => { resetForm(); setFormOpen(true); }}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  첫 연구노트 작성하기
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
       ) : (
