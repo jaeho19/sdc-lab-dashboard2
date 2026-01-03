@@ -2,11 +2,13 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import type { MilestoneStage } from "@/types/database.types";
 
 // Types
 interface CreateNoteData {
   projectId: string;
-  milestoneId: string;
+  stage: MilestoneStage;
+  milestoneId?: string;
   title: string;
   content: string;
   keywords: string[];
@@ -16,7 +18,8 @@ interface UpdateNoteData {
   title: string;
   content: string;
   keywords: string[];
-  milestoneId: string;
+  stage: MilestoneStage;
+  milestoneId?: string;
 }
 
 // =====================
@@ -49,7 +52,8 @@ export async function createResearchNote(data: CreateNoteData) {
     .from("research_notes")
     .insert({
       project_id: data.projectId,
-      milestone_id: data.milestoneId,
+      stage: data.stage,
+      milestone_id: data.milestoneId || null,
       author_id: member.id,
       title: data.title,
       content: data.content,
@@ -108,7 +112,8 @@ export async function updateResearchNote(noteId: string, data: UpdateNoteData) {
     title: data.title,
     content: data.content,
     keywords: data.keywords,
-    milestone_id: data.milestoneId,
+    stage: data.stage,
+    milestone_id: data.milestoneId || null,
     updated_at: new Date().toISOString(),
   };
   const { error } = await (supabase as any)
@@ -474,4 +479,63 @@ export async function deleteNoteFile(fileId: string, projectId: string) {
 
   revalidatePath(`/research/${projectId}`);
   return { success: true };
+}
+
+// =====================
+// 전체 연구노트 조회
+// =====================
+
+export async function getAllResearchNotes(filters?: {
+  authorId?: string;
+  stage?: string;
+  startDate?: string;
+  endDate?: string;
+}) {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("research_notes")
+    .select(`
+      id,
+      title,
+      content,
+      stage,
+      keywords,
+      created_at,
+      updated_at,
+      project:research_projects!research_notes_project_id_fkey (
+        id,
+        title
+      ),
+      author:members!research_notes_author_id_fkey (
+        id,
+        name,
+        avatar_url,
+        position
+      )
+    `)
+    .order("created_at", { ascending: false });
+
+  // 필터 적용
+  if (filters?.authorId) {
+    query = query.eq("author_id", filters.authorId);
+  }
+  if (filters?.stage) {
+    query = query.eq("stage", filters.stage);
+  }
+  if (filters?.startDate) {
+    query = query.gte("created_at", filters.startDate);
+  }
+  if (filters?.endDate) {
+    query = query.lte("created_at", filters.endDate);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("Error fetching research notes:", error);
+    return { error: "연구노트 조회에 실패했습니다." };
+  }
+
+  return { data };
 }

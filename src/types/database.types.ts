@@ -32,14 +32,16 @@ export type ProjectStatus =
   | "accepted"
   | "published";
 
-// 6단계 마일스톤 (투고까지 100%)
+// 8단계 마일스톤 (투고 후 출판까지)
 export type MilestoneStage =
-  | "literature_review"   // 문헌조사 15%
-  | "methodology"         // 방법론 설계 15%
-  | "data_collection"     // 데이터 수집 15%
-  | "analysis"            // 분석 25%
-  | "draft_writing"       // 초고 작성 20%
-  | "submission";         // 투고 10%
+  | "literature_review"   // 문헌조사
+  | "methodology"         // 방법론 설계
+  | "data_collection"     // 데이터 수집
+  | "analysis"            // 분석
+  | "draft_writing"       // 초고 작성
+  | "submission"          // 투고
+  | "review_revision"     // 심사 수정
+  | "publication";        // 출판
 
 export type ProjectType = "advanced" | "general";  // 선진연구 / 일반연구
 

@@ -24,6 +24,18 @@ import { createResearchNote, updateResearchNote } from "@/lib/actions/research-n
 import { MILESTONE_STAGE_LABEL } from "@/lib/constants";
 import type { MilestoneStage } from "@/types/database.types";
 
+// 8단계 연구 단계
+const MILESTONE_STAGES: MilestoneStage[] = [
+  "literature_review",
+  "methodology",
+  "data_collection",
+  "analysis",
+  "draft_writing",
+  "submission",
+  "review_revision",
+  "publication",
+];
+
 interface Milestone {
   id: string;
   stage: MilestoneStage;
@@ -34,12 +46,13 @@ interface ResearchNote {
   title: string;
   content: string;
   keywords: string[];
-  milestone_id: string;
+  stage?: MilestoneStage;
+  milestone_id?: string;
 }
 
 interface ResearchNoteFormProps {
   projectId: string;
-  milestones: Milestone[];
+  milestones?: Milestone[];
   note?: ResearchNote | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -48,7 +61,7 @@ interface ResearchNoteFormProps {
 
 export function ResearchNoteForm({
   projectId,
-  milestones,
+  milestones = [],
   note,
   open,
   onOpenChange,
@@ -60,7 +73,7 @@ export function ResearchNoteForm({
   const [content, setContent] = useState(note?.content || "");
   const [keywords, setKeywords] = useState<string[]>(note?.keywords || []);
   const [keywordInput, setKeywordInput] = useState("");
-  const [milestoneId, setMilestoneId] = useState(note?.milestone_id || "");
+  const [stage, setStage] = useState<MilestoneStage>(note?.stage || "literature_review");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -85,10 +98,13 @@ export function ResearchNoteForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !content.trim() || !milestoneId) return;
+    if (!title.trim() || !content.trim() || !stage) return;
 
     setSaving(true);
     setError(null);
+
+    // 선택한 stage에 해당하는 마일스톤 찾기
+    const matchingMilestone = milestones.find(m => m.stage === stage);
 
     try {
       if (isEdit && note) {
@@ -96,7 +112,8 @@ export function ResearchNoteForm({
           title: title.trim(),
           content: content.trim(),
           keywords,
-          milestoneId,
+          stage,
+          milestoneId: matchingMilestone?.id,
         });
         if (result.error) {
           setError(result.error);
@@ -105,7 +122,8 @@ export function ResearchNoteForm({
       } else {
         const result = await createResearchNote({
           projectId,
-          milestoneId,
+          stage,
+          milestoneId: matchingMilestone?.id,
           title: title.trim(),
           content: content.trim(),
           keywords,
@@ -120,7 +138,7 @@ export function ResearchNoteForm({
       setTitle("");
       setContent("");
       setKeywords([]);
-      setMilestoneId("");
+      setStage("literature_review");
       onSuccess();
       onOpenChange(false);
     } finally {
@@ -135,7 +153,7 @@ export function ResearchNoteForm({
         setTitle("");
         setContent("");
         setKeywords([]);
-        setMilestoneId("");
+        setStage("literature_review");
       }
       setError(null);
     } else if (isEdit && note) {
@@ -143,10 +161,18 @@ export function ResearchNoteForm({
       setTitle(note.title);
       setContent(note.content);
       setKeywords(note.keywords || []);
-      setMilestoneId(note.milestone_id);
+      setStage(note.stage || "literature_review");
     }
     onOpenChange(newOpen);
   };
+
+  // 오늘 날짜 표시
+  const today = new Date().toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "long",
+  });
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -155,6 +181,9 @@ export function ResearchNoteForm({
           <DialogTitle>
             {isEdit ? "연구노트 수정" : "새 연구노트 작성"}
           </DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            작성일: {today}
+          </p>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -164,17 +193,17 @@ export function ResearchNoteForm({
             </div>
           )}
 
-          {/* 마일스톤 선택 */}
+          {/* 연구 단계 선택 */}
           <div className="space-y-2">
-            <Label htmlFor="milestone">연결 마일스톤 *</Label>
-            <Select value={milestoneId} onValueChange={setMilestoneId}>
+            <Label htmlFor="stage">연구 단계 *</Label>
+            <Select value={stage} onValueChange={(v) => setStage(v as MilestoneStage)}>
               <SelectTrigger>
-                <SelectValue placeholder="마일스톤 단계 선택" />
+                <SelectValue placeholder="연구 단계 선택" />
               </SelectTrigger>
               <SelectContent>
-                {milestones.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    {MILESTONE_STAGE_LABEL[m.stage] || m.stage}
+                {MILESTONE_STAGES.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {MILESTONE_STAGE_LABEL[s]}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -188,7 +217,7 @@ export function ResearchNoteForm({
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="연구노트 제목"
+              placeholder="연구노트 제목 (예: 선행연구 분석 - 도시재생 관련)"
               required
             />
           </div>
@@ -242,7 +271,13 @@ export function ResearchNoteForm({
               id="content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="연구 과정, 사용한 데이터베이스, 검색 전략 등을 기록하세요..."
+              placeholder={`오늘 수행한 연구 활동을 기록하세요.
+
+예시:
+- 검색한 데이터베이스: Google Scholar, RISS
+- 검색 키워드: "도시재생", "주민참여"
+- 수집한 논문 수: 15편
+- 주요 발견사항: ...`}
               rows={12}
               required
             />
@@ -260,7 +295,7 @@ export function ResearchNoteForm({
             </Button>
             <Button
               type="submit"
-              disabled={!title.trim() || !content.trim() || !milestoneId || saving}
+              disabled={!title.trim() || !content.trim() || !stage || saving}
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               {isEdit ? "저장" : "작성"}

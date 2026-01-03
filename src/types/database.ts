@@ -49,10 +49,21 @@ export interface ProjectMember {
   created_at: string;
 }
 
+export type MilestoneStage =
+  | "literature_review"
+  | "methodology"
+  | "data_collection"
+  | "analysis"
+  | "draft_writing"
+  | "submission"
+  | "review_revision"
+  | "publication";
+
 export interface Milestone {
   id: string;
   project_id: string;
   title: string;
+  stage: MilestoneStage | null;
   description: string | null;
   weight: number;
   order_index: number;
@@ -160,8 +171,9 @@ export interface PeerReview {
 export interface ResearchNote {
   id: string;
   project_id: string;
-  milestone_id: string;
+  milestone_id: string | null;
   author_id: string;
+  stage: MilestoneStage;
   title: string;
   content: string;
   keywords: string[];

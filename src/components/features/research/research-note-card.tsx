@@ -63,11 +63,9 @@ interface ResearchNoteCardProps {
     title: string;
     content: string;
     keywords: string[];
+    stage: MilestoneStage;
     created_at: string;
-    milestone_id: string;
-    milestone: {
-      stage: MilestoneStage;
-    };
+    milestone_id: string | null;
     author: Author;
     comments: Comment[];
     files: FileItem[];
@@ -178,8 +176,7 @@ export function ResearchNoteCard({
                   <h4 className="font-medium">{note.title}</h4>
                   <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
                     <Badge variant="outline" className="text-xs">
-                      {MILESTONE_STAGE_LABEL[note.milestone.stage] ||
-                        note.milestone.stage}
+                      {MILESTONE_STAGE_LABEL[note.stage] || note.stage}
                     </Badge>
                     <span>|</span>
                     <span>{note.author.name}</span>

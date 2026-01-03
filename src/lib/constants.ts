@@ -146,22 +146,27 @@ export const SIDEBAR_MENU = [
   },
   {
     name: "Members",
-    href: "/dashboard/members",
+    href: "/members",
     icon: "Users",
   },
   {
     name: "Research Articles",
-    href: "/dashboard/research",
+    href: "/research",
     icon: "BookOpen",
   },
   {
+    name: "Research Notes",
+    href: "/research-notes",
+    icon: "FileText",
+  },
+  {
     name: "Calendar",
-    href: "/dashboard/calendar",
+    href: "/calendar",
     icon: "Calendar",
   },
   {
     name: "Mentoring",
-    href: "/dashboard/mentoring",
+    href: "/mentoring",
     icon: "MessageSquare",
   },
 ] as const;

@@ -18,6 +18,18 @@ import { createClient } from "@/lib/supabase/client";
 import { MILESTONE_STAGE_LABEL } from "@/lib/constants";
 import type { MilestoneStage } from "@/types/database.types";
 
+// 8단계 연구 단계
+const MILESTONE_STAGES: MilestoneStage[] = [
+  "literature_review",
+  "methodology",
+  "data_collection",
+  "analysis",
+  "draft_writing",
+  "submission",
+  "review_revision",
+  "publication",
+];
+
 interface Milestone {
   id: string;
   stage: MilestoneStage;
@@ -49,11 +61,9 @@ interface ResearchNote {
   title: string;
   content: string;
   keywords: string[];
+  stage: MilestoneStage;
   created_at: string;
-  milestone_id: string;
-  milestone: {
-    stage: MilestoneStage;
-  };
+  milestone_id: string | null;
   author: Author;
   comments: Comment[];
   files: FileItem[];
@@ -102,11 +112,9 @@ export function ResearchNotesSection({
         title,
         content,
         keywords,
+        stage,
         created_at,
         milestone_id,
-        milestones!inner (
-          stage
-        ),
         author:members!research_notes_author_id_fkey (
           id,
           name,
@@ -173,11 +181,9 @@ export function ResearchNotesSection({
       title: note.title,
       content: note.content,
       keywords: note.keywords || [],
+      stage: note.stage,
       created_at: note.created_at,
       milestone_id: note.milestone_id,
-      milestone: {
-        stage: note.milestones.stage,
-      },
       author: note.author,
       comments: (note.comments || []).map((c: any) => ({
         id: c.id,
@@ -217,11 +223,11 @@ export function ResearchNotesSection({
   const filteredNotes =
     stageFilter === "all"
       ? notes
-      : notes.filter((n) => n.milestone.stage === stageFilter);
+      : notes.filter((n) => n.stage === stageFilter);
 
-  // 마일스톤별 노트 개수
+  // 단계별 노트 개수
   const noteCounts = notes.reduce((acc, note) => {
-    const stage = note.milestone.stage;
+    const stage = note.stage;
     acc[stage] = (acc[stage] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
@@ -240,16 +246,16 @@ export function ResearchNotesSection({
           <div className="flex items-center gap-2">
             {/* 필터 */}
             <Select value={stageFilter} onValueChange={setStageFilter}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-[160px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="전체" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                {milestones.map((m) => (
-                  <SelectItem key={m.id} value={m.stage}>
-                    {MILESTONE_STAGE_LABEL[m.stage] || m.stage}
-                    {noteCounts[m.stage] ? ` (${noteCounts[m.stage]})` : ""}
+                <SelectItem value="all">전체 단계</SelectItem>
+                {MILESTONE_STAGES.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {MILESTONE_STAGE_LABEL[s]}
+                    {noteCounts[s] ? ` (${noteCounts[s]})` : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -273,9 +279,11 @@ export function ResearchNotesSection({
           </div>
         ) : filteredNotes.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
+            <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
             {stageFilter === "all"
               ? "등록된 연구노트가 없습니다."
-              : "해당 단계의 연구노트가 없습니다."}
+              : `${MILESTONE_STAGE_LABEL[stageFilter as MilestoneStage]} 단계의 연구노트가 없습니다.`}
+            <p className="text-sm mt-2">새 노트 작성 버튼을 클릭하여 연구 기록을 시작하세요.</p>
           </div>
         ) : (
           filteredNotes.map((note) => (
@@ -302,7 +310,8 @@ export function ResearchNotesSection({
           title: editingNote.title,
           content: editingNote.content,
           keywords: editingNote.keywords,
-          milestone_id: editingNote.milestone_id,
+          stage: editingNote.stage,
+          milestone_id: editingNote.milestone_id || undefined,
         } : null}
         open={formOpen}
         onOpenChange={handleFormClose}
