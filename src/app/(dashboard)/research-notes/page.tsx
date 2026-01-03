@@ -30,13 +30,17 @@ import {
 import {
   BookOpen,
   Calendar,
+  ChevronDown,
+  ChevronUp,
   Filter,
   FileText,
   ExternalLink,
   Loader2,
+  MessageSquare,
   MoreVertical,
   Pencil,
   Plus,
+  Send,
   Trash2,
   Upload,
   User,
@@ -46,8 +50,8 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { createClient } from "@/lib/supabase/client";
-import { createResearchNote, updateResearchNote, deleteResearchNote } from "@/lib/actions/research-notes";
-import { getInitials } from "@/lib/utils";
+import { createResearchNote, updateResearchNote, deleteResearchNote, addNoteComment, deleteNoteComment } from "@/lib/actions/research-notes";
+import { getInitials, formatDate } from "@/lib/utils";
 import { MILESTONE_STAGE_LABEL } from "@/lib/constants";
 import type { MilestoneStage } from "@/types/database.types";
 
@@ -75,6 +79,13 @@ interface Project {
   title: string;
 }
 
+interface Comment {
+  id: string;
+  content: string;
+  created_at: string;
+  author: Author;
+}
+
 interface ResearchNote {
   id: string;
   title: string;
@@ -85,6 +96,7 @@ interface ResearchNote {
   updated_at: string;
   project: Project;
   author: Author;
+  comments: Comment[];
 }
 
 interface CurrentUser {
@@ -130,6 +142,12 @@ export default function ResearchNotesPage() {
   // 수정/삭제 상태
   const [editingNote, setEditingNote] = useState<ResearchNote | null>(null);
   const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null);
+
+  // 댓글 상태
+  const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
+  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+  const [submittingComment, setSubmittingComment] = useState<string | null>(null);
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -215,6 +233,17 @@ export default function ResearchNotesPage() {
           name,
           avatar_url,
           position
+        ),
+        comments:research_note_comments (
+          id,
+          content,
+          created_at,
+          author:members!research_note_comments_author_id_fkey (
+            id,
+            name,
+            avatar_url,
+            position
+          )
         )
       `)
       .order("created_at", { ascending: false });
@@ -384,6 +413,54 @@ export default function ResearchNotesPage() {
   const canEditNote = (note: ResearchNote) => {
     if (!currentUser) return false;
     return isAdmin || note.author.id === currentUser.id;
+  };
+
+  // 댓글 권한 확인 (본인 댓글 또는 교수)
+  const canDeleteComment = (comment: Comment) => {
+    if (!currentUser) return false;
+    return isAdmin || comment.author.id === currentUser.id;
+  };
+
+  // 댓글 토글
+  const toggleComments = (noteId: string) => {
+    setExpandedNoteId(expandedNoteId === noteId ? null : noteId);
+  };
+
+  // 댓글 입력 변경
+  const handleCommentChange = (noteId: string, value: string) => {
+    setCommentInputs((prev) => ({ ...prev, [noteId]: value }));
+  };
+
+  // 댓글 추가
+  const handleAddComment = async (noteId: string, projectId: string) => {
+    const content = commentInputs[noteId]?.trim();
+    if (!content) return;
+
+    setSubmittingComment(noteId);
+    const result = await addNoteComment(noteId, content);
+
+    if (result.error) {
+      alert(result.error);
+    } else {
+      setCommentInputs((prev) => ({ ...prev, [noteId]: "" }));
+      fetchData();
+    }
+    setSubmittingComment(null);
+  };
+
+  // 댓글 삭제
+  const handleDeleteComment = async (commentId: string, projectId: string) => {
+    if (!confirm("댓글을 삭제하시겠습니까?")) return;
+
+    setDeletingCommentId(commentId);
+    const result = await deleteNoteComment(commentId, projectId);
+
+    if (result.error) {
+      alert(result.error);
+    } else {
+      fetchData();
+    }
+    setDeletingCommentId(null);
   };
 
   // 날짜별 그룹화
@@ -708,6 +785,103 @@ export default function ResearchNotesPage() {
                               <span className="text-xs text-muted-foreground">
                                 +{note.keywords.length - 3}
                               </span>
+                            )}
+                          </div>
+
+                          {/* 댓글 섹션 */}
+                          <div className="mt-4 pt-3 border-t">
+                            {/* 댓글 토글 버튼 */}
+                            <button
+                              onClick={() => toggleComments(note.id)}
+                              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                              <MessageSquare className="h-4 w-4" />
+                              <span>댓글 {note.comments?.length || 0}개</span>
+                              {expandedNoteId === note.id ? (
+                                <ChevronUp className="h-4 w-4" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4" />
+                              )}
+                            </button>
+
+                            {/* 댓글 목록 (펼쳐진 경우) */}
+                            {expandedNoteId === note.id && (
+                              <div className="mt-3 space-y-3">
+                                {/* 기존 댓글들 */}
+                                {note.comments && note.comments.length > 0 ? (
+                                  <div className="space-y-2">
+                                    {note.comments.map((comment) => (
+                                      <div
+                                        key={comment.id}
+                                        className="flex items-start gap-2 p-2 rounded-md bg-muted/50"
+                                      >
+                                        <Avatar className="h-6 w-6">
+                                          <AvatarImage src={comment.author.avatar_url || undefined} />
+                                          <AvatarFallback className="text-xs">
+                                            {getInitials(comment.author.name)}
+                                          </AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-sm font-medium">
+                                              {comment.author.name}
+                                            </span>
+                                            <span className="text-xs text-muted-foreground">
+                                              {formatDate(comment.created_at)}
+                                            </span>
+                                          </div>
+                                          <p className="text-sm mt-0.5">{comment.content}</p>
+                                        </div>
+                                        {canDeleteComment(comment) && (
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-6 w-6 text-muted-foreground hover:text-red-500"
+                                            onClick={() => handleDeleteComment(comment.id, note.project.id)}
+                                            disabled={deletingCommentId === comment.id}
+                                          >
+                                            {deletingCommentId === comment.id ? (
+                                              <Loader2 className="h-3 w-3 animate-spin" />
+                                            ) : (
+                                              <X className="h-3 w-3" />
+                                            )}
+                                          </Button>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-muted-foreground">아직 댓글이 없습니다.</p>
+                                )}
+
+                                {/* 댓글 입력 */}
+                                <div className="flex gap-2">
+                                  <Input
+                                    placeholder="댓글을 입력하세요..."
+                                    value={commentInputs[note.id] || ""}
+                                    onChange={(e) => handleCommentChange(note.id, e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter" && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleAddComment(note.id, note.project.id);
+                                      }
+                                    }}
+                                    disabled={submittingComment === note.id}
+                                    className="flex-1"
+                                  />
+                                  <Button
+                                    size="icon"
+                                    onClick={() => handleAddComment(note.id, note.project.id)}
+                                    disabled={!commentInputs[note.id]?.trim() || submittingComment === note.id}
+                                  >
+                                    {submittingComment === note.id ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Send className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                </div>
+                              </div>
                             )}
                           </div>
                         </div>
