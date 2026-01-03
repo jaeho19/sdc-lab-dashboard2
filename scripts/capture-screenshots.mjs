@@ -30,23 +30,36 @@ async function captureScreenshots() {
   await page.waitForURL('**/dashboard', { timeout: 30000 });
   await page.waitForLoadState('networkidle');
 
-  // 환영 팝업/토스트 닫기
+  // 환영 팝업 닫기
   console.log('환영 팝업 닫는 중...');
   await page.waitForTimeout(2000); // 팝업이 나타날 때까지 대기
 
-  // 토스트 닫기 버튼 클릭 시도
+  // "다시보지 않기" 체크박스 클릭
   try {
-    const closeButton = page.locator('[data-sonner-toast] button, [role="status"] button, .toast button, [data-dismiss]').first();
-    if (await closeButton.isVisible({ timeout: 1000 })) {
-      await closeButton.click();
+    const dontShowAgain = page.locator('text=다시보지 않기').first();
+    if (await dontShowAgain.isVisible({ timeout: 2000 })) {
+      await dontShowAgain.click();
+      console.log('다시보지 않기 체크됨');
       await page.waitForTimeout(500);
     }
   } catch (e) {
-    // 팝업이 없으면 무시
+    console.log('다시보지 않기 체크박스 없음');
   }
 
-  // 토스트가 사라질 때까지 대기
-  await page.waitForTimeout(3000);
+  // "시작하기" 버튼 클릭
+  try {
+    const startButton = page.locator('text=시작하기').first();
+    if (await startButton.isVisible({ timeout: 2000 })) {
+      await startButton.click();
+      console.log('시작하기 버튼 클릭됨');
+      await page.waitForTimeout(1000);
+    }
+  } catch (e) {
+    console.log('시작하기 버튼 없음');
+  }
+
+  // 팝업이 완전히 사라질 때까지 대기
+  await page.waitForTimeout(1000);
 
   // 2. 대시보드
   console.log('2. 대시보드 캡쳐...');
