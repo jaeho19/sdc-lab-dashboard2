@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SDC Lab Dashboard 사용 설명서</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      line-height: 1.8;
+      color: #333;
+      background: #fff;
+      font-size: 11pt;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 20mm 25mm;
+      margin: 0 auto;
+      background: white;
+      page-break-after: always;
+    }
+
+    .page:last-child {
+      page-break-after: avoid;
+    }
+
+    .cover {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      min-height: 257mm;
+    }
+
+    .cover h1 {
+      font-size: 36pt;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 10mm;
+    }
+
+    .cover h2 {
+      font-size: 24pt;
+      font-weight: 500;
+      color: #10b981;
+      margin-bottom: 20mm;
+    }
+
+    .cover .org {
+      font-size: 14pt;
+      color: #64748b;
+      margin-bottom: 5mm;
+    }
+
+    .cover .date {
+      font-size: 12pt;
+      color: #94a3b8;
+    }
+
+    h1 {
+      font-size: 20pt;
+      color: #10b981;
+      margin-bottom: 8mm;
+      padding-bottom: 3mm;
+      border-bottom: 2px solid #10b981;
+    }
+
+    h2 {
+      font-size: 14pt;
+      color: #1e293b;
+      margin-top: 8mm;
+      margin-bottom: 4mm;
+    }
+
+    h3 {
+      font-size: 12pt;
+      color: #475569;
+      margin-top: 6mm;
+      margin-bottom: 3mm;
+    }
+
+    p {
+      margin-bottom: 4mm;
+      text-align: justify;
+    }
+
+    ul, ol {
+      margin-left: 8mm;
+      margin-bottom: 4mm;
+    }
+
+    li {
+      margin-bottom: 2mm;
+    }
+
+    .intro {
+      background: #f8fafc;
+      padding: 5mm;
+      border-radius: 3mm;
+      margin-bottom: 6mm;
+    }
+
+    .important {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 4mm;
+      margin: 4mm 0;
+    }
+
+    .tip {
+      background: #ecfdf5;
+      border-left: 4px solid #10b981;
+      padding: 4mm;
+      margin: 4mm 0;
+    }
+
+    .warning {
+      background: #fef2f2;
+      border-left: 4px solid #ef4444;
+      padding: 4mm;
+      margin: 4mm 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 4mm 0;
+    }
+
+    th, td {
+      border: 1px solid #e2e8f0;
+      padding: 3mm;
+      text-align: left;
+    }
+
+    th {
+      background: #10b981;
+      color: white;
+      font-weight: 500;
+    }
+
+    tr:nth-child(even) {
+      background: #f8fafc;
+    }
+
+    .screenshot {
+      text-align: center;
+      margin: 5mm 0;
+      color: #64748b;
+      font-size: 10pt;
+      font-style: italic;
+    }
+
+    .screenshot-placeholder {
+      background: #f1f5f9;
+      border: 2px dashed #cbd5e1;
+      padding: 15mm;
+      text-align: center;
+      color: #94a3b8;
+      margin: 4mm 0;
+    }
+
+    .feature-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4mm;
+      margin: 4mm 0;
+    }
+
+    .feature-item {
+      background: #f8fafc;
+      padding: 4mm;
+      border-radius: 2mm;
+      border: 1px solid #e2e8f0;
+    }
+
+    .feature-item h4 {
+      color: #10b981;
+      margin-bottom: 2mm;
+      font-size: 11pt;
+    }
+
+    .page-number {
+      text-align: center;
+      color: #94a3b8;
+      font-size: 10pt;
+      margin-top: 10mm;
+    }
+
+    .toc {
+      margin: 6mm 0;
+    }
+
+    .toc-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 2mm 0;
+      border-bottom: 1px dotted #e2e8f0;
+    }
+
+    .toc-item.main {
+      font-weight: 500;
+    }
+
+    .toc-item.sub {
+      padding-left: 8mm;
+      font-size: 10pt;
+    }
+
+    @media print {
+      body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .page {
+        margin: 0;
+        page-break-after: always;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 표지 -->
+  <div class="page">
+    <div class="cover">
+      <h1>SDC Lab Dashboard</h1>
+      <h2>사용 설명서</h2>
+      <p class="org">서울시립대학교 Spatial Data & Community Lab</p>
+      <p class="date">2026년 1월</p>
+    </div>
+  </div>
+
+  <!-- 목차 -->
+  <div class="page">
+    <h1>목차</h1>
+    <div class="toc">
+      <div class="toc-item main"><span>도입부</span><span>1</span></div>
+      <div class="toc-item main"><span>1. 로그인 및 Dashboard 메인 화면</span><span>1</span></div>
+      <div class="toc-item main"><span>2. Members (구성원 정보)</span><span>3</span></div>
+      <div class="toc-item main"><span>3. Research (연구 관리)</span><span>5</span></div>
+      <div class="toc-item sub"><span>3-1. 기본 정보 입력</span><span>6</span></div>
+      <div class="toc-item sub"><span>3-2. 단계별 진행현황</span><span>7</span></div>
+      <div class="toc-item sub"><span>3-3. 프로젝트 타임라인</span><span>8</span></div>
+      <div class="toc-item sub"><span>3-4. 연구 흐름도</span><span>8</span></div>
+      <div class="toc-item sub"><span>3-5. 새 프로젝트 추가</span><span>9</span></div>
+      <div class="toc-item main"><span>4. Research Notes (연구노트) - 신규</span><span>10</span></div>
+      <div class="toc-item sub"><span>4-1. 연구노트 작성</span><span>10</span></div>
+      <div class="toc-item sub"><span>4-2. 필터 및 검색</span><span>11</span></div>
+      <div class="toc-item sub"><span>4-3. 댓글 기능</span><span>12</span></div>
+      <div class="toc-item sub"><span>4-4. 내보내기</span><span>12</span></div>
+      <div class="toc-item main"><span>5. Calendar (일정 관리)</span><span>13</span></div>
+      <div class="toc-item main"><span>6. Mentoring (멘토링 기록)</span><span>14</span></div>
+      <div class="toc-item main"><span>7. AI Peer Review</span><span>15</span></div>
+      <div class="toc-item main"><span>정리: 주간 업데이트 체크리스트</span><span>16</span></div>
+    </div>
+  </div>
+
+  <!-- 도입부 -->
+  <div class="page">
+    <h1>도입부</h1>
+    <div class="intro">
+      <p>안녕하세요. SDC Lab Dashboard 사용 가이드입니다. 이 대시보드는 연구실 전체의 연구 진행 상황, 일정, 멘토링 기록을 한 곳에서 관리하기 위한 시스템입니다.</p>
+      <p>이 설명서에서는 각 메뉴를 어떻게 사용하는지 하나씩 살펴보겠습니다.</p>
+    </div>
+
+    <h1>1. 로그인 및 Dashboard 메인 화면</h1>
+    <p>먼저 <strong>sdclab-dashboard.netlify.app</strong>에 접속합니다. 본인 계정으로 로그인하면 Dashboard 메인 화면이 나타납니다.</p>
+
+    <div class="screenshot-placeholder">
+      [로그인 화면 스크린샷]
+    </div>
+    <p class="screenshot">로그인 화면</p>
+
+    <p>로그인 후 Dashboard에서는 연구실 전체 현황을 한눈에 볼 수 있습니다:</p>
+    <ul>
+      <li>현재 활동 중인 연구원 수</li>
+      <li>진행 중인 연구 프로젝트 수</li>
+      <li>전체 평균 진행률</li>
+      <li>이번 주 예정된 일정</li>
+    </ul>
+
+    <div class="screenshot-placeholder">
+      [Dashboard 메인 화면 스크린샷]
+    </div>
+    <p class="screenshot">Dashboard 메인 화면</p>
+
+    <div class="tip">
+      <strong>TIP:</strong> 여기서 직접 수정하는 것은 없습니다. 다른 메뉴에서 입력한 내용이 자동으로 반영됩니다.
+    </div>
+
+    <p class="page-number">- 1 -</p>
+  </div>
+
+  <!-- Members -->
+  <div class="page">
+    <h1>2. Members (구성원 정보)</h1>
+    <p>좌측 메뉴에서 <strong>Members</strong>를 클릭합니다. 여기서 본인의 프로필 정보를 관리합니다.</p>
+
+    <div class="screenshot-placeholder">
+      [Members 목록 화면 스크린샷]
+    </div>
+    <p class="screenshot">Members 목록 화면</p>
+
+    <h2>반드시 입력해야 할 항목:</h2>
+    <ul>
+      <li><strong>입학일:</strong> 석사 또는 박사 과정 시작 날짜</li>
+      <li><strong>졸업예정일:</strong> 예상 졸업 시점</li>
+      <li><strong>관심분야:</strong> 본인의 연구 관심 키워드 3~5개</li>
+      <li><strong>이메일, 연락처:</strong> 최신 정보로 유지</li>
+    </ul>
+
+    <div class="screenshot-placeholder">
+      [개인 프로필 상세 화면 스크린샷]
+    </div>
+    <p class="screenshot">개인 프로필 상세 화면</p>
+
+    <div class="important">
+      <strong>중요:</strong> 입실 후 1주 이내에 이 정보들을 모두 채워주세요.
+    </div>
+
+    <p class="page-number">- 2 -</p>
+  </div>
+
+  <!-- Research -->
+  <div class="page">
+    <h1>3. Research (연구 관리) - 가장 중요</h1>
+    <p><strong>Research</strong> 메뉴로 이동합니다. 이곳이 대시보드의 핵심입니다.</p>
+
+    <div class="screenshot-placeholder">
+      [Research 목록 화면 스크린샷]
+    </div>
+    <p class="screenshot">Research 목록 화면 (새 프로젝트 버튼: 우측 상단)</p>
+
+    <h2>3-1. 기본 정보 입력</h2>
+    <p>프로젝트 상세 페이지 상단에서 다음 항목들을 설정합니다:</p>
+    <ul>
+      <li><strong>제목:</strong> 논문 또는 프로젝트 제목</li>
+      <li><strong>타깃 저널:</strong> 투고 목표 저널</li>
+      <li><strong>마감일:</strong> 투고 목표일</li>
+      <li><strong>상태:</strong> 준비중/진행중/검토중/완료</li>
+    </ul>
+
+    <h2>3-2. 단계별 진행현황 (체크박스 방식)</h2>
+    <p>각 단계(문헌조사, 방법론 설계, 데이터 수집, 분석, 초고 작성, 투고)별로 세부 체크리스트가 있습니다. 완료한 항목을 체크하면 진행률이 자동 계산됩니다.</p>
+
+    <div class="screenshot-placeholder">
+      [단계별 체크리스트 스크린샷]
+    </div>
+    <p class="screenshot">단계별 체크리스트 및 프로젝트 타임라인</p>
+
+    <p class="page-number">- 3 -</p>
+  </div>
+
+  <div class="page">
+    <h2>3-3. 프로젝트 타임라인</h2>
+    <p>타임라인 섹션에서 각 단계별 목표 날짜를 설정합니다. 시각적으로 진행 상황을 확인할 수 있습니다.</p>
+
+    <div class="screenshot-placeholder">
+      [프로젝트 타임라인 스크린샷]
+    </div>
+    <p class="screenshot">프로젝트 타임라인 (간트 차트 형태)</p>
+
+    <h2>3-4. 연구 흐름도 (매우 중요)</h2>
+    <p>연구 흐름도는 Markdown 형식으로 작성합니다. 연구 질문 → 가설 → 방법론 → 분석 → 결과 해석의 전체 구조를 담습니다.</p>
+
+    <div class="important">
+      <strong>핵심 원칙:</strong> 멘토링 미팅 후 흐름도가 변경되면 반드시 업데이트해야 합니다.
+    </div>
+
+    <h2>3-5. 새 프로젝트 추가</h2>
+    <p>새로운 연구를 시작할 때는 우측 상단의 <strong>'새 프로젝트'</strong> 버튼을 클릭합니다.</p>
+
+    <div class="screenshot-placeholder">
+      [새 프로젝트 생성 화면 스크린샷]
+    </div>
+    <p class="screenshot">새 프로젝트 생성 화면</p>
+
+    <p class="page-number">- 4 -</p>
+  </div>
+
+  <!-- Research Notes - 신규 섹션 -->
+  <div class="page">
+    <h1>4. Research Notes (연구노트) - 신규 기능</h1>
+
+    <div class="intro">
+      <p><strong>Research Notes</strong>는 일일 연구 활동을 기록하고 관리하는 기능입니다. 문헌조사, 데이터 분석, 실험 결과 등 연구 과정에서의 모든 활동을 체계적으로 기록할 수 있습니다.</p>
+    </div>
+
+    <p>좌측 메뉴에서 <strong>Research Notes</strong>를 클릭하여 접근합니다.</p>
+
+    <div class="screenshot-placeholder">
+      [연구노트 메인 화면 스크린샷]
+    </div>
+    <p class="screenshot">연구노트 메인 화면</p>
+
+    <h2>주요 기능:</h2>
+    <div class="feature-list">
+      <div class="feature-item">
+        <h4>노트 작성</h4>
+        <p>마크다운 형식으로 연구 활동 기록</p>
+      </div>
+      <div class="feature-item">
+        <h4>8단계 연구 단계</h4>
+        <p>문헌조사부터 출판까지 단계별 분류</p>
+      </div>
+      <div class="feature-item">
+        <h4>키워드 태그</h4>
+        <p>키워드로 노트 분류 및 검색</p>
+      </div>
+      <div class="feature-item">
+        <h4>댓글 기능</h4>
+        <p>교수님/동료의 피드백 기록</p>
+      </div>
+    </div>
+
+    <h2>4-1. 연구노트 작성</h2>
+    <p>우측 상단의 <strong>'새 노트 작성'</strong> 버튼을 클릭합니다.</p>
+
+    <h3>작성 항목:</h3>
+    <table>
+      <tr>
+        <th>항목</th>
+        <th>설명</th>
+        <th>필수 여부</th>
+      </tr>
+      <tr>
+        <td>연구 프로젝트</td>
+        <td>노트가 속한 연구 프로젝트 선택</td>
+        <td>필수</td>
+      </tr>
+      <tr>
+        <td>연구 단계</td>
+        <td>현재 작업 중인 연구 단계 선택</td>
+        <td>필수</td>
+      </tr>
+      <tr>
+        <td>제목</td>
+        <td>노트의 제목 (예: 선행연구 분석 - 도시재생)</td>
+        <td>필수</td>
+      </tr>
+      <tr>
+        <td>키워드</td>
+        <td>관련 키워드 태그 (검색용)</td>
+        <td>선택</td>
+      </tr>
+      <tr>
+        <td>내용</td>
+        <td>마크다운 형식의 연구 활동 내용</td>
+        <td>필수</td>
+      </tr>
+    </table>
+
+    <p class="page-number">- 5 -</p>
+  </div>
+
+  <div class="page">
+    <h3>8단계 연구 단계:</h3>
+    <table>
+      <tr>
+        <th>단계</th>
+        <th>영문명</th>
+        <th>설명</th>
+      </tr>
+      <tr>
+        <td>1. 문헌조사</td>
+        <td>Literature Review</td>
+        <td>관련 논문 및 자료 조사</td>
+      </tr>
+      <tr>
+        <td>2. 방법론 설계</td>
+        <td>Methodology</td>
+        <td>연구 방법 및 분석 기법 설계</td>
+      </tr>
+      <tr>
+        <td>3. 데이터 수집</td>
+        <td>Data Collection</td>
+        <td>설문, 실험, 현장조사 등</td>
+      </tr>
+      <tr>
+        <td>4. 분석</td>
+        <td>Analysis</td>
+        <td>데이터 분석 및 결과 도출</td>
+      </tr>
+      <tr>
+        <td>5. 초고 작성</td>
+        <td>Draft Writing</td>
+        <td>논문 초고 작성</td>
+      </tr>
+      <tr>
+        <td>6. 투고</td>
+        <td>Submission</td>
+        <td>저널 투고</td>
+      </tr>
+      <tr>
+        <td>7. 심사 수정</td>
+        <td>Review & Revision</td>
+        <td>리뷰어 코멘트 대응</td>
+      </tr>
+      <tr>
+        <td>8. 출판</td>
+        <td>Publication</td>
+        <td>최종 출판</td>
+      </tr>
+    </table>
+
+    <h3>마크다운 작성 팁:</h3>
+    <p>내용 작성 시 마크다운 문법을 사용할 수 있습니다. <strong>미리보기</strong> 버튼으로 렌더링 결과를 확인하세요.</p>
+
+    <div class="tip">
+      <strong>TIP:</strong> MD 파일을 직접 업로드할 수도 있습니다. 'MD 파일 선택' 버튼을 사용하세요.
+    </div>
+
+    <h2>4-2. 필터 및 검색</h2>
+    <p>연구노트 목록에서 다양한 필터를 사용하여 원하는 노트를 찾을 수 있습니다.</p>
+
+    <h3>필터 옵션:</h3>
+    <ul>
+      <li><strong>연구원 필터 (교수 전용):</strong> 전체 연구원 / 특정 연구원의 노트 조회</li>
+      <li><strong>단계 필터:</strong> 특정 연구 단계의 노트만 조회</li>
+      <li><strong>날짜 필터:</strong> 특정 날짜에 작성된 노트 조회 (기본값: 오늘)</li>
+      <li><strong>키워드 검색:</strong> 키워드 또는 제목으로 검색</li>
+    </ul>
+
+    <div class="screenshot-placeholder">
+      [필터 및 검색 UI 스크린샷]
+    </div>
+    <p class="screenshot">연구노트 필터 및 검색</p>
+
+    <p class="page-number">- 6 -</p>
+  </div>
+
+  <div class="page">
+    <h2>4-3. 댓글 기능</h2>
+    <p>각 연구노트에 댓글을 달아 피드백을 주고받을 수 있습니다.</p>
+
+    <h3>댓글 사용 방법:</h3>
+    <ol>
+      <li>노트 하단의 <strong>'댓글 N개'</strong> 버튼을 클릭하여 댓글 섹션을 펼칩니다.</li>
+      <li>댓글 입력창에 내용을 입력합니다.</li>
+      <li><strong>Enter</strong> 키 또는 <strong>전송</strong> 버튼으로 댓글을 등록합니다.</li>
+      <li>본인 댓글은 <strong>X</strong> 버튼으로 삭제할 수 있습니다.</li>
+    </ol>
+
+    <div class="tip">
+      <strong>TIP:</strong> 타인이 내 노트에 댓글을 작성하면 알림이 발송됩니다.
+    </div>
+
+    <h2>4-4. 내보내기</h2>
+    <p>연구노트를 파일로 내보내어 보관하거나 공유할 수 있습니다.</p>
+
+    <h3>내보내기 형식:</h3>
+    <table>
+      <tr>
+        <th>형식</th>
+        <th>설명</th>
+        <th>용도</th>
+      </tr>
+      <tr>
+        <td>마크다운 (.md)</td>
+        <td>전체 내용 + 댓글 포함</td>
+        <td>문서 보관, 블로그 포스팅</td>
+      </tr>
+      <tr>
+        <td>CSV (.csv)</td>
+        <td>표 형식 데이터</td>
+        <td>Excel 분석, 데이터 정리</td>
+      </tr>
+    </table>
+
+    <h3>내보내기 방법:</h3>
+    <ol>
+      <li>원하는 필터를 적용하여 내보낼 노트를 선택합니다.</li>
+      <li>우측 상단의 <strong>'내보내기'</strong> 버튼을 클릭합니다.</li>
+      <li>원하는 형식(마크다운 또는 CSV)을 선택합니다.</li>
+      <li>파일이 자동으로 다운로드됩니다.</li>
+    </ol>
+
+    <div class="important">
+      <strong>중요:</strong> 내보내기는 현재 필터링된 노트만 포함합니다. 전체 노트를 내보내려면 필터를 해제하세요.
+    </div>
+
+    <h2>4-5. 수정 및 삭제</h2>
+    <p>본인이 작성한 노트는 수정 및 삭제가 가능합니다.</p>
+    <ul>
+      <li>노트 우측의 <strong>⋮</strong> 버튼을 클릭합니다.</li>
+      <li><strong>수정</strong> 또는 <strong>삭제</strong>를 선택합니다.</li>
+      <li>삭제 시 확인 대화상자가 표시됩니다.</li>
+    </ul>
+
+    <div class="tip">
+      <strong>TIP:</strong> 교수님은 모든 연구원의 노트를 조회하고 댓글을 달 수 있습니다.
+    </div>
+
+    <p class="page-number">- 7 -</p>
+  </div>
+
+  <!-- Calendar -->
+  <div class="page">
+    <h1>5. Calendar (일정 관리)</h1>
+    <p><strong>Calendar</strong> 메뉴에서 연구원 본인의 일정을 직접 등록합니다.</p>
+
+    <div class="screenshot-placeholder">
+      [Calendar 화면 스크린샷]
+    </div>
+    <p class="screenshot">Calendar 화면</p>
+
+    <h2>등록해야 할 일정:</h2>
+    <ul>
+      <li><strong>학회:</strong> 발표 또는 참석 일정</li>
+      <li><strong>마감:</strong> 논문 투고, 과제 제출</li>
+      <li><strong>휴가/출장:</strong> 반나절 이상 부재 시</li>
+      <li><strong>현장조사:</strong> 필드워크 일정</li>
+    </ul>
+
+    <div class="important">
+      <strong>중요:</strong> 일정이 확정되면 즉시 등록하세요.
+    </div>
+
+    <p class="page-number">- 8 -</p>
+  </div>
+
+  <!-- Mentoring -->
+  <div class="page">
+    <h1>6. Mentoring (멘토링 기록)</h1>
+    <p>지도교수님과 미팅 후에는 반드시 이곳에 기록을 남겨야 합니다.</p>
+
+    <div class="screenshot-placeholder">
+      [Mentoring 목록 화면 스크린샷]
+    </div>
+    <p class="screenshot">Mentoring 목록 화면</p>
+
+    <h2>기록 내용:</h2>
+    <ul>
+      <li><strong>상담 날짜:</strong> 미팅 일자</li>
+      <li><strong>논의 사항:</strong> 핵심 내용</li>
+      <li><strong>NEXT STEPS:</strong> 다음 과제</li>
+    </ul>
+
+    <div class="warning">
+      <strong>필수:</strong> 미팅 후 24시간 이내에 기록하세요.
+    </div>
+
+    <p class="page-number">- 9 -</p>
+  </div>
+
+  <!-- AI Peer Review -->
+  <div class="page">
+    <h1>7. AI Peer Review</h1>
+    <p>연구 설계가 타당한지 AI를 통해 검토받는 기능입니다.</p>
+
+    <div class="screenshot-placeholder">
+      [AI Peer Review 화면 스크린샷]
+    </div>
+    <p class="screenshot">AI Peer Review 화면</p>
+
+    <h2>주의사항:</h2>
+    <ul>
+      <li><strong>API 비용 발생</strong> - 남발 금지</li>
+      <li><strong>필요할 때만 사용</strong> (새 연구 설계 후, 큰 방향 수정 후)</li>
+    </ul>
+
+    <p class="page-number">- 10 -</p>
+  </div>
+
+  <!-- 정리 -->
+  <div class="page">
+    <h1>정리: 주간 업데이트 체크리스트</h1>
+    <p>매주 랩미팅 전까지 다음을 확인하세요:</p>
+
+    <table>
+      <tr>
+        <th>메뉴</th>
+        <th>확인 사항</th>
+      </tr>
+      <tr>
+        <td>Members</td>
+        <td>정보 변경사항 반영</td>
+      </tr>
+      <tr>
+        <td>Research</td>
+        <td>진행현황 체크박스 업데이트, 흐름도 최신화</td>
+      </tr>
+      <tr>
+        <td><strong>Research Notes</strong></td>
+        <td><strong>이번 주 연구 활동 기록 완료</strong></td>
+      </tr>
+      <tr>
+        <td>Calendar</td>
+        <td>이번 주/다음 주 일정 등록</td>
+      </tr>
+      <tr>
+        <td>Mentoring</td>
+        <td>미팅 후 기록 완료 여부</td>
+      </tr>
+    </table>
+
+    <h1>마무리</h1>
+    <div class="intro">
+      <p>SDC Lab Dashboard는 연구 진행 상황을 투명하게 공유하고, 멘토링 내용을 체계적으로 기록하기 위한 도구입니다.</p>
+      <p>특히 <strong>Research의 연구 흐름도</strong>와 <strong>Research Notes의 일일 기록</strong>, 그리고 <strong>Mentoring 기록</strong>은 연구의 맥락을 유지하는 데 핵심입니다.</p>
+    </div>
+
+    <p>질문이 있으면 랩 매니저나 교수님께 문의하세요.</p>
+
+    <p class="page-number">- 11 -</p>
+  </div>
+</body>
+</html>
