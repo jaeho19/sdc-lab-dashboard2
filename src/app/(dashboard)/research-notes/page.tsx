@@ -30,6 +30,7 @@ import {
   Loader2,
   Plus,
   Upload,
+  User,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -97,8 +98,10 @@ export default function ResearchNotesPage() {
   const [isAdmin, setIsAdmin] = useState(false);
 
   // 필터 상태 - 날짜 기본값을 오늘로 설정
+  const [authorFilter, setAuthorFilter] = useState<string>("me"); // "me" = 본인, "all" = 전체, 또는 특정 member_id
   const [stageFilter, setStageFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>(getTodayDate());
+  const [members, setMembers] = useState<{ id: string; name: string }[]>([]);
 
   // 노트 작성 모달 상태
   const [formOpen, setFormOpen] = useState(false);
@@ -121,6 +124,8 @@ export default function ResearchNotesPage() {
 
     // 현재 사용자 정보 조회
     const { data: { user } } = await supabase.auth.getUser();
+    let userIsAdmin = false;
+
     if (user) {
       const { data: memberData } = await supabase
         .from("members")
@@ -131,7 +136,21 @@ export default function ResearchNotesPage() {
       if (memberData) {
         const member = memberData as CurrentUser;
         setCurrentUser(member);
-        setIsAdmin(member.position === "professor");
+        userIsAdmin = member.position === "professor";
+        setIsAdmin(userIsAdmin);
+      }
+
+      // 교수인 경우 모든 활성 멤버 목록 조회
+      if (userIsAdmin) {
+        const { data: membersData } = await supabase
+          .from("members")
+          .select("id, name")
+          .eq("status", "active")
+          .order("name");
+
+        if (membersData) {
+          setMembers(membersData as { id: string; name: string }[]);
+        }
       }
     }
 
@@ -158,7 +177,7 @@ export default function ResearchNotesPage() {
       }
     }
 
-    // 연구노트 조회 - 로그인한 사용자의 노트만
+    // 연구노트 조회
     if (!user) {
       setLoading(false);
       return;
@@ -185,8 +204,20 @@ export default function ResearchNotesPage() {
           position
         )
       `)
-      .eq("author_id", user.id)
       .order("created_at", { ascending: false });
+
+    // 작성자 필터 적용 (교수는 전체 또는 특정 연구원 선택 가능)
+    if (userIsAdmin) {
+      if (authorFilter === "me") {
+        query = query.eq("author_id", user.id);
+      } else if (authorFilter !== "all") {
+        query = query.eq("author_id", authorFilter);
+      }
+      // "all"인 경우 필터 없음 - 모든 노트 표시
+    } else {
+      // 일반 연구원은 본인 노트만
+      query = query.eq("author_id", user.id);
+    }
 
     // 필터 적용
     if (stageFilter !== "all") {
@@ -208,7 +239,7 @@ export default function ResearchNotesPage() {
 
     setNotes((data || []) as ResearchNote[]);
     setLoading(false);
-  }, [stageFilter, dateFilter]);
+  }, [authorFilter, stageFilter, dateFilter]);
 
   useEffect(() => {
     fetchData();
@@ -329,10 +360,13 @@ export default function ResearchNotesPage() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <BookOpen className="h-6 w-6" />
-            내 연구노트
+            {isAdmin ? "연구노트 관리" : "내 연구노트"}
           </h1>
           <p className="text-muted-foreground mt-1">
-            {currentUser?.name}님의 연구 활동 기록 | {todayDisplay}
+            {isAdmin
+              ? `연구원들의 연구 활동 기록 | ${todayDisplay}`
+              : `${currentUser?.name}님의 연구 활동 기록 | ${todayDisplay}`
+            }
           </p>
         </div>
         <Button onClick={() => { resetForm(); setFormOpen(true); }}>
@@ -404,6 +438,27 @@ export default function ResearchNotesPage() {
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-wrap gap-4">
+            {/* 연구원 필터 - 교수만 표시 */}
+            {isAdmin && (
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-muted-foreground" />
+                <Select value={authorFilter} onValueChange={setAuthorFilter}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="연구원 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">전체 연구원</SelectItem>
+                    <SelectItem value="me">내 노트</SelectItem>
+                    {members.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {/* 단계 필터 */}
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4 text-muted-foreground" />
@@ -514,6 +569,13 @@ export default function ResearchNotesPage() {
                             <div>
                               <h4 className="font-medium">{note.title}</h4>
                               <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+                                {/* 교수가 전체 보기일 때 작성자 이름 표시 */}
+                                {isAdmin && authorFilter !== "me" && (
+                                  <>
+                                    <span className="font-medium text-foreground">{note.author.name}</span>
+                                    <span>·</span>
+                                  </>
+                                )}
                                 <Badge variant="outline" className="text-xs">
                                   {MILESTONE_STAGE_LABEL[note.stage]}
                                 </Badge>
