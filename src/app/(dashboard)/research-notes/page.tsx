@@ -32,7 +32,9 @@ import {
   Calendar,
   ChevronDown,
   ChevronUp,
+  Download,
   Filter,
+  FileSpreadsheet,
   FileText,
   ExternalLink,
   Loader2,
@@ -479,6 +481,99 @@ export default function ResearchNotesPage() {
       })
     : notes;
 
+  // 마크다운으로 내보내기
+  const exportToMarkdown = () => {
+    if (filteredNotes.length === 0) {
+      alert("내보낼 연구노트가 없습니다.");
+      return;
+    }
+
+    const today = new Date().toLocaleDateString("ko-KR");
+    let markdown = `# 연구노트 내보내기\n\n`;
+    markdown += `> 내보내기 날짜: ${today}\n`;
+    markdown += `> 총 ${filteredNotes.length}개 노트\n\n`;
+    markdown += `---\n\n`;
+
+    filteredNotes.forEach((note, index) => {
+      const noteDate = new Date(note.created_at).toLocaleDateString("ko-KR");
+      markdown += `## ${index + 1}. ${note.title}\n\n`;
+      markdown += `- **작성자**: ${note.author.name}\n`;
+      markdown += `- **작성일**: ${noteDate}\n`;
+      markdown += `- **연구단계**: ${MILESTONE_STAGE_LABEL[note.stage]}\n`;
+      markdown += `- **프로젝트**: ${note.project.title}\n`;
+      if (note.keywords.length > 0) {
+        markdown += `- **키워드**: ${note.keywords.map(k => `#${k}`).join(" ")}\n`;
+      }
+      markdown += `\n### 내용\n\n${note.content}\n\n`;
+      if (note.comments && note.comments.length > 0) {
+        markdown += `### 댓글 (${note.comments.length}개)\n\n`;
+        note.comments.forEach((comment) => {
+          const commentDate = new Date(comment.created_at).toLocaleDateString("ko-KR");
+          markdown += `- **${comment.author.name}** (${commentDate}): ${comment.content}\n`;
+        });
+        markdown += `\n`;
+      }
+      markdown += `---\n\n`;
+    });
+
+    // 파일 다운로드
+    const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `연구노트_${new Date().toISOString().split("T")[0]}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // CSV로 내보내기
+  const exportToCSV = () => {
+    if (filteredNotes.length === 0) {
+      alert("내보낼 연구노트가 없습니다.");
+      return;
+    }
+
+    // CSV 헤더
+    const headers = ["번호", "제목", "작성자", "작성일", "연구단계", "프로젝트", "키워드", "내용", "댓글수"];
+
+    // CSV 데이터 행
+    const rows = filteredNotes.map((note, index) => {
+      const noteDate = new Date(note.created_at).toLocaleDateString("ko-KR");
+      // CSV에서 쉼표와 줄바꿈 처리
+      const escapeCSV = (str: string) => {
+        if (str.includes(",") || str.includes("\n") || str.includes('"')) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      };
+
+      return [
+        index + 1,
+        escapeCSV(note.title),
+        escapeCSV(note.author.name),
+        noteDate,
+        MILESTONE_STAGE_LABEL[note.stage],
+        escapeCSV(note.project.title),
+        escapeCSV(note.keywords.join(", ")),
+        escapeCSV(note.content.replace(/\n/g, " ").slice(0, 200) + (note.content.length > 200 ? "..." : "")),
+        note.comments?.length || 0,
+      ].join(",");
+    });
+
+    // BOM 추가 (Excel에서 한글 깨짐 방지)
+    const BOM = "\uFEFF";
+    const csv = BOM + headers.join(",") + "\n" + rows.join("\n");
+
+    // 파일 다운로드
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `연구노트_${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // 날짜별 그룹화
   const groupedNotes = filteredNotes.reduce((groups, note) => {
     const date = note.created_at.split("T")[0];
@@ -522,10 +617,32 @@ export default function ResearchNotesPage() {
             }
           </p>
         </div>
-        <Button onClick={() => { resetForm(); setFormOpen(true); }}>
-          <Plus className="h-4 w-4 mr-2" />
-          새 노트 작성
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* 내보내기 드롭다운 */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                내보내기
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={exportToMarkdown}>
+                <FileText className="h-4 w-4 mr-2" />
+                마크다운 (.md)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={exportToCSV}>
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                CSV (.csv)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button onClick={() => { resetForm(); setFormOpen(true); }}>
+            <Plus className="h-4 w-4 mr-2" />
+            새 노트 작성
+          </Button>
+        </div>
       </div>
 
       {/* 통계 카드 */}
