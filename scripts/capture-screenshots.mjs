@@ -30,6 +30,24 @@ async function captureScreenshots() {
   await page.waitForURL('**/dashboard', { timeout: 30000 });
   await page.waitForLoadState('networkidle');
 
+  // 환영 팝업/토스트 닫기
+  console.log('환영 팝업 닫는 중...');
+  await page.waitForTimeout(2000); // 팝업이 나타날 때까지 대기
+
+  // 토스트 닫기 버튼 클릭 시도
+  try {
+    const closeButton = page.locator('[data-sonner-toast] button, [role="status"] button, .toast button, [data-dismiss]').first();
+    if (await closeButton.isVisible({ timeout: 1000 })) {
+      await closeButton.click();
+      await page.waitForTimeout(500);
+    }
+  } catch (e) {
+    // 팝업이 없으면 무시
+  }
+
+  // 토스트가 사라질 때까지 대기
+  await page.waitForTimeout(3000);
+
   // 2. 대시보드
   console.log('2. 대시보드 캡쳐...');
   await page.screenshot({
