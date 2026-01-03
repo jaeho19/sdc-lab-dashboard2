@@ -165,22 +165,26 @@ export function TimelineCalendar({
     if (milestone.endDate < weekStart || milestone.startDate > weekEnd)
       return null;
 
+    // 시작 위치 계산
     let startCol = 0;
-    let endCol = 6;
-
-    for (let i = 0; i < 7; i++) {
-      const dateStr = formatDateString(weekDates[i]);
-      if (dateStr >= milestone.startDate && startCol === 0) {
-        startCol = i;
-      }
-      if (dateStr <= milestone.endDate) {
-        endCol = i;
+    if (milestone.startDate > weekStart) {
+      for (let i = 0; i < 7; i++) {
+        if (formatDateString(weekDates[i]) >= milestone.startDate) {
+          startCol = i;
+          break;
+        }
       }
     }
 
-    // 마일스톤이 주 시작 전부터 시작하는 경우
-    if (milestone.startDate < weekStart) {
-      startCol = 0;
+    // 종료 위치 계산
+    let endCol = 6;
+    if (milestone.endDate < weekEnd) {
+      for (let i = 6; i >= 0; i--) {
+        if (formatDateString(weekDates[i]) <= milestone.endDate) {
+          endCol = i;
+          break;
+        }
+      }
     }
 
     return { startCol, span: endCol - startCol + 1 };
