@@ -151,25 +151,23 @@ export function TimelineCalendar({
 
   const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
 
-  // 마일스톤 바 위치 계산 (7열 기준, 주 단위)
-  function getMilestoneBarStyle(
-    milestone: MilestoneItem,
+  // 바 위치 계산 (7열 기준, 주 단위) - 마일스톤과 주간 목표 모두 사용
+  function getBarStyle(
+    startDate: string,
+    endDate: string,
     weekDates: Date[]
   ): { startCol: number; span: number } | null {
-    if (!milestone.startDate || !milestone.endDate) return null;
-
     const weekStart = formatDateString(weekDates[0]);
     const weekEnd = formatDateString(weekDates[6]);
 
     // 이 주와 겹치지 않으면 null
-    if (milestone.endDate < weekStart || milestone.startDate > weekEnd)
-      return null;
+    if (endDate < weekStart || startDate > weekEnd) return null;
 
     // 시작 위치 계산
     let startCol = 0;
-    if (milestone.startDate > weekStart) {
+    if (startDate > weekStart) {
       for (let i = 0; i < 7; i++) {
-        if (formatDateString(weekDates[i]) >= milestone.startDate) {
+        if (formatDateString(weekDates[i]) >= startDate) {
           startCol = i;
           break;
         }
@@ -178,9 +176,9 @@ export function TimelineCalendar({
 
     // 종료 위치 계산
     let endCol = 6;
-    if (milestone.endDate < weekEnd) {
+    if (endDate < weekEnd) {
       for (let i = 6; i >= 0; i--) {
-        if (formatDateString(weekDates[i]) <= milestone.endDate) {
+        if (formatDateString(weekDates[i]) <= endDate) {
           endCol = i;
           break;
         }
@@ -188,6 +186,24 @@ export function TimelineCalendar({
     }
 
     return { startCol, span: endCol - startCol + 1 };
+  }
+
+  // 주간 목표의 시작일 계산 (마감일 7일 전 또는 오늘 중 늦은 날짜)
+  function getGoalStartDate(deadline: string): string {
+    const deadlineDate = new Date(deadline);
+    const sevenDaysBeforeDeadline = new Date(deadlineDate);
+    sevenDaysBeforeDeadline.setDate(deadlineDate.getDate() - 6);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // 7일 전과 오늘 중 늦은 날짜 사용
+    const startDate = sevenDaysBeforeDeadline > today ? sevenDaysBeforeDeadline : today;
+    // 단, 시작일이 마감일보다 늦으면 마감일 사용
+    if (startDate > deadlineDate) {
+      return deadline;
+    }
+    return formatDateString(startDate);
   }
 
   return (
@@ -302,18 +318,21 @@ export function TimelineCalendar({
               })}
             </div>
 
-            {/* Week 1 마일스톤 바 */}
+            {/* Week 1 간트 바 (마일스톤 + 주간 목표) */}
             <div className="space-y-1">
+              {/* 마일스톤 바 */}
               {milestones.map((milestone) => {
-                const barStyle = getMilestoneBarStyle(
-                  milestone,
+                if (!milestone.startDate || !milestone.endDate) return null;
+                const barStyle = getBarStyle(
+                  milestone.startDate,
+                  milestone.endDate,
                   dates.slice(0, 7)
                 );
                 if (!barStyle) return null;
 
                 return (
                   <Link
-                    key={`w1-${milestone.id}`}
+                    key={`w1-m-${milestone.id}`}
                     href={`/research/${milestone.projectId}`}
                     className="block"
                   >
@@ -348,6 +367,63 @@ export function TimelineCalendar({
                                 <span className="truncate text-[10px]">
                                   {MILESTONE_STAGE_LABEL[milestone.stage] ||
                                     milestone.stage}
+                                </span>
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </Link>
+                );
+              })}
+
+              {/* 주간 목표 바 */}
+              {weeklyGoals.filter(g => !g.is_completed).map((goal) => {
+                const goalStart = getGoalStartDate(goal.deadline);
+                const barStyle = getBarStyle(
+                  goalStart,
+                  goal.deadline,
+                  dates.slice(0, 7)
+                );
+                if (!barStyle) return null;
+
+                return (
+                  <Link
+                    key={`w1-g-${goal.id}`}
+                    href={`/research/${goal.projectId}`}
+                    className="block"
+                  >
+                    <div className="grid grid-cols-7 gap-1">
+                      {Array.from({ length: 7 }).map((_, i) => {
+                        const isInRange =
+                          i >= barStyle.startCol &&
+                          i < barStyle.startCol + barStyle.span;
+                        const isStart = i === barStyle.startCol;
+                        const isEnd = i === barStyle.startCol + barStyle.span - 1;
+
+                        if (!isInRange) return <div key={i} />;
+
+                        return (
+                          <div
+                            key={i}
+                            className={`
+                              h-5 flex items-center text-xs text-white
+                              hover:opacity-80 transition-opacity cursor-pointer
+                              ${isStart ? "rounded-l pl-1" : ""}
+                              ${isEnd ? "rounded-r" : ""}
+                            `}
+                            style={{
+                              backgroundColor:
+                                TIMELINE_ITEM_CONFIG.weekly_goal.color,
+                            }}
+                            title={`${goal.content} - ${goal.projectTitle}`}
+                          >
+                            {isStart && (
+                              <span className="truncate flex items-center gap-0.5">
+                                <Target className="h-3 w-3 shrink-0" />
+                                <span className="truncate text-[10px]">
+                                  {goal.content}
                                 </span>
                               </span>
                             )}
@@ -420,18 +496,21 @@ export function TimelineCalendar({
               })}
             </div>
 
-            {/* Week 2 마일스톤 바 */}
+            {/* Week 2 간트 바 (마일스톤 + 주간 목표) */}
             <div className="space-y-1">
+              {/* 마일스톤 바 */}
               {milestones.map((milestone) => {
-                const barStyle = getMilestoneBarStyle(
-                  milestone,
+                if (!milestone.startDate || !milestone.endDate) return null;
+                const barStyle = getBarStyle(
+                  milestone.startDate,
+                  milestone.endDate,
                   dates.slice(7, 14)
                 );
                 if (!barStyle) return null;
 
                 return (
                   <Link
-                    key={`w2-${milestone.id}`}
+                    key={`w2-m-${milestone.id}`}
                     href={`/research/${milestone.projectId}`}
                     className="block"
                   >
@@ -466,6 +545,63 @@ export function TimelineCalendar({
                                 <span className="truncate text-[10px]">
                                   {MILESTONE_STAGE_LABEL[milestone.stage] ||
                                     milestone.stage}
+                                </span>
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </Link>
+                );
+              })}
+
+              {/* 주간 목표 바 */}
+              {weeklyGoals.filter(g => !g.is_completed).map((goal) => {
+                const goalStart = getGoalStartDate(goal.deadline);
+                const barStyle = getBarStyle(
+                  goalStart,
+                  goal.deadline,
+                  dates.slice(7, 14)
+                );
+                if (!barStyle) return null;
+
+                return (
+                  <Link
+                    key={`w2-g-${goal.id}`}
+                    href={`/research/${goal.projectId}`}
+                    className="block"
+                  >
+                    <div className="grid grid-cols-7 gap-1">
+                      {Array.from({ length: 7 }).map((_, i) => {
+                        const isInRange =
+                          i >= barStyle.startCol &&
+                          i < barStyle.startCol + barStyle.span;
+                        const isStart = i === barStyle.startCol;
+                        const isEnd = i === barStyle.startCol + barStyle.span - 1;
+
+                        if (!isInRange) return <div key={i} />;
+
+                        return (
+                          <div
+                            key={i}
+                            className={`
+                              h-5 flex items-center text-xs text-white
+                              hover:opacity-80 transition-opacity cursor-pointer
+                              ${isStart ? "rounded-l pl-1" : ""}
+                              ${isEnd ? "rounded-r" : ""}
+                            `}
+                            style={{
+                              backgroundColor:
+                                TIMELINE_ITEM_CONFIG.weekly_goal.color,
+                            }}
+                            title={`${goal.content} - ${goal.projectTitle}`}
+                          >
+                            {isStart && (
+                              <span className="truncate flex items-center gap-0.5">
+                                <Target className="h-3 w-3 shrink-0" />
+                                <span className="truncate text-[10px]">
+                                  {goal.content}
                                 </span>
                               </span>
                             )}
