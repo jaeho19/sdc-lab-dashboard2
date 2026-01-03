@@ -59,11 +59,12 @@ export type NotificationType =
   | "deadline_reminder"
   | "mentoring_comment"
   | "mentoring_like"
-  | "project_update";
+  | "project_update"
+  | "research_note_comment";
 
 export type WeeklyGoalStatus = "pending" | "completed";
 
-export type FileEntityType = "project" | "mentoring_post" | "flowchart";
+export type FileEntityType = "project" | "mentoring_post" | "flowchart" | "research_note";
 
 export type PeerReviewStatus = "pending" | "processing" | "completed" | "error";
 
@@ -613,6 +614,67 @@ export interface Database {
           content?: string;
           review_result?: string | null;
           review_status?: PeerReviewStatus;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      research_notes: {
+        Row: {
+          id: string;
+          project_id: string;
+          milestone_id: string;
+          author_id: string;
+          title: string;
+          content: string;
+          keywords: string[];
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          milestone_id: string;
+          author_id: string;
+          title: string;
+          content: string;
+          keywords?: string[];
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          milestone_id?: string;
+          author_id?: string;
+          title?: string;
+          content?: string;
+          keywords?: string[];
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      research_note_comments: {
+        Row: {
+          id: string;
+          note_id: string;
+          author_id: string;
+          content: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          note_id: string;
+          author_id: string;
+          content: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          note_id?: string;
+          author_id?: string;
+          content?: string;
           created_at?: string;
           updated_at?: string;
         };

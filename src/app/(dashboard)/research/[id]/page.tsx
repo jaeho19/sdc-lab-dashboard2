@@ -70,6 +70,7 @@ import Link from "next/link";
 import { WeeklyGoals } from "@/components/features/research/weekly-goals";
 import { ProjectTimeline } from "@/components/features/research/project-timeline";
 import { ResearchFlowchart } from "@/components/features/research/research-flowchart";
+import { ResearchNotesSection } from "@/components/features/research/research-notes-section";
 import { DeleteProjectButton } from "@/components/features/DeleteProjectButton";
 import type { MilestoneStage } from "@/types/database.types";
 
@@ -632,6 +633,16 @@ export default function ResearchDetailPage() {
         }))}
         projectDeadline={project.target_date}
         onRefresh={fetchData}
+      />
+
+      {/* 연구노트 */}
+      <ResearchNotesSection
+        projectId={id}
+        milestones={milestones.map((m) => ({
+          id: m.id,
+          stage: m.stage as MilestoneStage,
+        }))}
+        canEdit={true}
       />
 
       {/* 연구 흐름도 */}

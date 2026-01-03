@@ -7,8 +7,8 @@ export type EmploymentType = "full-time" | "part-time";
 export type ProjectCategory = "thesis" | "submission" | "revision" | "publication" | "other";
 export type ProjectStatus = "preparing" | "in_progress" | "under_review" | "revision" | "completed" | "on_hold";
 export type EventCategory = "meeting" | "deadline" | "seminar" | "holiday" | "personal" | "other";
-export type FileEntityType = "project" | "mentoring";
-export type NotificationType = "deadline" | "comment" | "like" | "project_update";
+export type FileEntityType = "project" | "mentoring" | "research_note";
+export type NotificationType = "deadline" | "comment" | "like" | "project_update" | "research_note_comment";
 export type PeerReviewStatus = "pending" | "processing" | "completed" | "error";
 
 export interface Member {
@@ -153,6 +153,27 @@ export interface PeerReview {
   content: string;
   review_result: string | null;
   review_status: PeerReviewStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ResearchNote {
+  id: string;
+  project_id: string;
+  milestone_id: string;
+  author_id: string;
+  title: string;
+  content: string;
+  keywords: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ResearchNoteComment {
+  id: string;
+  note_id: string;
+  author_id: string;
+  content: string;
   created_at: string;
   updated_at: string;
 }
@@ -482,6 +503,52 @@ export interface Database {
           content?: string;
           review_result?: string | null;
           review_status?: PeerReviewStatus;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      research_notes: {
+        Row: ResearchNote;
+        Insert: {
+          id?: string;
+          project_id: string;
+          milestone_id: string;
+          author_id: string;
+          title: string;
+          content: string;
+          keywords?: string[];
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          milestone_id?: string;
+          author_id?: string;
+          title?: string;
+          content?: string;
+          keywords?: string[];
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      research_note_comments: {
+        Row: ResearchNoteComment;
+        Insert: {
+          id?: string;
+          note_id: string;
+          author_id: string;
+          content: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          note_id?: string;
+          author_id?: string;
+          content?: string;
           created_at?: string;
           updated_at?: string;
         };
