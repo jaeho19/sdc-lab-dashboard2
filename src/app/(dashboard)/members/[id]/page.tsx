@@ -13,11 +13,12 @@ import {
   getProjectStatusLabel,
   formatDate,
 } from "@/lib/utils";
-import { Mail, GraduationCap, Calendar, FileText, Sparkles, Pencil, Plus, Clock, Plane, BookOpen as BookOpenIcon, Users, BarChart3 } from "lucide-react";
+import { Mail, GraduationCap, Calendar, FileText, Sparkles, Pencil, Plus, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import type { Database } from "@/types/database.types";
+import type { Database, CalendarCategory, MilestoneStage } from "@/types/database.types";
 import { DeleteProjectButton } from "@/components/features/DeleteProjectButton";
+import { TimelineCalendar } from "@/components/features/members/timeline-calendar";
 
 type Member = Database["public"]["Tables"]["members"]["Row"];
 
@@ -71,6 +72,7 @@ export default async function MemberDetailPage({
     .select(
       `
       role,
+      project_id,
       research_projects (
         id,
         title,
@@ -82,14 +84,133 @@ export default async function MemberDetailPage({
     )
     .eq("member_id", id);
 
-  // 개별 캘린더 이벤트 조회 (해당 멤버의 일정)
-  const { data: memberEvents } = await supabase
+  // 2주 날짜 범위 계산
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = today.toISOString().split("T")[0];
+  const twoWeeksLater = new Date(today);
+  twoWeeksLater.setDate(twoWeeksLater.getDate() + 14);
+  const twoWeeksLaterStr = twoWeeksLater.toISOString().split("T")[0];
+
+  // 프로젝트 ID 목록 (타입 명시)
+  const projectMembersList = (projectMembers || []) as Array<{
+    role: string;
+    project_id: string;
+    research_projects: {
+      id: string;
+      title: string;
+      status: string;
+      overall_progress: number;
+      created_by: string;
+    } | null;
+  }>;
+  const projectIds = projectMembersList
+    .map((pm) => pm.project_id)
+    .filter(Boolean);
+
+  // 주간 목표 조회
+  let weeklyGoalsData: Array<{
+    id: string;
+    content: string;
+    deadline: string;
+    linked_stage: MilestoneStage | null;
+    is_completed: boolean;
+    research_projects: { id: string; title: string } | null;
+  }> = [];
+
+  if (projectIds.length > 0) {
+    const { data } = await supabase
+      .from("weekly_goals")
+      .select(
+        `
+        id,
+        content,
+        deadline,
+        linked_stage,
+        is_completed,
+        research_projects (id, title)
+      `
+      )
+      .in("project_id", projectIds)
+      .gte("deadline", todayStr)
+      .lte("deadline", twoWeeksLaterStr)
+      .eq("is_completed", false)
+      .order("deadline", { ascending: true });
+
+    weeklyGoalsData = (data || []) as typeof weeklyGoalsData;
+  }
+
+  // 마일스톤 조회
+  let milestonesData: Array<{
+    id: string;
+    stage: MilestoneStage;
+    start_date: string | null;
+    end_date: string | null;
+    sort_order: number;
+    research_projects: { id: string; title: string } | null;
+  }> = [];
+
+  if (projectIds.length > 0) {
+    const { data } = await supabase
+      .from("milestones")
+      .select(
+        `
+        id,
+        stage,
+        start_date,
+        end_date,
+        sort_order,
+        research_projects (id, title)
+      `
+      )
+      .in("project_id", projectIds)
+      .not("start_date", "is", null)
+      .not("end_date", "is", null);
+
+    milestonesData = (data || []) as typeof milestonesData;
+  }
+
+  // 마일스톤 진행률 조회 (체크리스트 기반)
+  const milestoneIds = milestonesData.map((m) => m.id);
+  const checklistCounts: Record<string, { total: number; completed: number }> = {};
+
+  if (milestoneIds.length > 0) {
+    const { data: checklistItems } = await supabase
+      .from("checklist_items")
+      .select("milestone_id, is_completed")
+      .in("milestone_id", milestoneIds);
+
+    const checklistItemsList = (checklistItems || []) as Array<{
+      milestone_id: string;
+      is_completed: boolean;
+    }>;
+
+    checklistItemsList.forEach((item) => {
+      if (!checklistCounts[item.milestone_id]) {
+        checklistCounts[item.milestone_id] = { total: 0, completed: 0 };
+      }
+      checklistCounts[item.milestone_id].total++;
+      if (item.is_completed) {
+        checklistCounts[item.milestone_id].completed++;
+      }
+    });
+  }
+
+  // 개별 캘린더 이벤트 조회 (2주 범위)
+  const { data: memberEventsData } = await supabase
     .from("calendar_events")
     .select("*")
     .eq("member_id", id)
-    .gte("start_date", new Date().toISOString().split("T")[0])
-    .order("start_date", { ascending: true })
-    .limit(10);
+    .gte("start_datetime", todayStr)
+    .lte("start_datetime", twoWeeksLaterStr)
+    .order("start_datetime", { ascending: true });
+
+  const memberEvents = (memberEventsData || []) as Array<{
+    id: string;
+    title: string;
+    start_datetime: string;
+    category: string;
+  }>;
 
   // 멘토링 기록 조회 (해당 연구원이 대상인 멘토링)
   const { data: mentoringPosts } = await supabase
@@ -99,26 +220,8 @@ export default async function MemberDetailPage({
     .order("created_at", { ascending: false })
     .limit(5);
 
-  const projectList = (projectMembers || []) as Array<{
-    role: string;
-    research_projects: {
-      id: string;
-      title: string;
-      status: string;
-      overall_progress: number;
-      created_by: string;
-    } | null;
-  }>;
-
-  const eventList = (memberEvents || []) as Array<{
-    id: string;
-    title: string;
-    description: string | null;
-    start_date: string;
-    end_date: string | null;
-    all_day: boolean;
-    category: string;
-  }>;
+  // projectList는 위에서 정의한 projectMembersList 사용
+  const projectList = projectMembersList;
 
   const mentoringList = (mentoringPosts || []) as Array<{
     id: string;
@@ -126,6 +229,47 @@ export default async function MemberDetailPage({
     meeting_date: string | null;
     created_at: string;
   }>;
+
+  // Timeline용 데이터 변환
+  const timelineWeeklyGoals = weeklyGoalsData.map((goal) => ({
+    id: goal.id,
+    content: goal.content,
+    deadline: goal.deadline,
+    linked_stage: goal.linked_stage,
+    is_completed: goal.is_completed,
+    projectTitle: goal.research_projects?.title || "",
+    projectId: goal.research_projects?.id || "",
+  }));
+
+  const timelineMilestones = milestonesData
+    .filter((m) => {
+      // 2주 범위와 겹치는 마일스톤만 필터링
+      if (!m.start_date || !m.end_date) return false;
+      return m.start_date <= twoWeeksLaterStr && m.end_date >= todayStr;
+    })
+    .map((milestone) => {
+      const counts = checklistCounts[milestone.id] || { total: 0, completed: 0 };
+      const progress =
+        counts.total > 0
+          ? Math.round((counts.completed / counts.total) * 100)
+          : 0;
+      return {
+        id: milestone.id,
+        stage: milestone.stage,
+        startDate: milestone.start_date,
+        endDate: milestone.end_date,
+        progress,
+        projectTitle: milestone.research_projects?.title || "",
+        projectId: milestone.research_projects?.id || "",
+      };
+    });
+
+  const timelineCalendarEvents = (memberEvents || []).map((event) => ({
+    id: event.id,
+    title: event.title,
+    startDatetime: event.start_datetime,
+    category: event.category as CalendarCategory,
+  }));
 
   function getPositionBadgeVariant(position: string) {
     const variants: Record<string, "professor" | "post_doc" | "phd" | "researcher" | "ms"> = {
@@ -336,87 +480,13 @@ export default async function MemberDetailPage({
           </CardContent>
         </Card>
 
-        {/* 개별 캘린더 */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              개별 일정
-            </CardTitle>
-            {canEdit && (
-              <Link href={`/calendar?member=${id}`}>
-                <Button variant="outline" size="sm">
-                  <Plus className="h-4 w-4 mr-1" />
-                  일정 추가
-                </Button>
-              </Link>
-            )}
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {eventList.map((event) => {
-                const getCategoryIcon = (category: string) => {
-                  switch (category) {
-                    case "lab_meeting":
-                    case "seminar":
-                      return <Users className="h-4 w-4" />;
-                    case "vacation":
-                      return <Plane className="h-4 w-4" />;
-                    case "study":
-                      return <BookOpenIcon className="h-4 w-4" />;
-                    default:
-                      return <Clock className="h-4 w-4" />;
-                  }
-                };
-                const getCategoryLabel = (category: string) => {
-                  const labels: Record<string, string> = {
-                    lab_meeting: "미팅",
-                    conference: "학회",
-                    social: "친목",
-                    deadline: "마감",
-                    seminar: "세미나",
-                    study: "수업",
-                    field_trip: "출장",
-                    vacation: "휴가",
-                  };
-                  return labels[category] || category;
-                };
-                const formatEventDate = (dateStr: string) => {
-                  const date = new Date(dateStr);
-                  const month = date.getMonth() + 1;
-                  const day = date.getDate();
-                  const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
-                  const weekday = weekdays[date.getDay()];
-                  return `${month}/${day} (${weekday})`;
-                };
-                return (
-                  <div
-                    key={event.id}
-                    className="flex items-center gap-3 p-3 rounded-lg border"
-                  >
-                    <div className="text-muted-foreground">
-                      {getCategoryIcon(event.category)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{event.title}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatEventDate(event.start_date)}
-                      </p>
-                    </div>
-                    <Badge variant="outline" className="shrink-0">
-                      {getCategoryLabel(event.category)}
-                    </Badge>
-                  </div>
-                );
-              })}
-              {eventList.length === 0 && (
-                <p className="text-center text-muted-foreground py-4">
-                  예정된 일정이 없습니다.
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        {/* 타임라인 캘린더 */}
+        <TimelineCalendar
+          memberId={id}
+          weeklyGoals={timelineWeeklyGoals}
+          milestones={timelineMilestones}
+          calendarEvents={timelineCalendarEvents}
+        />
       </div>
 
       {/* 최근 멘토링 기록 */}

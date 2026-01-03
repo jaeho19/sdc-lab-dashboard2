@@ -108,6 +108,20 @@ export const CALENDAR_CATEGORY_CONFIG = {
   },
 } as const;
 
+// 타임라인 아이템 타입 설정
+export const TIMELINE_ITEM_CONFIG = {
+  weekly_goal: {
+    label: "주간 목표",
+    color: "#f59e0b",
+    bgClass: "bg-amber-500",
+  },
+  milestone: {
+    label: "마일스톤",
+    color: "#3b82f6",
+    bgClass: "bg-blue-500",
+  },
+} as const;
+
 // 파일 업로드 설정
 export const FILE_UPLOAD_CONFIG = {
   maxSize: 10 * 1024 * 1024, // 10MB
