@@ -22,13 +22,22 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   BookOpen,
   Calendar,
   Filter,
   FileText,
   ExternalLink,
   Loader2,
+  MoreVertical,
+  Pencil,
   Plus,
+  Trash2,
   Upload,
   User,
   X,
@@ -37,7 +46,7 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { createClient } from "@/lib/supabase/client";
-import { createResearchNote } from "@/lib/actions/research-notes";
+import { createResearchNote, updateResearchNote, deleteResearchNote } from "@/lib/actions/research-notes";
 import { getInitials } from "@/lib/utils";
 import { MILESTONE_STAGE_LABEL } from "@/lib/constants";
 import type { MilestoneStage } from "@/types/database.types";
@@ -117,6 +126,10 @@ export default function ResearchNotesPage() {
 
   // 미리보기 모드
   const [previewMode, setPreviewMode] = useState(false);
+
+  // 수정/삭제 상태
+  const [editingNote, setEditingNote] = useState<ResearchNote | null>(null);
+  const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -284,7 +297,7 @@ export default function ResearchNotesPage() {
     e.target.value = "";
   };
 
-  // 노트 저장
+  // 노트 저장 (생성 또는 수정)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle.trim() || !formContent.trim() || !formProjectId || !formStage) return;
@@ -292,25 +305,39 @@ export default function ResearchNotesPage() {
     setSaving(true);
     setFormError(null);
 
-    const result = await createResearchNote({
-      projectId: formProjectId,
-      stage: formStage,
-      title: formTitle.trim(),
-      content: formContent.trim(),
-      keywords: formKeywords,
-    });
+    if (editingNote) {
+      // 수정
+      const result = await updateResearchNote(editingNote.id, {
+        title: formTitle.trim(),
+        content: formContent.trim(),
+        keywords: formKeywords,
+        stage: formStage,
+      });
 
-    if (result.error) {
-      setFormError(result.error);
-      setSaving(false);
-      return;
+      if (result.error) {
+        setFormError(result.error);
+        setSaving(false);
+        return;
+      }
+    } else {
+      // 생성
+      const result = await createResearchNote({
+        projectId: formProjectId,
+        stage: formStage,
+        title: formTitle.trim(),
+        content: formContent.trim(),
+        keywords: formKeywords,
+      });
+
+      if (result.error) {
+        setFormError(result.error);
+        setSaving(false);
+        return;
+      }
     }
 
     // 성공 시 초기화
-    setFormTitle("");
-    setFormContent("");
-    setFormStage("literature_review");
-    setFormKeywords([]);
+    resetForm();
     setFormOpen(false);
     setSaving(false);
     fetchData();
@@ -324,6 +351,39 @@ export default function ResearchNotesPage() {
     setFormKeywords([]);
     setFormError(null);
     setPreviewMode(false);
+    setEditingNote(null);
+  };
+
+  // 수정 시작
+  const handleEdit = (note: ResearchNote) => {
+    setEditingNote(note);
+    setFormTitle(note.title);
+    setFormContent(note.content);
+    setFormStage(note.stage);
+    setFormKeywords(note.keywords);
+    setFormProjectId(note.project.id);
+    setFormOpen(true);
+  };
+
+  // 삭제
+  const handleDelete = async (noteId: string) => {
+    if (!confirm("정말로 이 연구노트를 삭제하시겠습니까?")) return;
+
+    setDeletingNoteId(noteId);
+    const result = await deleteResearchNote(noteId);
+
+    if (result.error) {
+      alert(result.error);
+    }
+
+    setDeletingNoteId(null);
+    fetchData();
+  };
+
+  // 권한 확인 (수정/삭제 가능 여부)
+  const canEditNote = (note: ResearchNote) => {
+    if (!currentUser) return false;
+    return isAdmin || note.author.id === currentUser.id;
   };
 
   // 날짜별 그룹화
@@ -588,12 +648,41 @@ export default function ResearchNotesPage() {
                                 </span>
                               </div>
                             </div>
-                            <Link href={`/research/${note.project.id}`}>
-                              <Button variant="ghost" size="sm">
-                                <ExternalLink className="h-4 w-4 mr-1" />
-                                프로젝트
-                              </Button>
-                            </Link>
+                            <div className="flex items-center gap-1">
+                              <Link href={`/research/${note.project.id}`}>
+                                <Button variant="ghost" size="sm">
+                                  <ExternalLink className="h-4 w-4 mr-1" />
+                                  프로젝트
+                                </Button>
+                              </Link>
+                              {canEditNote(note) && (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                      <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => handleEdit(note)}>
+                                      <Pencil className="h-4 w-4 mr-2" />
+                                      수정
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => handleDelete(note.id)}
+                                      className="text-red-600 focus:text-red-600"
+                                      disabled={deletingNoteId === note.id}
+                                    >
+                                      {deletingNoteId === note.id ? (
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="h-4 w-4 mr-2" />
+                                      )}
+                                      삭제
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
+                            </div>
                           </div>
 
                           {/* 본문 미리보기 */}
@@ -638,10 +727,13 @@ export default function ResearchNotesPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              새 연구노트 작성
+              {editingNote ? "연구노트 수정" : "새 연구노트 작성"}
             </DialogTitle>
             <p className="text-sm text-muted-foreground">
-              작성일: {todayDisplay}
+              {editingNote
+                ? `작성일: ${new Date(editingNote.created_at).toLocaleDateString("ko-KR")}`
+                : `작성일: ${todayDisplay}`
+              }
             </p>
           </DialogHeader>
 
@@ -653,10 +745,14 @@ export default function ResearchNotesPage() {
             )}
 
             <div className="grid grid-cols-2 gap-4">
-              {/* 프로젝트 선택 */}
+              {/* 프로젝트 선택 - 수정 시 변경 불가 */}
               <div className="space-y-2">
                 <Label>연구 프로젝트 *</Label>
-                <Select value={formProjectId} onValueChange={setFormProjectId}>
+                <Select
+                  value={formProjectId}
+                  onValueChange={setFormProjectId}
+                  disabled={!!editingNote}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="프로젝트 선택" />
                   </SelectTrigger>
@@ -668,6 +764,9 @@ export default function ResearchNotesPage() {
                     ))}
                   </SelectContent>
                 </Select>
+                {editingNote && (
+                  <p className="text-xs text-muted-foreground">프로젝트는 수정할 수 없습니다</p>
+                )}
               </div>
 
               {/* 연구 단계 선택 */}
