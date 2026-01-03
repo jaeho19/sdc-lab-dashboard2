@@ -75,7 +75,10 @@
       "Bash(netlify api:*)",
       "Bash(netlify env:list:*)",
       "Bash(netlify env:get:*)",
-      "Skill(ux-designer)"
+      "Skill(ux-designer)",
+      "Bash(git restore:*)",
+      "Bash(where:*)",
+      "Bash(npx playwright install chromium)"
     ]
   }
 }
