@@ -624,8 +624,9 @@ export interface Database {
         Row: {
           id: string;
           project_id: string;
-          milestone_id: string;
+          milestone_id: string | null;
           author_id: string;
+          stage: MilestoneStage;
           title: string;
           content: string;
           keywords: string[];
@@ -635,8 +636,9 @@ export interface Database {
         Insert: {
           id?: string;
           project_id: string;
-          milestone_id: string;
+          milestone_id?: string | null;
           author_id: string;
+          stage: MilestoneStage;
           title: string;
           content: string;
           keywords?: string[];
@@ -646,8 +648,9 @@ export interface Database {
         Update: {
           id?: string;
           project_id?: string;
-          milestone_id?: string;
+          milestone_id?: string | null;
           author_id?: string;
+          stage?: MilestoneStage;
           title?: string;
           content?: string;
           keywords?: string[];

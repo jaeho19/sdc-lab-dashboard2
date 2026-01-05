@@ -48,17 +48,18 @@ export async function createResearchNote(data: CreateNoteData) {
   }
 
   // 노트 생성
+  const insertData = {
+    project_id: data.projectId,
+    stage: data.stage,
+    milestone_id: data.milestoneId || null,
+    author_id: member.id,
+    title: data.title,
+    content: data.content,
+    keywords: data.keywords,
+  };
   const { data: noteData, error } = await supabase
     .from("research_notes")
-    .insert({
-      project_id: data.projectId,
-      stage: data.stage,
-      milestone_id: data.milestoneId || null,
-      author_id: member.id,
-      title: data.title,
-      content: data.content,
-      keywords: data.keywords,
-    } as any)
+    .insert(insertData as never)
     .select()
     .single();
 
@@ -116,9 +117,9 @@ export async function updateResearchNote(noteId: string, data: UpdateNoteData) {
     milestone_id: data.milestoneId || null,
     updated_at: new Date().toISOString(),
   };
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from("research_notes")
-    .update(updateData)
+    .update(updateData as never)
     .eq("id", noteId);
 
   if (error) {
