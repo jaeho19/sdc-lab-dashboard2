@@ -29,6 +29,9 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 import { deleteResearchNote, uploadNoteFile, deleteNoteFile } from "@/lib/actions/research-notes";
 import { formatDate, getInitials } from "@/lib/utils";
 import { MILESTONE_STAGE_LABEL } from "@/lib/constants";
@@ -248,11 +251,16 @@ export function ResearchNoteCard({
 
         <CollapsibleContent>
           <CardContent className="pt-2 space-y-4">
-            {/* 본문 (마크다운 렌더링) */}
-            <div className="prose prose-sm max-w-none dark:prose-invert pl-8">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {note.content}
-              </ReactMarkdown>
+            {/* 본문 (마크다운 렌더링 - 연구흐름도와 동일 스타일) */}
+            <div className="pl-8">
+              <div className="flowchart-content prose prose-sm max-w-none dark:prose-invert prose-p:text-muted-foreground prose-strong:text-foreground prose-code:text-primary prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-muted prose-pre:border">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm, remarkMath]}
+                  rehypePlugins={[rehypeKatex]}
+                >
+                  {note.content}
+                </ReactMarkdown>
+              </div>
             </div>
 
             {/* 첨부파일 */}
