@@ -173,6 +173,7 @@ export default async function DashboardPage() {
     deadline: string;
     linked_stage: string | null;
     project_id: string;
+    is_completed: boolean;
     research_projects: {
       id: string;
       title: string;
@@ -200,21 +201,31 @@ export default async function DashboardPage() {
       memberAvatarUrl: member?.avatar_url,
       projectId: project?.id,
       projectTitle: project?.title,
+      isCompleted: goal.is_completed,
     };
   });
 
-  // 캘린더 이벤트를 통합 마감일 형식으로 변환
-  const calendarDeadlines: UnifiedDeadlineItem[] = eventList.map((event) => ({
-    id: event.id,
-    type: "event" as const,
-    title: event.title,
-    date: event.start_date,
-    category: event.category,
-    memberName: event.member?.name || "Lab",
-    memberAvatarUrl: event.member?.avatar_url,
-    memberId: event.member_id || undefined,
-    isAllDay: event.all_day,
-  }));
+  // 캘린더 이벤트를 통합 마감일 형식으로 변환 (미래 일정만)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const calendarDeadlines: UnifiedDeadlineItem[] = eventList
+    .filter((event) => {
+      const eventDate = new Date(event.start_date);
+      eventDate.setHours(0, 0, 0, 0);
+      return eventDate >= today; // 오늘 포함, 과거 제외
+    })
+    .map((event) => ({
+      id: event.id,
+      type: "event" as const,
+      title: event.title,
+      date: event.start_date,
+      category: event.category,
+      memberName: event.member?.name || "Lab",
+      memberAvatarUrl: event.member?.avatar_url,
+      memberId: event.member_id || undefined,
+      isAllDay: event.all_day,
+    }));
 
   // 통합 마감일 목록 (날짜순 정렬)
   const unifiedDeadlines = [...goalDeadlines, ...calendarDeadlines]

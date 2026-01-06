@@ -19,13 +19,18 @@ export interface UnifiedDeadlineItem {
   category?: string;
   isAllDay?: boolean;
   memberId?: string;  // 추가: 일정 클릭 시 멤버 페이지로 이동
+  isCompleted?: boolean;  // 추가: 목표 완료 여부
 }
 
 interface UnifiedDeadlineViewProps {
   items: UnifiedDeadlineItem[];
 }
 
-function getDeadlineStatus(date: string): "overdue" | "today" | "soon" | "normal" {
+function getDeadlineStatus(
+  date: string,
+  type: "goal" | "event",
+  isCompleted?: boolean
+): "overdue" | "today" | "soon" | "normal" {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const targetDate = new Date(date);
@@ -33,7 +38,10 @@ function getDeadlineStatus(date: string): "overdue" | "today" | "soon" | "normal
 
   const diffDays = Math.ceil((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
-  if (diffDays < 0) return "overdue";
+  // 목표가 완료되지 않았고 기한이 지났으면 overdue
+  if (type === "goal" && !isCompleted && diffDays < 0) return "overdue";
+
+  // 일정은 오늘/미래만 표시되므로 overdue 없음
   if (diffDays === 0) return "today";
   if (diffDays <= 3) return "soon";
   return "normal";
@@ -82,8 +90,10 @@ export function UnifiedDeadlineView({ items }: UnifiedDeadlineViewProps) {
       <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
         <div className="space-y-3 max-h-[800px] overflow-y-auto pr-1">
           {items.map((item) => {
-            const status = getDeadlineStatus(item.date);
+            const status = getDeadlineStatus(item.date, item.type, item.isCompleted);
             const { month, day, weekday } = formatDate(item.date);
+
+            const isOverdue = status === "overdue" && item.type === "goal";
 
             const statusColors = {
               overdue: "bg-red-100 text-red-600",
@@ -95,7 +105,7 @@ export function UnifiedDeadlineView({ items }: UnifiedDeadlineViewProps) {
             const content = (
               <div
                 className={`flex items-center gap-3 md:gap-4 p-2 md:p-3 rounded-lg border hover:bg-muted/50 transition-colors ${
-                  status === "overdue" ? "border-red-200" : ""
+                  isOverdue ? "border-red-300 bg-red-50/50" : ""
                 }`}
               >
                 {/* Date Box */}
@@ -117,8 +127,16 @@ export function UnifiedDeadlineView({ items }: UnifiedDeadlineViewProps) {
                     <span className="text-xs md:text-sm font-medium truncate">
                       {item.memberName}
                     </span>
+                    {/* 지연 알림 배지 */}
+                    {isOverdue && (
+                      <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                        지연됨
+                      </Badge>
+                    )}
                   </div>
-                  <p className="text-sm md:text-base font-medium truncate">
+                  <p className={`text-sm md:text-base font-medium truncate ${
+                    isOverdue ? "text-red-700" : ""
+                  }`}>
                     {item.title}
                   </p>
                   {item.projectTitle && (
@@ -131,7 +149,10 @@ export function UnifiedDeadlineView({ items }: UnifiedDeadlineViewProps) {
                 {/* Type Badge */}
                 <div className="flex-shrink-0">
                   {item.type === "goal" ? (
-                    <Badge variant="default" className="text-xs">
+                    <Badge
+                      variant={isOverdue ? "destructive" : "default"}
+                      className="text-xs"
+                    >
                       <Target className="h-3 w-3 mr-1" />
                       목표
                     </Badge>
