@@ -42,13 +42,30 @@ export default async function DashboardPage() {
     .order("updated_at", { ascending: false });
 
   // 모든 캘린더 이벤트 조회 (캘린더 페이지와 동일)
-  const { data: upcomingEvents } = await supabase
+  const { data: upcomingEvents, error: eventsError } = await supabase
     .from("calendar_events")
-    .select(`
-      *,
-      member:members(id, name, avatar_url)
-    `)
+    .select("*")
     .order("start_date", { ascending: true });
+
+  if (eventsError) {
+    console.error("Calendar events fetch error:", eventsError);
+  }
+
+  // 멤버 정보를 별도로 조회
+  const memberIds = (upcomingEvents || [])
+    .map((e: { member_id: string | null }) => e.member_id)
+    .filter((id): id is string => id !== null);
+
+  const { data: eventMembers } = memberIds.length > 0
+    ? await supabase
+        .from("members")
+        .select("id, name, avatar_url")
+        .in("id", memberIds)
+    : { data: [] };
+
+  const memberMap = new Map(
+    (eventMembers || []).map((m: { id: string; name: string; avatar_url: string | null }) => [m.id, m])
+  );
 
   // 모든 멤버의 미완료 목표 조회
   const todayStr = new Date().toISOString().split("T")[0];
@@ -123,7 +140,18 @@ export default async function DashboardPage() {
     (p) => p.submission_status && p.submission_status !== "not_submitted"
   );
 
-  const eventList = (upcomingEvents || []) as Array<{
+  const eventList = (upcomingEvents || []).map((event: {
+    id: string;
+    title: string;
+    start_date: string;
+    end_date: string | null;
+    category: CalendarCategory;
+    all_day: boolean;
+    member_id: string | null;
+  }) => ({
+    ...event,
+    member: event.member_id ? memberMap.get(event.member_id) || null : null,
+  })) as Array<{
     id: string;
     title: string;
     start_date: string;
