@@ -41,21 +41,14 @@ export default async function DashboardPage() {
     .select("*")
     .order("updated_at", { ascending: false });
 
-  // 모든 캘린더 이벤트 조회 (최근 3개월)
-  const now = new Date();
-  const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const threeMonthsLater = new Date(now.getFullYear(), now.getMonth() + 2, 0);
-
+  // 모든 캘린더 이벤트 조회 (캘린더 페이지와 동일)
   const { data: upcomingEvents } = await supabase
     .from("calendar_events")
     .select(`
       *,
       member:members(id, name, avatar_url)
     `)
-    .gte("start_date", threeMonthsAgo.toISOString().split("T")[0])
-    .lte("start_date", threeMonthsLater.toISOString().split("T")[0])
-    .order("start_date", { ascending: true })
-    .limit(200);
+    .order("start_date", { ascending: true });
 
   // 모든 멤버의 미완료 목표 조회
   const todayStr = new Date().toISOString().split("T")[0];
