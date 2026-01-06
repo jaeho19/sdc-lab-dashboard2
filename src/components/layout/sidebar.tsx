@@ -116,7 +116,7 @@ function SidebarContent({
       const { data } = await supabase
         .from("members")
         .select("id, name, avatar_url")
-        .eq("employment_type", "full_time")
+        .eq("employment_type", "full-time")
         .eq("status", "active")
         .order("name");
 
