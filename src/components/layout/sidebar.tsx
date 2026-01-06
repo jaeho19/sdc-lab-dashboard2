@@ -113,12 +113,18 @@ function SidebarContent({
   useEffect(() => {
     async function loadFulltimeMembers() {
       const supabase = createClient();
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("members")
-        .select("id, name, avatar_url")
+        .select("id, name, avatar_url, position")
         .eq("employment_type", "full-time")
         .eq("status", "active")
+        .neq("position", "professor")
         .order("name");
+
+      if (error) {
+        console.error("Failed to load fulltime members:", error);
+        return;
+      }
 
       if (data) {
         setFulltimeMembers(data as FulltimeMember[]);
@@ -192,7 +198,7 @@ function SidebarContent({
                   </button>
 
                   {/* 풀타임 멤버 목록 */}
-                  {isMembersExpanded && fulltimeMembers.length > 0 && (
+                  {isMembersExpanded && (
                     <div className="ml-4 mt-1 space-y-0.5">
                       {/* 전체 멤버 보기 링크 */}
                       <Link
