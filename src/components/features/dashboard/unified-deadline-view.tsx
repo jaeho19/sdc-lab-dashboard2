@@ -68,7 +68,7 @@ export function UnifiedDeadlineView({ items }: UnifiedDeadlineViewProps) {
   }
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card>
       <CardHeader className="p-4 md:p-6">
         <CardTitle className="flex items-center gap-2 text-base md:text-lg">
           <Clock className="h-4 w-4 md:h-5 md:w-5" />
@@ -78,8 +78,8 @@ export function UnifiedDeadlineView({ items }: UnifiedDeadlineViewProps) {
           </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-4 pt-0 md:p-6 md:pt-0 flex-1 overflow-hidden">
-        <div className="space-y-3 h-full overflow-y-auto pr-1">
+      <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
+        <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
           {items.map((item) => {
             const status = getDeadlineStatus(item.date);
             const { month, day, weekday } = formatDate(item.date);
