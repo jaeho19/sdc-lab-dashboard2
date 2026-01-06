@@ -17,6 +17,7 @@ import {
   CALENDAR_CATEGORY_CONFIG,
   TIMELINE_ITEM_CONFIG,
   MILESTONE_STAGE_LABEL,
+  MILESTONE_STAGE_COLORS,
 } from "@/lib/constants";
 import type { CalendarCategory, MilestoneStage } from "@/types/database.types";
 
@@ -330,13 +331,15 @@ export function TimelineCalendar({
                 );
                 if (!barStyle) return null;
 
+                const stageColor = MILESTONE_STAGE_COLORS[milestone.stage] || MILESTONE_STAGE_COLORS.default;
+
                 return (
                   <Link
                     key={`w1-m-${milestone.id}`}
                     href={`/research/${milestone.projectId}`}
                     className="block"
                   >
-                    <div className="grid grid-cols-7 gap-1">
+                    <div className="grid grid-cols-7">
                       {Array.from({ length: 7 }).map((_, i) => {
                         const isInRange =
                           i >= barStyle.startCol &&
@@ -344,27 +347,26 @@ export function TimelineCalendar({
                         const isStart = i === barStyle.startCol;
                         const isEnd = i === barStyle.startCol + barStyle.span - 1;
 
-                        if (!isInRange) return <div key={i} />;
+                        if (!isInRange) return <div key={i} className="h-6" />;
 
                         return (
                           <div
                             key={i}
                             className={`
-                              h-5 flex items-center text-xs text-white
+                              h-6 flex items-center text-xs text-gray-700
                               hover:opacity-80 transition-opacity cursor-pointer
-                              ${isStart ? "rounded-l pl-1" : ""}
-                              ${isEnd ? "rounded-r" : ""}
+                              ${isStart ? "rounded-l-md pl-1.5" : ""}
+                              ${isEnd ? "rounded-r-md" : ""}
                             `}
                             style={{
-                              backgroundColor:
-                                TIMELINE_ITEM_CONFIG.milestone.color,
+                              backgroundColor: stageColor,
                             }}
                             title={`${MILESTONE_STAGE_LABEL[milestone.stage] || milestone.stage} - ${milestone.projectTitle} (${milestone.progress}%)`}
                           >
                             {isStart && (
-                              <span className="truncate flex items-center gap-0.5">
+                              <span className="truncate flex items-center gap-1">
                                 <Flag className="h-3 w-3 shrink-0" />
-                                <span className="truncate text-[10px]">
+                                <span className="truncate text-[11px] font-medium">
                                   {MILESTONE_STAGE_LABEL[milestone.stage] ||
                                     milestone.stage}
                                 </span>
@@ -388,13 +390,18 @@ export function TimelineCalendar({
                 );
                 if (!barStyle) return null;
 
+                // linked_stage에 따라 파스텔 색상 적용, 없으면 기본 색상
+                const goalColor = goal.linked_stage
+                  ? MILESTONE_STAGE_COLORS[goal.linked_stage] || MILESTONE_STAGE_COLORS.default
+                  : MILESTONE_STAGE_COLORS.default;
+
                 return (
                   <Link
                     key={`w1-g-${goal.id}`}
                     href={`/research/${goal.projectId}`}
                     className="block"
                   >
-                    <div className="grid grid-cols-7 gap-1">
+                    <div className="grid grid-cols-7">
                       {Array.from({ length: 7 }).map((_, i) => {
                         const isInRange =
                           i >= barStyle.startCol &&
@@ -402,27 +409,26 @@ export function TimelineCalendar({
                         const isStart = i === barStyle.startCol;
                         const isEnd = i === barStyle.startCol + barStyle.span - 1;
 
-                        if (!isInRange) return <div key={i} />;
+                        if (!isInRange) return <div key={i} className="h-6" />;
 
                         return (
                           <div
                             key={i}
                             className={`
-                              h-5 flex items-center text-xs text-white
+                              h-6 flex items-center text-xs text-gray-700
                               hover:opacity-80 transition-opacity cursor-pointer
-                              ${isStart ? "rounded-l pl-1" : ""}
-                              ${isEnd ? "rounded-r" : ""}
+                              ${isStart ? "rounded-l-md pl-1.5" : ""}
+                              ${isEnd ? "rounded-r-md" : ""}
                             `}
                             style={{
-                              backgroundColor:
-                                TIMELINE_ITEM_CONFIG.weekly_goal.color,
+                              backgroundColor: goalColor,
                             }}
                             title={`${goal.content} - ${goal.projectTitle}`}
                           >
                             {isStart && (
-                              <span className="truncate flex items-center gap-0.5">
+                              <span className="truncate flex items-center gap-1">
                                 <Target className="h-3 w-3 shrink-0" />
-                                <span className="truncate text-[10px]">
+                                <span className="truncate text-[11px] font-medium">
                                   {goal.content}
                                 </span>
                               </span>
@@ -508,13 +514,15 @@ export function TimelineCalendar({
                 );
                 if (!barStyle) return null;
 
+                const stageColor = MILESTONE_STAGE_COLORS[milestone.stage] || MILESTONE_STAGE_COLORS.default;
+
                 return (
                   <Link
                     key={`w2-m-${milestone.id}`}
                     href={`/research/${milestone.projectId}`}
                     className="block"
                   >
-                    <div className="grid grid-cols-7 gap-1">
+                    <div className="grid grid-cols-7">
                       {Array.from({ length: 7 }).map((_, i) => {
                         const isInRange =
                           i >= barStyle.startCol &&
@@ -522,27 +530,26 @@ export function TimelineCalendar({
                         const isStart = i === barStyle.startCol;
                         const isEnd = i === barStyle.startCol + barStyle.span - 1;
 
-                        if (!isInRange) return <div key={i} />;
+                        if (!isInRange) return <div key={i} className="h-6" />;
 
                         return (
                           <div
                             key={i}
                             className={`
-                              h-5 flex items-center text-xs text-white
+                              h-6 flex items-center text-xs text-gray-700
                               hover:opacity-80 transition-opacity cursor-pointer
-                              ${isStart ? "rounded-l pl-1" : ""}
-                              ${isEnd ? "rounded-r" : ""}
+                              ${isStart ? "rounded-l-md pl-1.5" : ""}
+                              ${isEnd ? "rounded-r-md" : ""}
                             `}
                             style={{
-                              backgroundColor:
-                                TIMELINE_ITEM_CONFIG.milestone.color,
+                              backgroundColor: stageColor,
                             }}
                             title={`${MILESTONE_STAGE_LABEL[milestone.stage] || milestone.stage} - ${milestone.projectTitle} (${milestone.progress}%)`}
                           >
                             {isStart && (
-                              <span className="truncate flex items-center gap-0.5">
+                              <span className="truncate flex items-center gap-1">
                                 <Flag className="h-3 w-3 shrink-0" />
-                                <span className="truncate text-[10px]">
+                                <span className="truncate text-[11px] font-medium">
                                   {MILESTONE_STAGE_LABEL[milestone.stage] ||
                                     milestone.stage}
                                 </span>
@@ -566,13 +573,18 @@ export function TimelineCalendar({
                 );
                 if (!barStyle) return null;
 
+                // linked_stage에 따라 파스텔 색상 적용, 없으면 기본 색상
+                const goalColor = goal.linked_stage
+                  ? MILESTONE_STAGE_COLORS[goal.linked_stage] || MILESTONE_STAGE_COLORS.default
+                  : MILESTONE_STAGE_COLORS.default;
+
                 return (
                   <Link
                     key={`w2-g-${goal.id}`}
                     href={`/research/${goal.projectId}`}
                     className="block"
                   >
-                    <div className="grid grid-cols-7 gap-1">
+                    <div className="grid grid-cols-7">
                       {Array.from({ length: 7 }).map((_, i) => {
                         const isInRange =
                           i >= barStyle.startCol &&
@@ -580,27 +592,26 @@ export function TimelineCalendar({
                         const isStart = i === barStyle.startCol;
                         const isEnd = i === barStyle.startCol + barStyle.span - 1;
 
-                        if (!isInRange) return <div key={i} />;
+                        if (!isInRange) return <div key={i} className="h-6" />;
 
                         return (
                           <div
                             key={i}
                             className={`
-                              h-5 flex items-center text-xs text-white
+                              h-6 flex items-center text-xs text-gray-700
                               hover:opacity-80 transition-opacity cursor-pointer
-                              ${isStart ? "rounded-l pl-1" : ""}
-                              ${isEnd ? "rounded-r" : ""}
+                              ${isStart ? "rounded-l-md pl-1.5" : ""}
+                              ${isEnd ? "rounded-r-md" : ""}
                             `}
                             style={{
-                              backgroundColor:
-                                TIMELINE_ITEM_CONFIG.weekly_goal.color,
+                              backgroundColor: goalColor,
                             }}
                             title={`${goal.content} - ${goal.projectTitle}`}
                           >
                             {isStart && (
-                              <span className="truncate flex items-center gap-0.5">
+                              <span className="truncate flex items-center gap-1">
                                 <Target className="h-3 w-3 shrink-0" />
-                                <span className="truncate text-[10px]">
+                                <span className="truncate text-[11px] font-medium">
                                   {goal.content}
                                 </span>
                               </span>
@@ -615,29 +626,38 @@ export function TimelineCalendar({
             </div>
           </div>
 
-          {/* Legend */}
-          <div className="flex items-center gap-4 mt-3 pt-2 border-t text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <span
-                className="w-3 h-3 rounded"
-                style={{
-                  backgroundColor: TIMELINE_ITEM_CONFIG.milestone.color,
-                }}
-              />
-              <span>마일스톤</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span
-                className="w-2 h-2 rounded-full"
-                style={{
-                  backgroundColor: TIMELINE_ITEM_CONFIG.weekly_goal.color,
-                }}
-              />
-              <span>주간 목표</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span>일정</span>
+          {/* Legend - 카테고리별 색상 */}
+          <div className="mt-3 pt-2 border-t">
+            <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">카테고리:</span>
+              <div className="flex items-center gap-1">
+                <span className="w-3 h-3 rounded" style={{ backgroundColor: MILESTONE_STAGE_COLORS.literature_review }} />
+                <span>문헌조사</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-3 h-3 rounded" style={{ backgroundColor: MILESTONE_STAGE_COLORS.methodology }} />
+                <span>방법론</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-3 h-3 rounded" style={{ backgroundColor: MILESTONE_STAGE_COLORS.data_collection }} />
+                <span>데이터수집</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-3 h-3 rounded" style={{ backgroundColor: MILESTONE_STAGE_COLORS.analysis }} />
+                <span>분석</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-3 h-3 rounded" style={{ backgroundColor: MILESTONE_STAGE_COLORS.draft_writing }} />
+                <span>초고작성</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-3 h-3 rounded" style={{ backgroundColor: MILESTONE_STAGE_COLORS.submission }} />
+                <span>투고</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span>일정</span>
+              </div>
             </div>
           </div>
         </div>

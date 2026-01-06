@@ -13,7 +13,7 @@ import {
   getProjectStatusLabel,
   formatDate,
 } from "@/lib/utils";
-import { Mail, GraduationCap, Calendar, FileText, Sparkles, Pencil, Plus, BarChart3 } from "lucide-react";
+import { Mail, GraduationCap, Calendar, FileText, Sparkles, Pencil, Plus, BarChart3, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import type { Database, CalendarCategory, MilestoneStage } from "@/types/database.types";
@@ -491,8 +491,19 @@ export default async function MemberDetailPage({
 
       {/* 최근 멘토링 기록 */}
       <Card>
-        <CardHeader>
-          <CardTitle>최근 멘토링 기록</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            최근 멘토링 기록
+          </CardTitle>
+          {isAdmin && (
+            <Link href={`/mentoring/new?target=${id}`}>
+              <Button variant="outline" size="sm">
+                <Plus className="h-4 w-4 mr-1" />
+                멘토링 기록 작성
+              </Button>
+            </Link>
+          )}
         </CardHeader>
         <CardContent>
           <div className="space-y-4">

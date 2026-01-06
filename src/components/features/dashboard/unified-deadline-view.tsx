@@ -18,6 +18,7 @@ export interface UnifiedDeadlineItem {
   projectTitle?: string;
   category?: string;
   isAllDay?: boolean;
+  memberId?: string;  // 추가: 일정 클릭 시 멤버 페이지로 이동
 }
 
 interface UnifiedDeadlineViewProps {
@@ -144,10 +145,22 @@ export function UnifiedDeadlineView({ items }: UnifiedDeadlineViewProps) {
               </div>
             );
 
-            // Wrap in Link if it's a goal with projectId
+            // Wrap in Link based on type
             if (item.type === "goal" && item.projectId) {
               return (
                 <Link key={item.id} href={`/research/${item.projectId}`} className="block">
+                  {content}
+                </Link>
+              );
+            }
+
+            if (item.type === "event") {
+              // event에 memberId가 있으면 멤버 페이지로, 없으면 캘린더로
+              const eventLink = item.memberId
+                ? `/members/${item.memberId}`
+                : "/calendar";
+              return (
+                <Link key={item.id} href={eventLink} className="block">
                   {content}
                 </Link>
               );

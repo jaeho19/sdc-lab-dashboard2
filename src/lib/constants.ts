@@ -72,6 +72,19 @@ export const MILESTONE_STAGE_LABEL = {
   publication: "출판",
 } as const;
 
+// Milestone Stage 파스텔톤 색상
+export const MILESTONE_STAGE_COLORS = {
+  literature_review: "#FFB3BA",  // 연한 핑크 - 문헌조사
+  methodology: "#BAFFC9",        // 연한 민트 - 방법론 설계
+  data_collection: "#BAE1FF",    // 연한 블루 - 데이터 수집
+  analysis: "#FFFFBA",           // 연한 옐로우 - 분석
+  draft_writing: "#FFDFBa",      // 연한 피치 - 초고 작성
+  submission: "#E2BAFF",         // 연한 라벤더 - 투고
+  review_revision: "#C9F0FF",    // 연한 스카이 - 심사 수정
+  publication: "#D4EDDA",        // 연한 그린 - 출판
+  default: "#E5E7EB",            // 기본 연한 회색
+} as const;
+
 // Calendar Category 라벨 및 색상
 export const CALENDAR_CATEGORY_CONFIG = {
   lab_meeting: {

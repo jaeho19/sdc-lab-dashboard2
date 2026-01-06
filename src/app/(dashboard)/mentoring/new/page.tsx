@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useRef, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Plus, X, Paperclip, Upload, File } from "lucide-react";
+import { ArrowLeft, Plus, X, Paperclip, Upload, File, User } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getInitials } from "@/lib/utils";
 
 const ALLOWED_FILE_TYPES = [
   "application/pdf",
@@ -22,8 +24,17 @@ const ALLOWED_FILE_TYPES = [
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
+interface TargetMember {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+}
+
 export default function NewMentoringPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const targetMemberId = searchParams.get("target");
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +45,27 @@ export default function NewMentoringPage() {
   const [nextSteps, setNextSteps] = useState<string[]>([]);
   const [newStep, setNewStep] = useState("");
   const [files, setFiles] = useState<File[]>([]);
+  const [targetMember, setTargetMember] = useState<TargetMember | null>(null);
+
+  // target 멤버 정보 조회
+  useEffect(() => {
+    async function fetchTargetMember() {
+      if (!targetMemberId) return;
+
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("members")
+        .select("id, name, avatar_url")
+        .eq("id", targetMemberId)
+        .single();
+
+      if (data) {
+        setTargetMember(data as TargetMember);
+      }
+    }
+
+    fetchTargetMember();
+  }, [targetMemberId]);
 
   function addNextStep() {
     if (newStep.trim()) {
@@ -118,6 +150,7 @@ export default function NewMentoringPage() {
       .from("mentoring_posts")
       .insert({
         author_id: memberData.id,
+        target_member_id: targetMemberId || memberData.id,  // target이 없으면 작성자 본인
         content,
         meeting_date: meetingDate,
         professor_comment: professorComments || null,
@@ -166,11 +199,13 @@ export default function NewMentoringPage() {
     router.push(`/mentoring/${postData.id}`);
   }
 
+  const backUrl = targetMemberId ? `/members/${targetMemberId}` : "/mentoring";
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/mentoring">
+        <Link href={backUrl}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -180,10 +215,31 @@ export default function NewMentoringPage() {
             새 멘토링 기록 작성
           </h1>
           <p className="text-muted-foreground">
-            멘토링 내용을 공유하세요
+            {targetMember ? `${targetMember.name}님에 대한 ` : ""}멘토링 내용을 공유하세요
           </p>
         </div>
       </div>
+
+      {/* 대상 멤버 표시 */}
+      {targetMember && (
+        <Card className="bg-muted/30">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-3">
+              <User className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">대상 연구원:</span>
+              <div className="flex items-center gap-2">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={targetMember.avatar_url || undefined} />
+                  <AvatarFallback className="text-xs">
+                    {getInitials(targetMember.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="font-medium">{targetMember.name}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
@@ -339,7 +395,7 @@ export default function NewMentoringPage() {
               <Button type="submit" disabled={isLoading}>
                 {isLoading ? "저장 중..." : "저장"}
               </Button>
-              <Link href="/mentoring">
+              <Link href={backUrl}>
                 <Button type="button" variant="outline" disabled={isLoading}>
                   취소
                 </Button>

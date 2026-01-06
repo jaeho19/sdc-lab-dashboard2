@@ -43,7 +43,10 @@ export default async function DashboardPage() {
 
   const { data: upcomingEvents } = await supabase
     .from("calendar_events")
-    .select("*")
+    .select(`
+      *,
+      member:members(id, name, avatar_url)
+    `)
     .gte("start_date", new Date().toISOString())
     .order("start_date", { ascending: true })
     .limit(10);
@@ -128,6 +131,12 @@ export default async function DashboardPage() {
     end_date: string | null;
     category: CalendarCategory;
     all_day: boolean;
+    member_id: string | null;
+    member: {
+      id: string;
+      name: string;
+      avatar_url: string | null;
+    } | null;
   }>;
 
   // 목표를 통합 마감일 형식으로 변환
@@ -174,7 +183,9 @@ export default async function DashboardPage() {
     title: event.title,
     date: event.start_date,
     category: event.category,
-    memberName: "Lab",
+    memberName: event.member?.name || "Lab",
+    memberAvatarUrl: event.member?.avatar_url,
+    memberId: event.member_id || undefined,
     isAllDay: event.all_day,
   }));
 

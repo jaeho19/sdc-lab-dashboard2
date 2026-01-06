@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -19,11 +20,14 @@ import {
   Download,
   Home,
   BookOpen,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { createClient } from "@/lib/supabase/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,6 +47,12 @@ import { getInitials, getPositionLabel } from "@/lib/utils";
 import type { Database } from "@/types/database.types";
 
 type Member = Database["public"]["Tables"]["members"]["Row"];
+
+interface FulltimeMember {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+}
 
 interface SidebarProps {
   member: Member;
@@ -96,6 +106,27 @@ function SidebarContent({
 }) {
   const pathname = usePathname();
   const isAdmin = member.position === "professor";
+  const [fulltimeMembers, setFulltimeMembers] = useState<FulltimeMember[]>([]);
+  const [isMembersExpanded, setIsMembersExpanded] = useState(true);
+
+  // 풀타임 멤버 목록 로드
+  useEffect(() => {
+    async function loadFulltimeMembers() {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("members")
+        .select("id, name, avatar_url")
+        .eq("employment_type", "full_time")
+        .eq("status", "active")
+        .order("name");
+
+      if (data) {
+        setFulltimeMembers(data as FulltimeMember[]);
+      }
+    }
+
+    loadFulltimeMembers();
+  }, []);
 
   async function handleLogout() {
     await logout();
@@ -135,21 +166,92 @@ function SidebarContent({
       <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto">
         {navigation.map((item) => {
           const isActive = pathname.startsWith(item.href);
+          const isMembers = item.name === "Members";
+
           return (
-            <Link
-              key={item.name}
-              href={item.href}
-              onClick={onLinkClick}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-sidebar-primary text-white"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent"
+            <div key={item.name}>
+              {isMembers && !isCollapsed ? (
+                <>
+                  {/* Members 메뉴 with 펼침/접기 */}
+                  <button
+                    onClick={() => setIsMembersExpanded(!isMembersExpanded)}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors w-full",
+                      isActive
+                        ? "bg-sidebar-primary text-white"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent"
+                    )}
+                  >
+                    <item.icon className="h-5 w-5 shrink-0" />
+                    <span className="flex-1 text-left">{item.name}</span>
+                    {isMembersExpanded ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                  </button>
+
+                  {/* 풀타임 멤버 목록 */}
+                  {isMembersExpanded && fulltimeMembers.length > 0 && (
+                    <div className="ml-4 mt-1 space-y-0.5">
+                      {/* 전체 멤버 보기 링크 */}
+                      <Link
+                        href="/members"
+                        onClick={onLinkClick}
+                        className={cn(
+                          "flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                          pathname === "/members"
+                            ? "bg-sidebar-accent text-sidebar-foreground"
+                            : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                        )}
+                      >
+                        <Users className="h-3.5 w-3.5" />
+                        <span>전체 멤버</span>
+                      </Link>
+                      {/* 풀타임 멤버들 */}
+                      {fulltimeMembers.map((m) => {
+                        const isMemberActive = pathname === `/members/${m.id}`;
+                        return (
+                          <Link
+                            key={m.id}
+                            href={`/members/${m.id}`}
+                            onClick={onLinkClick}
+                            className={cn(
+                              "flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                              isMemberActive
+                                ? "bg-sidebar-accent text-sidebar-foreground"
+                                : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                            )}
+                          >
+                            <Avatar className="h-5 w-5">
+                              <AvatarImage src={m.avatar_url || undefined} />
+                              <AvatarFallback className="bg-sidebar-primary text-white text-[10px]">
+                                {getInitials(m.name)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="truncate">{m.name}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <Link
+                  href={item.href}
+                  onClick={onLinkClick}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-sidebar-primary text-white"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent"
+                  )}
+                >
+                  <item.icon className="h-5 w-5 shrink-0" />
+                  {!isCollapsed && <span>{item.name}</span>}
+                </Link>
               )}
-            >
-              <item.icon className="h-5 w-5 shrink-0" />
-              {!isCollapsed && <span>{item.name}</span>}
-            </Link>
+            </div>
           );
         })}
 

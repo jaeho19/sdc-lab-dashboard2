@@ -160,17 +160,11 @@ export default function MentoringPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Community Feed</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Mentoring Records</h1>
           <p className="text-sm md:text-base text-muted-foreground">
-            Share and discuss research progress
+            멘토링 기록은 각 멤버 페이지에서 작성할 수 있습니다
           </p>
         </div>
-        <Link href="/mentoring/new">
-          <Button size="sm" className="md:h-10 md:px-4 md:text-base">
-            <Plus className="h-4 w-4 mr-1 md:mr-2" />
-            New Post
-          </Button>
-        </Link>
       </div>
 
       {/* Search */}
@@ -200,19 +194,11 @@ export default function MentoringPage() {
           <Card>
             <CardContent className="py-8 md:py-12">
               <div className="text-center">
-                <p className="text-muted-foreground mb-4 text-sm md:text-base">
+                <p className="text-muted-foreground text-sm md:text-base">
                   {searchQuery
                     ? "검색 결과가 없습니다."
-                    : "멘토링 기록이 없습니다."}
+                    : "멘토링 기록이 없습니다. 각 멤버 페이지에서 멘토링 기록을 작성해주세요."}
                 </p>
-                {!searchQuery && (
-                  <Link href="/mentoring/new">
-                    <Button size="sm" className="md:h-10 md:px-4 md:text-base">
-                      <Plus className="h-4 w-4 mr-2" />
-                      첫 기록 작성하기
-                    </Button>
-                  </Link>
-                )}
               </div>
             </CardContent>
           </Card>
