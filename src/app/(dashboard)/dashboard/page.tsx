@@ -46,16 +46,17 @@ export default async function DashboardPage() {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
 
+  // 모든 멤버의 캘린더 이벤트 조회 (이번 달)
   const { data: upcomingEvents } = await supabase
     .from("calendar_events")
     .select(`
       *,
       member:members(id, name, avatar_url)
     `)
-    .gte("start_date", monthStart)
-    .lte("start_date", monthEnd)
-    .order("start_date", { ascending: true })
-    .limit(50);
+    .gte("start_datetime", monthStart)
+    .lte("start_datetime", monthEnd)
+    .order("start_datetime", { ascending: true })
+    .limit(100);
 
   // 모든 멤버의 미완료 목표 조회
   const todayStr = new Date().toISOString().split("T")[0];
@@ -133,10 +134,10 @@ export default async function DashboardPage() {
   const eventList = (upcomingEvents || []) as Array<{
     id: string;
     title: string;
-    start_date: string;
-    end_date: string | null;
+    start_datetime: string;
+    end_datetime: string | null;
     category: CalendarCategory;
-    all_day: boolean;
+    is_all_day: boolean;
     member_id: string | null;
     member: {
       id: string;
@@ -187,12 +188,12 @@ export default async function DashboardPage() {
     id: event.id,
     type: "event" as const,
     title: event.title,
-    date: event.start_date,
+    date: event.start_datetime,
     category: event.category,
     memberName: event.member?.name || "Lab",
     memberAvatarUrl: event.member?.avatar_url,
     memberId: event.member_id || undefined,
-    isAllDay: event.all_day,
+    isAllDay: event.is_all_day,
   }));
 
   // 통합 마감일 목록 (날짜순 정렬)
@@ -289,7 +290,14 @@ export default async function DashboardPage() {
         {/* 오른쪽: 캘린더 + 투고 중인 연구 */}
         <div className="space-y-4 md:space-y-6">
           {/* 미니 캘린더 */}
-          <DashboardCalendar events={eventList} />
+          <DashboardCalendar events={eventList.map(e => ({
+            id: e.id,
+            title: e.title,
+            start_date: e.start_datetime,
+            end_date: e.end_datetime,
+            category: e.category,
+            all_day: e.is_all_day,
+          }))} />
 
           {/* 투고 중인 연구 (투고 후) - 클라이언트 컴포넌트 */}
           <SubmittedProjectsCard projects={submittedProjects} />
