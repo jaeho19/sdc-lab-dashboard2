@@ -45,29 +45,137 @@ interface WeeklyGoalsProps {
   onRefresh: () => void;
 }
 
-function getWeekRange(): { start: string; end: string; label: string } {
-  const now = new Date();
-  const dayOfWeek = now.getDay();
-  const diffToSunday = dayOfWeek === 0 ? 0 : -dayOfWeek;
-  const diffToSaturday = dayOfWeek === 0 ? 6 : 6 - dayOfWeek;
+interface WeekInfo {
+  weekNumber: number;
+  start: Date;
+  end: Date;
+  label: string;
+}
 
-  const startOfWeek = new Date(now);
-  startOfWeek.setDate(now.getDate() + diffToSunday);
+interface MonthInfo {
+  year: number;
+  month: number;
+  label: string;
+  weeks: WeekInfo[];
+}
 
-  const endOfWeek = new Date(now);
-  endOfWeek.setDate(now.getDate() + diffToSaturday);
+function getMonthInfo(date: Date = new Date()): MonthInfo {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const label = `${year}년 ${month + 1}월`;
 
-  const formatDate = (date: Date) => {
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${month}/${day}`;
-  };
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
 
-  return {
-    start: startOfWeek.toISOString().split("T")[0],
-    end: endOfWeek.toISOString().split("T")[0],
-    label: `${formatDate(startOfWeek)} ~ ${formatDate(endOfWeek)}`,
-  };
+  const weeks: WeekInfo[] = [];
+  let currentWeekStart = new Date(firstDay);
+  // Adjust to Sunday (week start)
+  currentWeekStart.setDate(currentWeekStart.getDate() - currentWeekStart.getDay());
+
+  let weekNumber = 1;
+  while (currentWeekStart <= lastDay) {
+    const weekEnd = new Date(currentWeekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+
+    const formatDate = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`;
+    weeks.push({
+      weekNumber,
+      start: new Date(currentWeekStart),
+      end: weekEnd,
+      label: `${weekNumber}주차 (${formatDate(currentWeekStart)} ~ ${formatDate(weekEnd)})`,
+    });
+
+    currentWeekStart = new Date(currentWeekStart);
+    currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+    weekNumber++;
+  }
+
+  return { year, month, label, weeks };
+}
+
+function getWeekNumberForDate(date: Date, monthInfo: MonthInfo): number {
+  const targetDate = new Date(date);
+  targetDate.setHours(0, 0, 0, 0);
+
+  for (const week of monthInfo.weeks) {
+    const weekStart = new Date(week.start);
+    weekStart.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(week.end);
+    weekEnd.setHours(23, 59, 59, 999);
+
+    if (targetDate >= weekStart && targetDate <= weekEnd) {
+      return week.weekNumber;
+    }
+  }
+  return 0; // Outside current month
+}
+
+interface GroupedGoals {
+  currentMonth: Map<number, WeeklyGoal[]>;
+  futureGoals: WeeklyGoal[];
+  pastGoals: WeeklyGoal[];
+}
+
+function groupGoalsByWeek(goals: WeeklyGoal[], monthInfo: MonthInfo): GroupedGoals {
+  const currentMonth = new Map<number, WeeklyGoal[]>();
+  const futureGoals: WeeklyGoal[] = [];
+  const pastGoals: WeeklyGoal[] = [];
+
+  const monthStart = new Date(monthInfo.year, monthInfo.month, 1);
+  const monthEnd = new Date(monthInfo.year, monthInfo.month + 1, 0);
+  monthEnd.setHours(23, 59, 59, 999);
+
+  // Initialize week buckets
+  for (const week of monthInfo.weeks) {
+    currentMonth.set(week.weekNumber, []);
+  }
+
+  for (const goal of goals) {
+    const deadlineDate = new Date(goal.deadline);
+    deadlineDate.setHours(0, 0, 0, 0);
+
+    if (deadlineDate < monthStart) {
+      pastGoals.push(goal);
+    } else if (deadlineDate > monthEnd) {
+      futureGoals.push(goal);
+    } else {
+      const weekNum = getWeekNumberForDate(deadlineDate, monthInfo);
+      if (weekNum > 0) {
+        const weekGoals = currentMonth.get(weekNum) || [];
+        weekGoals.push(goal);
+        currentMonth.set(weekNum, weekGoals);
+      }
+    }
+  }
+
+  return { currentMonth, futureGoals, pastGoals };
+}
+
+interface FutureMonthGroup {
+  label: string;
+  goals: WeeklyGoal[];
+}
+
+function groupFutureGoalsByMonth(goals: WeeklyGoal[]): Map<string, FutureMonthGroup> {
+  const grouped = new Map<string, FutureMonthGroup>();
+
+  // Sort goals by deadline first
+  const sortedGoals = [...goals].sort(
+    (a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
+  );
+
+  for (const goal of sortedGoals) {
+    const date = new Date(goal.deadline);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    const monthLabel = `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
+
+    if (!grouped.has(monthKey)) {
+      grouped.set(monthKey, { label: monthLabel, goals: [] });
+    }
+    grouped.get(monthKey)!.goals.push(goal);
+  }
+
+  return grouped;
 }
 
 function getDeadlineStatus(deadline: string): "overdue" | "today" | "normal" {
@@ -103,7 +211,10 @@ export function WeeklyGoals({ projectId, goals, onRefresh }: WeeklyGoalsProps) {
   const [editLinkedStage, setEditLinkedStage] = useState<string>("");
   const [editError, setEditError] = useState<string | null>(null);
 
-  const weekRange = useMemo(() => getWeekRange(), []);
+  const [showFuture, setShowFuture] = useState(true);
+  const [showPast, setShowPast] = useState(false);
+
+  const monthInfo = useMemo(() => getMonthInfo(), []);
 
   const sortedGoals = useMemo(() => {
     return [...goals].sort((a, b) => {
@@ -116,6 +227,10 @@ export function WeeklyGoals({ projectId, goals, onRefresh }: WeeklyGoalsProps) {
 
   const pendingGoals = sortedGoals.filter((g) => !g.is_completed);
   const completedGoals = sortedGoals.filter((g) => g.is_completed);
+
+  const groupedGoals = useMemo(() => {
+    return groupGoalsByWeek(pendingGoals, monthInfo);
+  }, [pendingGoals, monthInfo]);
 
   const handleAddGoal = async () => {
     if (!newContent.trim() || !newDeadline) return;
@@ -203,9 +318,9 @@ export function WeeklyGoals({ projectId, goals, onRefresh }: WeeklyGoalsProps) {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <span>이번 주 목표</span>
+            <span>이번달 목표</span>
             <span className="text-sm font-normal text-muted-foreground">
-              ({weekRange.label})
+              ({monthInfo.label})
             </span>
           </CardTitle>
           <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
@@ -220,7 +335,7 @@ export function WeeklyGoals({ projectId, goals, onRefresh }: WeeklyGoalsProps) {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>주간 목표 추가</DialogTitle>
+                <DialogTitle>목표 추가</DialogTitle>
               </DialogHeader>
               {error && (
                 <div className="flex items-center gap-2 rounded-md bg-red-50 p-3 text-sm text-red-600">
@@ -284,73 +399,219 @@ export function WeeklyGoals({ projectId, goals, onRefresh }: WeeklyGoalsProps) {
           </Dialog>
         </div>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-4">
         {goals.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
-            등록된 주간 목표가 없습니다.
+            등록된 목표가 없습니다.
           </p>
         ) : (
           <>
-            {/* 미완료 목표 */}
-            {pendingGoals.map((goal) => {
-              const status = getDeadlineStatus(goal.deadline);
-              return (
-                <div
-                  key={goal.id}
-                  className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-muted/50 group"
+            {/* 지난 달 목표 (마감일 지남) */}
+            {groupedGoals.pastGoals.length > 0 && (
+              <div className="space-y-2">
+                <button
+                  onClick={() => setShowPast(!showPast)}
+                  className="flex items-center gap-2 text-sm text-red-500 hover:text-red-600 w-full py-1"
                 >
-                  <Checkbox
-                    checked={goal.is_completed}
-                    onCheckedChange={(checked) =>
-                      handleToggleGoal(goal.id, checked === true)
-                    }
-                  />
-                  <span className="flex-1 text-sm">{goal.content}</span>
-                  <span
-                    className={`text-xs ${
-                      status === "overdue"
-                        ? "text-red-500 font-medium"
-                        : status === "today"
-                        ? "text-orange-500 font-medium"
-                        : "text-muted-foreground"
-                    }`}
-                  >
-                    ~ {formatDeadline(goal.deadline)}
-                  </span>
-                  {goal.linked_stage && (
-                    <Badge variant="outline" className="text-xs">
-                      {getStageLabel(goal.linked_stage)}
-                    </Badge>
+                  {showPast ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
                   )}
-                  {status === "overdue" && (
-                    <span className="text-red-500 text-xs">!</span>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 opacity-0 group-hover:opacity-100"
-                    onClick={() => handleOpenEditDialog(goal)}
-                  >
-                    <Edit2 className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600"
-                    onClick={() => handleDeleteGoal(goal.id)}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+                  지난 목표 ({groupedGoals.pastGoals.length})
+                </button>
+                {showPast && (
+                  <div className="space-y-1 pl-2 border-l-2 border-red-200">
+                    {groupedGoals.pastGoals.map((goal) => {
+                      const status = getDeadlineStatus(goal.deadline);
+                      return (
+                        <div
+                          key={goal.id}
+                          className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-muted/50 group"
+                        >
+                          <Checkbox
+                            checked={goal.is_completed}
+                            onCheckedChange={(checked) =>
+                              handleToggleGoal(goal.id, checked === true)
+                            }
+                          />
+                          <span className="flex-1 text-sm">{goal.content}</span>
+                          <span className="text-xs text-red-500 font-medium">
+                            {formatDeadline(goal.deadline)}
+                          </span>
+                          {goal.linked_stage && (
+                            <Badge variant="outline" className="text-xs">
+                              {getStageLabel(goal.linked_stage)}
+                            </Badge>
+                          )}
+                          <span className="text-red-500 text-xs">!</span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                            onClick={() => handleOpenEditDialog(goal)}
+                          >
+                            <Edit2 className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600"
+                            onClick={() => handleDeleteGoal(goal.id)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 이번달 주차별 목표 */}
+            {monthInfo.weeks.map((week) => {
+              const weekGoals = groupedGoals.currentMonth.get(week.weekNumber) || [];
+              if (weekGoals.length === 0) return null;
+              return (
+                <div key={week.weekNumber} className="space-y-2">
+                  <h4 className="text-sm font-medium text-muted-foreground border-b pb-1">
+                    {week.label}
+                  </h4>
+                  <div className="space-y-1">
+                    {weekGoals.map((goal) => {
+                      const status = getDeadlineStatus(goal.deadline);
+                      return (
+                        <div
+                          key={goal.id}
+                          className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-muted/50 group"
+                        >
+                          <Checkbox
+                            checked={goal.is_completed}
+                            onCheckedChange={(checked) =>
+                              handleToggleGoal(goal.id, checked === true)
+                            }
+                          />
+                          <span className="flex-1 text-sm">{goal.content}</span>
+                          <span
+                            className={`text-xs ${
+                              status === "overdue"
+                                ? "text-red-500 font-medium"
+                                : status === "today"
+                                ? "text-orange-500 font-medium"
+                                : "text-muted-foreground"
+                            }`}
+                          >
+                            {formatDeadline(goal.deadline)}
+                          </span>
+                          {goal.linked_stage && (
+                            <Badge variant="outline" className="text-xs">
+                              {getStageLabel(goal.linked_stage)}
+                            </Badge>
+                          )}
+                          {status === "overdue" && (
+                            <span className="text-red-500 text-xs">!</span>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                            onClick={() => handleOpenEditDialog(goal)}
+                          >
+                            <Edit2 className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600"
+                            onClick={() => handleDeleteGoal(goal.id)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               );
             })}
+
+            {/* 이후 일정 (다음 달 이후) - 월별 그룹화 */}
+            {groupedGoals.futureGoals.length > 0 && (
+              <div className="space-y-2">
+                <button
+                  onClick={() => setShowFuture(!showFuture)}
+                  className="flex items-center gap-2 text-sm text-blue-500 hover:text-blue-600 w-full py-1"
+                >
+                  {showFuture ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                  이후 일정 ({groupedGoals.futureGoals.length})
+                </button>
+                {showFuture && (
+                  <div className="space-y-4 pl-2 border-l-2 border-blue-200">
+                    {Array.from(groupFutureGoalsByMonth(groupedGoals.futureGoals)).map(
+                      ([monthKey, monthGroup]) => (
+                        <div key={monthKey} className="space-y-2">
+                          <h4 className="text-sm font-medium text-blue-600 border-b border-blue-100 pb-1">
+                            {monthGroup.label}
+                          </h4>
+                          <div className="space-y-1">
+                            {monthGroup.goals.map((goal) => (
+                              <div
+                                key={goal.id}
+                                className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-muted/50 group"
+                              >
+                                <Checkbox
+                                  checked={goal.is_completed}
+                                  onCheckedChange={(checked) =>
+                                    handleToggleGoal(goal.id, checked === true)
+                                  }
+                                />
+                                <span className="flex-1 text-sm">{goal.content}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {formatDeadline(goal.deadline)}
+                                </span>
+                                {goal.linked_stage && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {getStageLabel(goal.linked_stage)}
+                                  </Badge>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                                  onClick={() => handleOpenEditDialog(goal)}
+                                >
+                                  <Edit2 className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600"
+                                  onClick={() => handleDeleteGoal(goal.id)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* 완료된 목표 토글 */}
             {completedGoals.length > 0 && (
               <>
                 <button
                   onClick={() => setShowCompleted(!showCompleted)}
-                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground w-full py-2"
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground w-full py-2 border-t mt-2"
                 >
                   {showCompleted ? (
                     <ChevronUp className="h-4 w-4" />
@@ -376,7 +637,7 @@ export function WeeklyGoals({ projectId, goals, onRefresh }: WeeklyGoalsProps) {
                         {goal.content}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        ~ {formatDeadline(goal.deadline)}
+                        {formatDeadline(goal.deadline)}
                       </span>
                       {goal.linked_stage && (
                         <Badge
@@ -420,7 +681,7 @@ export function WeeklyGoals({ projectId, goals, onRefresh }: WeeklyGoalsProps) {
       }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>주간 목표 수정</DialogTitle>
+            <DialogTitle>목표 수정</DialogTitle>
           </DialogHeader>
           {editError && (
             <div className="flex items-center gap-2 rounded-md bg-red-50 p-3 text-sm text-red-600">

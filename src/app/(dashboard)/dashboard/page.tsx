@@ -9,10 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Users,
-  FileText,
   Calendar,
   TrendingUp,
-  Clock,
   CheckCircle2,
   Heart,
   MessageCircle,
@@ -20,14 +18,14 @@ import {
 } from "lucide-react";
 import {
   formatDate,
-  getProjectStatusLabel,
-  getCalendarCategoryLabel,
   getInitials,
   getPositionLabel,
 } from "@/lib/utils";
-import type { SubmissionStatus } from "@/types/database.types";
+import type { SubmissionStatus, CalendarCategory } from "@/types/database.types";
 import Link from "next/link";
 import { SubmittedProjectsCard } from "@/components/features/SubmittedProjectsCard";
+import { UnifiedDeadlineView, type UnifiedDeadlineItem } from "@/components/features/dashboard/unified-deadline-view";
+import { DashboardCalendar } from "@/components/features/dashboard/dashboard-calendar";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -48,7 +46,36 @@ export default async function DashboardPage() {
     .select("*")
     .gte("start_date", new Date().toISOString())
     .order("start_date", { ascending: true })
-    .limit(5);
+    .limit(10);
+
+  // 모든 멤버의 미완료 목표 조회
+  const todayStr = new Date().toISOString().split("T")[0];
+  const { data: memberGoals } = await supabase
+    .from("weekly_goals")
+    .select(`
+      id,
+      content,
+      deadline,
+      linked_stage,
+      project_id,
+      research_projects!inner (
+        id,
+        title,
+        project_members (
+          role,
+          member_id,
+          members (
+            id,
+            name,
+            avatar_url
+          )
+        )
+      )
+    `)
+    .eq("is_completed", false)
+    .gte("deadline", todayStr)
+    .order("deadline", { ascending: true })
+    .limit(50);
 
   const { data: recentMentoring } = await supabase
     .from("mentoring_posts")
@@ -89,11 +116,6 @@ export default async function DashboardPage() {
     target_journal: string | null;
   }>;
 
-  // 진행 중인 연구 (아직 투고 전)
-  const inProgressProjects = projectList.filter(
-    (p) => p.submission_status === "not_submitted" || !p.submission_status
-  );
-
   // 투고 중인 연구 (투고 후)
   const submittedProjects = projectList.filter(
     (p) => p.submission_status && p.submission_status !== "not_submitted"
@@ -103,9 +125,64 @@ export default async function DashboardPage() {
     id: string;
     title: string;
     start_date: string;
-    category: string;
+    end_date: string | null;
+    category: CalendarCategory;
     all_day: boolean;
   }>;
+
+  // 목표를 통합 마감일 형식으로 변환
+  const goalDeadlines: UnifiedDeadlineItem[] = (memberGoals || []).map((goal: {
+    id: string;
+    content: string;
+    deadline: string;
+    linked_stage: string | null;
+    project_id: string;
+    research_projects: {
+      id: string;
+      title: string;
+      project_members: Array<{
+        role: string;
+        member_id: string;
+        members: {
+          id: string;
+          name: string;
+          avatar_url: string | null;
+        } | null;
+      }>;
+    };
+  }) => {
+    const project = goal.research_projects;
+    const firstAuthor = project?.project_members?.find((pm) => pm.role === "first_author");
+    const member = firstAuthor?.members || project?.project_members?.[0]?.members;
+
+    return {
+      id: goal.id,
+      type: "goal" as const,
+      title: goal.content,
+      date: goal.deadline,
+      memberName: member?.name || "미지정",
+      memberAvatarUrl: member?.avatar_url,
+      projectId: project?.id,
+      projectTitle: project?.title,
+    };
+  });
+
+  // 캘린더 이벤트를 통합 마감일 형식으로 변환
+  const calendarDeadlines: UnifiedDeadlineItem[] = eventList.map((event) => ({
+    id: event.id,
+    type: "event" as const,
+    title: event.title,
+    date: event.start_date,
+    category: event.category,
+    memberName: "Lab",
+    isAllDay: event.all_day,
+  }));
+
+  // 통합 마감일 목록 (날짜순 정렬)
+  const unifiedDeadlines = [...goalDeadlines, ...calendarDeadlines]
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, 25);
+
   const mentoringList = (recentMentoring || []) as Array<{
     id: string;
     content: string;
@@ -131,9 +208,6 @@ export default async function DashboardPage() {
     }>;
   }>;
 
-  const activeProjectsCount = projectList.filter(
-    (p) => p.status !== "published"
-  ).length;
   const avgProgress =
     projectList.length > 0
       ? Math.round(
@@ -153,7 +227,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 md:p-6 md:pb-2">
             <CardTitle className="text-xs md:text-sm font-medium">활동 연구원</CardTitle>
@@ -163,19 +237,6 @@ export default async function DashboardPage() {
             <div className="text-xl md:text-2xl font-bold">{memberList.length}명</div>
             <p className="text-xs text-muted-foreground">
               풀타임 + 파트타임
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 md:p-6 md:pb-2">
-            <CardTitle className="text-xs md:text-sm font-medium">진행 중 연구</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
-            <div className="text-xl md:text-2xl font-bold">{activeProjectsCount}건</div>
-            <p className="text-xs text-muted-foreground">
-              전체 {projectList.length}건
             </p>
           </CardContent>
         </Card>
@@ -203,116 +264,20 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {/* 1행: 진행 중인 연구 + 투고 중인 연구 (2열) */}
+      {/* 2열 레이아웃: 왼쪽 - 다가오는 일정, 오른쪽 - 캘린더 + 투고중인 연구 */}
       <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2">
-        {/* 진행 중인 연구 (투고 전) */}
-        <Card>
-          <CardHeader className="p-4 md:p-6">
-            <CardTitle className="flex items-center gap-2 text-base md:text-lg">
-              <FileText className="h-4 w-4 md:h-5 md:w-5" />
-              진행 중인 연구
-              <Badge variant="secondary" className="ml-auto text-xs">
-                {inProgressProjects.length}건
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
-            <div className="space-y-3 md:space-y-4">
-              {inProgressProjects.slice(0, 5).map((project) => (
-                <Link
-                  key={project.id}
-                  href={`/research/${project.id}`}
-                  className="block"
-                >
-                  <div className="flex items-center justify-between p-2 md:p-3 rounded-lg border hover:bg-muted/50 transition-colors gap-2">
-                    <div className="space-y-1 flex-1 min-w-0">
-                      <p className="font-medium truncate text-sm md:text-base">{project.title}</p>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          {getProjectStatusLabel(project.status)}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {project.overall_progress}%
-                        </span>
-                      </div>
-                    </div>
-                    <Progress
-                      value={project.overall_progress}
-                      className="w-16 md:w-20 h-2 shrink-0"
-                    />
-                  </div>
-                </Link>
-              ))}
-              {inProgressProjects.length === 0 && (
-                <p className="text-center text-muted-foreground py-4">
-                  진행 중인 연구가 없습니다.
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        {/* 왼쪽: 다가오는 마감일 (목표 + 일정 통합) */}
+        <UnifiedDeadlineView items={unifiedDeadlines} />
 
-        {/* 투고 중인 연구 (투고 후) - 클라이언트 컴포넌트 */}
-        <SubmittedProjectsCard projects={submittedProjects} />
+        {/* 오른쪽: 캘린더 + 투고 중인 연구 */}
+        <div className="space-y-4 md:space-y-6">
+          {/* 미니 캘린더 */}
+          <DashboardCalendar events={eventList} />
+
+          {/* 투고 중인 연구 (투고 후) - 클라이언트 컴포넌트 */}
+          <SubmittedProjectsCard projects={submittedProjects} />
+        </div>
       </div>
-
-      {/* 2행: 다가오는 일정 (전체 너비) */}
-      <Card>
-        <CardHeader className="p-4 md:p-6">
-          <CardTitle className="flex items-center gap-2 text-base md:text-lg">
-            <Clock className="h-4 w-4 md:h-5 md:w-5" />
-            다가오는 일정
-            <Badge variant="secondary" className="ml-auto text-xs">
-              {eventList.length}건
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
-          <div className="grid gap-3 md:gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {eventList.map((event) => (
-              <div
-                key={event.id}
-                className="flex items-center gap-3 md:gap-4 p-2 md:p-3 rounded-lg border"
-              >
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-primary/10 flex flex-col items-center justify-center">
-                    <span className="text-[10px] md:text-xs text-primary font-medium">
-                      {new Date(event.start_date).toLocaleDateString(
-                        "ko-KR",
-                        { month: "short" }
-                      )}
-                    </span>
-                    <span className="text-base md:text-lg font-bold text-primary">
-                      {new Date(event.start_date).getDate()}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate text-sm md:text-base">{event.title}</p>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="secondary" className="text-xs">
-                      {getCalendarCategoryLabel(event.category)}
-                    </Badge>
-                    {!event.all_day && (
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(event.start_date).toLocaleTimeString(
-                          "ko-KR",
-                          { hour: "2-digit", minute: "2-digit" }
-                        )}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-            {eventList.length === 0 && (
-              <p className="text-center text-muted-foreground py-4 col-span-full">
-                다가오는 일정이 없습니다.
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* 최근 멘토링 */}
       <Card>

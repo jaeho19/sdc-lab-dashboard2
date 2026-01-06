@@ -402,3 +402,69 @@
     font-size: 0.65rem;
   }
 }
+
+/* Dashboard Mini Calendar 스타일 */
+.dashboard-mini-calendar .fc {
+  font-size: 0.75rem;
+}
+
+.dashboard-mini-calendar .fc .fc-toolbar {
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-mini-calendar .fc .fc-toolbar-title {
+  font-size: 0.875rem !important;
+  font-weight: 600;
+}
+
+.dashboard-mini-calendar .fc .fc-button {
+  padding: 0.15rem 0.4rem;
+  font-size: 0.7rem;
+}
+
+.dashboard-mini-calendar .fc .fc-button-group {
+  gap: 2px;
+}
+
+.dashboard-mini-calendar .fc .fc-daygrid-day-number {
+  font-size: 0.7rem;
+  padding: 2px 4px;
+}
+
+.dashboard-mini-calendar .fc .fc-col-header-cell {
+  padding: 4px 0;
+}
+
+.dashboard-mini-calendar .fc .fc-col-header-cell-cushion {
+  font-size: 0.65rem;
+  font-weight: 500;
+}
+
+.dashboard-mini-calendar .fc .fc-daygrid-day {
+  min-height: 2.5rem;
+}
+
+.dashboard-mini-calendar .fc .fc-daygrid-day-events {
+  margin-top: 0;
+}
+
+.dashboard-mini-calendar .fc .fc-daygrid-event-dot {
+  margin: 0 1px;
+  width: 6px;
+  height: 6px;
+}
+
+.dashboard-mini-calendar .fc .fc-daygrid-more-link {
+  font-size: 0.6rem;
+}
+
+/* 모바일에서 미니 캘린더 추가 조정 */
+@media (max-width: 768px) {
+  .dashboard-mini-calendar .fc .fc-daygrid-day {
+    min-height: 2rem;
+  }
+
+  .dashboard-mini-calendar .fc .fc-toolbar-title {
+    font-size: 0.75rem !important;
+  }
+}
