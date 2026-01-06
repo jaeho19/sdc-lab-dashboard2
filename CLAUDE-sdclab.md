@@ -2,7 +2,10 @@
 
 ## 프로젝트 개요
 
-서울시립대학교 SDC Lab(Spatial Data & Community Lab) 연구실의 연구 진행 현황, 일정, 멘토링 기록을 통합 관리하는 웹 기반 대시보드
+서울과학기술대학교 SDC Lab(Spatial Data & Community Lab) 연구실의 연구 진행 현황, 일정, 멘토링 기록을 통합 관리하는 웹 기반 대시보드
+
+- **프로젝트 경로**: `C:\dev\sdclab-dashboard`
+- **package.json 위치**: 프로젝트 루트 (하위 폴더 없음)
 
 ### 핵심 요구사항
 - 연구원별 연구 진행률 실시간 추적
@@ -18,11 +21,24 @@
 
 ---
 
+## 개발 명령어
+
+```bash
+cd C:\dev\sdclab-dashboard
+
+npm run dev        # 개발 서버 (http://localhost:3000)
+npm run build      # 빌드
+npm run type-check # 타입 체크
+npm run lint       # 린트
+```
+
+---
+
 ## 기술 스택
 
 | 계층 | 기술 |
 |------|------|
-| Frontend | Next.js 14 + TypeScript |
+| Frontend | Next.js 15.5.9 + TypeScript |
 | UI Framework | Tailwind CSS + shadcn/ui |
 | State Management | Zustand + React Query |
 | Backend/DB | Supabase (500MB DB, 1GB Storage, 50K MAU) |
@@ -42,15 +58,25 @@
 
 ### 파일 구조
 ```
-src/
-├── app/                 # Next.js App Router
-├── components/          # 재사용 컴포넌트
-│   ├── ui/             # shadcn/ui 컴포넌트
-│   └── features/       # 기능별 컴포넌트
-├── lib/                # 유틸리티, Supabase 클라이언트
-├── hooks/              # 커스텀 훅
-├── stores/             # Zustand 스토어
-└── types/              # TypeScript 타입 정의
+sdclab-dashboard/
+├── .claude/             # Claude Code 설정 및 스킬
+├── docs/                # 명세서
+├── public/              # 정적 파일
+├── src/
+│   ├── app/             # Next.js App Router
+│   ├── components/      # 재사용 컴포넌트
+│   │   ├── ui/          # shadcn/ui 컴포넌트
+│   │   └── features/    # 기능별 컴포넌트
+│   ├── lib/             # 유틸리티, Supabase 클라이언트
+│   ├── hooks/           # 커스텀 훅
+│   ├── stores/          # Zustand 스토어
+│   ├── types/           # TypeScript 타입 정의
+│   └── middleware.ts    # Next.js 미들웨어
+├── supabase/            # Supabase 설정
+├── scripts/             # 유틸리티 스크립트
+├── screenshots/         # 스크린샷
+├── package.json
+└── CLAUDE.md            # 이 파일
 ```
 
 ### 네이밍 컨벤션
@@ -196,24 +222,18 @@ Position 뱃지 색상: POST-DOC `#f59e0b`, PHD `#3b82f6`, RESEARCHER `#8b5cf6`,
 
 ---
 
-## 개발 명령어
-
-```bash
-# 개발 서버
-npm run dev
-
-# 빌드
-npm run build
-
-# 타입 체크
-npm run type-check
-
-# 린트
-npm run lint
-```
-
----
-
 ## 상세 명세서
 
 전체 명세서는 `docs/SPECIFICATION.md` 참고
+
+---
+
+## 주의사항
+
+### Claude Code 사용 시
+1. **프로젝트 루트에서 실행**: `C:\dev\sdclab-dashboard`에서 바로 npm 명령 실행 가능
+2. **환경변수**: `.env.local` 파일에 Supabase 키 설정 필요
+3. **Supabase**: 로컬 개발 시 Supabase 프로젝트 연결 확인
+
+### 향후 업그레이드 고려
+- Next.js 16 업그레이드 시 `middleware.ts` → `proxy.ts` 마이그레이션 필요

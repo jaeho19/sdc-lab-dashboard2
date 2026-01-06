@@ -78,7 +78,10 @@
       "Skill(ux-designer)",
       "Bash(git restore:*)",
       "Bash(where:*)",
-      "Bash(npx playwright install chromium)"
+      "Bash(npx playwright install chromium)",
+      "Bash(wc:*)",
+      "Bash(grep:*)",
+      "Bash(research \")"
     ]
   }
 }

@@ -71,9 +71,9 @@ export function DashboardCalendar({ events }: DashboardCalendarProps) {
             }}
             events={calendarEvents}
             height="auto"
-            aspectRatio={1.0}
-            dayMaxEvents={1}
-            eventDisplay="dot"
+            aspectRatio={1.2}
+            dayMaxEvents={3}
+            eventDisplay="block"
             titleFormat={{
               year: "numeric",
               month: "short",
