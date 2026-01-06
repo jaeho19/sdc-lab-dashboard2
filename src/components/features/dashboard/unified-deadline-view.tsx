@@ -79,7 +79,7 @@ export function UnifiedDeadlineView({ items }: UnifiedDeadlineViewProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
-        <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+        <div className="space-y-3 max-h-[800px] overflow-y-auto pr-1">
           {items.map((item) => {
             const status = getDeadlineStatus(item.date);
             const { month, day, weekday } = formatDate(item.date);
