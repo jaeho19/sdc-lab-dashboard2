@@ -255,7 +255,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get user's peer reviews
+    // Calculate current month's start and end dates
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+    // Delete old reviews (from previous months) - cleanup on each request
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any)
+      .from("peer_reviews")
+      .delete()
+      .eq("member_id", member.id)
+      .lt("created_at", startOfMonth.toISOString());
+
+    // Get user's peer reviews for current month only
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: reviews, error } = await (supabase as any)
       .from("peer_reviews")
@@ -266,6 +279,8 @@ export async function GET(request: NextRequest) {
       `
       )
       .eq("member_id", member.id)
+      .gte("created_at", startOfMonth.toISOString())
+      .lte("created_at", endOfMonth.toISOString())
       .order("created_at", { ascending: false });
 
     if (error) {

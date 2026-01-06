@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, FileText, Bot, Plus, History, ChevronRight } from "lucide-react";
+import { Loader2, FileText, Bot, Plus, History, ChevronRight, Calendar } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { createClient } from "@/lib/supabase/client";
@@ -166,7 +166,7 @@ export default function PeerReviewPage() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="new" className="mt-4 md:mt-6">
+        <TabsContent value="new" className="mt-4 md:mt-6 space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             {/* Input Form */}
             <Card>
@@ -292,6 +292,63 @@ export default function PeerReviewPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* 이번 달 사용 이력 */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Calendar className="h-4 w-4" />
+                {format(new Date(), "yyyy년 M월", { locale: ko })} 사용 이력
+                <Badge variant="secondary" className="ml-2">
+                  {reviews.length}회
+                </Badge>
+              </CardTitle>
+              <CardDescription className="text-xs">
+                매월 1일에 이전 달 기록이 자동으로 삭제됩니다.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {reviews.length === 0 ? (
+                <div className="text-center py-4 text-sm text-muted-foreground">
+                  이번 달 사용 이력이 없습니다.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {reviews.slice(0, 5).map((review) => (
+                    <button
+                      key={review.id}
+                      onClick={() => {
+                        setSelectedReview(review);
+                        setActiveTab("history");
+                      }}
+                      className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{review.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(review.created_at), "M월 d일 HH:mm", {
+                            locale: ko,
+                          })}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {getStatusBadge(review.review_status)}
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </button>
+                  ))}
+                  {reviews.length > 5 && (
+                    <button
+                      onClick={() => setActiveTab("history")}
+                      className="w-full text-center text-sm text-primary hover:underline py-2"
+                    >
+                      +{reviews.length - 5}개 더 보기
+                    </button>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="history" className="mt-6">
