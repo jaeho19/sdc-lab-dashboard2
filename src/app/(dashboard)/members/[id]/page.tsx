@@ -19,6 +19,7 @@ import Link from "next/link";
 import type { Database, CalendarCategory, MilestoneStage } from "@/types/database.types";
 import { DeleteProjectButton } from "@/components/features/DeleteProjectButton";
 import { TimelineCalendar } from "@/components/features/members/timeline-calendar";
+import { MemberResearchNotes } from "@/components/features/members/member-research-notes";
 
 type Member = Database["public"]["Tables"]["members"]["Row"];
 
@@ -488,6 +489,13 @@ export default async function MemberDetailPage({
           calendarEvents={timelineCalendarEvents}
         />
       </div>
+
+      {/* 연구노트 */}
+      <MemberResearchNotes
+        memberId={id}
+        memberName={member.name}
+        canEdit={canEdit}
+      />
 
       {/* 최근 멘토링 기록 */}
       <Card>

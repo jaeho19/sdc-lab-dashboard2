@@ -81,7 +81,6 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Members", href: "/members", icon: Users },
   { name: "Research", href: "/research", icon: BookOpen },
-  { name: "Research Notes", href: "/research-notes", icon: FileText },
   { name: "Calendar", href: "/calendar", icon: Calendar },
   { name: "Mentoring", href: "/mentoring", icon: MessageSquare },
   { name: "AI Peer Review", href: "/peer-review", icon: Bot },
