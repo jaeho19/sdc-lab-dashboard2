@@ -54,6 +54,21 @@ interface FulltimeMember {
   avatar_url: string | null;
 }
 
+// 사이드바 멤버 커스텀 순서
+const SIDEBAR_MEMBER_ORDER: Record<string, number> = {
+  "강성익": 1,
+  "오재인": 2,
+  "이지윤": 3,
+  "김은솔": 4,
+  "이다연": 5,
+  "최희진": 6,
+  "배성훈": 7,
+  "이은진": 8,
+};
+
+// 사이드바에서 제외할 멤버
+const SIDEBAR_EXCLUDED_MEMBERS = ["이재호"];
+
 interface SidebarProps {
   member: Member;
   isCollapsed: boolean;
@@ -118,8 +133,7 @@ function SidebarContent({
         .select("id, name, avatar_url, position")
         .eq("employment_type", "full-time")
         .eq("status", "active")
-        .neq("position", "professor")
-        .order("name");
+        .neq("position", "professor");
 
       if (error) {
         console.error("Failed to load fulltime members:", error);
@@ -127,7 +141,15 @@ function SidebarContent({
       }
 
       if (data) {
-        setFulltimeMembers(data as FulltimeMember[]);
+        // 제외할 멤버 필터링 및 커스텀 순서 정렬
+        const filteredAndSorted = (data as FulltimeMember[])
+          .filter(m => !SIDEBAR_EXCLUDED_MEMBERS.includes(m.name))
+          .sort((a, b) => {
+            const orderA = SIDEBAR_MEMBER_ORDER[a.name] || 99;
+            const orderB = SIDEBAR_MEMBER_ORDER[b.name] || 99;
+            return orderA - orderB;
+          });
+        setFulltimeMembers(filteredAndSorted);
       }
     }
 
