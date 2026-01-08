@@ -67,8 +67,12 @@ export default async function DashboardPage() {
     (eventMembers || []).map((m: { id: string; name: string; avatar_url: string | null }) => [m.id, m])
   );
 
-  // 모든 멤버의 미완료 목표 조회
+  // 모든 멤버의 목표 조회 (미완료 + 최근 완료된 목표 포함)
   const todayStr = new Date().toISOString().split("T")[0];
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split("T")[0];
+
   const { data: memberGoals } = await supabase
     .from("weekly_goals")
     .select(`
@@ -77,6 +81,7 @@ export default async function DashboardPage() {
       deadline,
       linked_stage,
       project_id,
+      is_completed,
       research_projects!inner (
         id,
         title,
@@ -91,8 +96,7 @@ export default async function DashboardPage() {
         )
       )
     `)
-    .eq("is_completed", false)
-    .gte("deadline", todayStr)
+    .gte("deadline", thirtyDaysAgoStr)
     .order("deadline", { ascending: true })
     .limit(50);
 
@@ -227,9 +231,16 @@ export default async function DashboardPage() {
       isAllDay: event.all_day,
     }));
 
-  // 통합 마감일 목록 (날짜순 정렬)
+  // 통합 마감일 목록 (미완료 우선, 그 다음 완료된 항목, 각각 날짜순 정렬)
   const unifiedDeadlines = [...goalDeadlines, ...calendarDeadlines]
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .sort((a, b) => {
+      // 완료된 항목은 뒤로
+      if (a.isCompleted !== b.isCompleted) {
+        return a.isCompleted ? 1 : -1;
+      }
+      // 같은 상태면 날짜순
+      return new Date(a.date).getTime() - new Date(b.date).getTime();
+    })
     .slice(0, 25);
 
   const mentoringList = (recentMentoring || []) as Array<{

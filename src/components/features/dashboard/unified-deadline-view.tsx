@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Clock, Target, Calendar } from "lucide-react";
+import { Clock, Target, Calendar, CheckCircle2 } from "lucide-react";
 import { getInitials, getCalendarCategoryLabel } from "@/lib/utils";
 import Link from "next/link";
 
@@ -94,6 +94,7 @@ export function UnifiedDeadlineView({ items }: UnifiedDeadlineViewProps) {
             const { month, day, weekday } = formatDate(item.date);
 
             const isOverdue = status === "overdue" && item.type === "goal";
+            const isCompleted = item.isCompleted && item.type === "goal";
 
             const statusColors = {
               overdue: "bg-red-100 text-red-600",
@@ -102,14 +103,17 @@ export function UnifiedDeadlineView({ items }: UnifiedDeadlineViewProps) {
               normal: "bg-primary/10 text-primary",
             };
 
+            // 완료된 항목은 녹색 계열로 표시
+            const completedColors = "bg-green-100 text-green-600";
+
             const content = (
               <div
                 className={`flex items-center gap-3 md:gap-4 p-2 md:p-3 rounded-lg border hover:bg-muted/50 transition-colors ${
-                  isOverdue ? "border-red-300 bg-red-50/50" : ""
+                  isCompleted ? "border-green-300 bg-green-50/50" : isOverdue ? "border-red-300 bg-red-50/50" : ""
                 }`}
               >
                 {/* Date Box */}
-                <div className={`flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-lg flex flex-col items-center justify-center ${statusColors[status]}`}>
+                <div className={`flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-lg flex flex-col items-center justify-center ${isCompleted ? completedColors : statusColors[status]}`}>
                   <span className="text-[10px] md:text-xs font-medium">{month}</span>
                   <span className="text-lg md:text-xl font-bold">{day}</span>
                   <span className="text-[9px] md:text-[10px]">({weekday})</span>
@@ -127,7 +131,13 @@ export function UnifiedDeadlineView({ items }: UnifiedDeadlineViewProps) {
                     <span className="text-xs md:text-sm font-medium truncate">
                       {item.memberName}
                     </span>
-                    {/* 지연 알림 배지 */}
+                    {/* 완료/지연 알림 배지 */}
+                    {isCompleted && (
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-green-100 text-green-700 border-green-300">
+                        <CheckCircle2 className="h-3 w-3 mr-0.5" />
+                        완료됨
+                      </Badge>
+                    )}
                     {isOverdue && (
                       <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
                         지연됨
@@ -135,7 +145,7 @@ export function UnifiedDeadlineView({ items }: UnifiedDeadlineViewProps) {
                     )}
                   </div>
                   <p className={`text-sm md:text-base font-medium truncate ${
-                    isOverdue ? "text-red-700" : ""
+                    isCompleted ? "line-through text-muted-foreground" : isOverdue ? "text-red-700" : ""
                   }`}>
                     {item.title}
                   </p>
