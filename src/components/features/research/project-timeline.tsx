@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { updateMilestoneDates } from "@/lib/actions/research";
+import { MILESTONE_STAGES } from "@/lib/utils";
 import {
   ChevronDown,
   ChevronUp,
@@ -25,6 +27,7 @@ import {
   Edit2,
   Loader2,
 } from "lucide-react";
+import type { MilestoneStage } from "@/types/database.types";
 
 interface MilestoneWithDates {
   id: string;
@@ -37,11 +40,20 @@ interface MilestoneWithDates {
   end_date: string | null;
 }
 
+interface WeeklyGoalForTimeline {
+  id: string;
+  content: string;
+  deadline: string;
+  linked_stage: MilestoneStage | null;
+  is_completed: boolean;
+}
+
 interface ProjectTimelineProps {
   projectId: string;
   milestones: MilestoneWithDates[];
   projectDeadline: string | null;
   onRefresh: () => void;
+  goals?: WeeklyGoalForTimeline[];
 }
 
 type MilestoneStatus = "completed" | "in_progress" | "not_started" | "delayed";
@@ -88,11 +100,47 @@ function getStatusLabel(status: MilestoneStatus): string {
   }
 }
 
+function getGoalStatus(
+  goal: WeeklyGoalForTimeline,
+  today: Date
+): MilestoneStatus {
+  if (goal.is_completed) return "completed";
+
+  const deadlineDate = new Date(goal.deadline);
+  deadlineDate.setHours(23, 59, 59, 999);
+
+  if (today > deadlineDate) return "delayed";
+  return "in_progress";
+}
+
+function getWeekRange(deadline: string): { start: Date; end: Date } {
+  const date = new Date(deadline);
+  const dayOfWeek = date.getDay();
+
+  // Get Sunday (start of week)
+  const start = new Date(date);
+  start.setDate(date.getDate() - dayOfWeek);
+  start.setHours(0, 0, 0, 0);
+
+  // Get Saturday (end of week)
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  end.setHours(23, 59, 59, 999);
+
+  return { start, end };
+}
+
+function getStageLabel(stage: MilestoneStage): string {
+  const stageIndex = MILESTONE_STAGES.findIndex((s) => s.key === stage);
+  return stageIndex >= 0 ? `${stageIndex + 1}단계` : "";
+}
+
 export function ProjectTimeline({
   projectId,
   milestones,
   projectDeadline,
   onRefresh,
+  goals,
 }: ProjectTimelineProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [editingMilestone, setEditingMilestone] =
@@ -104,6 +152,17 @@ export function ProjectTimeline({
 
   const today = useMemo(() => new Date(), []);
 
+  // 목표를 마감일 기준으로 정렬
+  const sortedGoals = useMemo(() => {
+    if (!goals) return [];
+    return [...goals].sort(
+      (a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
+    );
+  }, [goals]);
+
+  // 목표가 있으면 목표 사용, 없으면 마일스톤 사용
+  const useGoals = goals && goals.length > 0;
+
   const sortedMilestones = useMemo(() => {
     return [...milestones].sort((a, b) => a.order_index - b.order_index);
   }, [milestones]);
@@ -111,10 +170,20 @@ export function ProjectTimeline({
   const { timelineStart, timelineEnd, months, weeks } = useMemo(() => {
     const dates: Date[] = [];
 
-    sortedMilestones.forEach((m) => {
-      if (m.start_date) dates.push(new Date(m.start_date));
-      if (m.end_date) dates.push(new Date(m.end_date));
-    });
+    if (useGoals) {
+      // 목표 기반 날짜 계산
+      sortedGoals.forEach((goal) => {
+        const weekRange = getWeekRange(goal.deadline);
+        dates.push(weekRange.start);
+        dates.push(weekRange.end);
+      });
+    } else {
+      // 마일스톤 기반 날짜 계산
+      sortedMilestones.forEach((m) => {
+        if (m.start_date) dates.push(new Date(m.start_date));
+        if (m.end_date) dates.push(new Date(m.end_date));
+      });
+    }
 
     if (projectDeadline) dates.push(new Date(projectDeadline));
     dates.push(today);
@@ -167,7 +236,7 @@ export function ProjectTimeline({
       months: monthsList,
       weeks: weeksList,
     };
-  }, [sortedMilestones, projectDeadline, today]);
+  }, [sortedMilestones, sortedGoals, useGoals, projectDeadline, today]);
 
   const totalWeeks = weeks.length;
 
@@ -321,69 +390,128 @@ export function ProjectTimeline({
 
             {/* 간트 차트 바 */}
             <TooltipProvider>
-              {sortedMilestones.map((milestone, index) => {
-                const status = getMilestoneStatus(milestone, today);
-                const hasDateRange = milestone.start_date && milestone.end_date;
+              {useGoals ? (
+                // 목표 기반 타임라인
+                sortedGoals.map((goal, index) => {
+                  const status = getGoalStatus(goal, today);
+                  const weekRange = getWeekRange(goal.deadline);
+                  const startDateStr = weekRange.start.toISOString().split("T")[0];
+                  const endDateStr = weekRange.end.toISOString().split("T")[0];
 
-                return (
-                  <div key={milestone.id} className="flex items-center h-10">
-                    {/* 단계명 */}
-                    <div className="w-32 shrink-0 flex items-center gap-2 pr-2">
-                      <span className="text-xs font-medium truncate">
-                        {index + 1}. {milestone.title}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-5 w-5 shrink-0"
-                        onClick={() => handleEditMilestone(milestone)}
-                      >
-                        <Edit2 className="h-3 w-3" />
-                      </Button>
-                    </div>
+                  return (
+                    <div key={goal.id} className="flex items-center h-10">
+                      {/* 목표 제목 */}
+                      <div className="w-40 shrink-0 flex items-center gap-2 pr-2">
+                        <span className="text-xs font-medium truncate" title={goal.content}>
+                          {index + 1}. {goal.content}
+                        </span>
+                      </div>
 
-                    {/* 바 영역 */}
-                    <div className="flex-1 relative h-6 bg-muted/30 rounded">
-                      {hasDateRange && (
+                      {/* 바 영역 */}
+                      <div className="flex-1 relative h-6 bg-muted/30 rounded">
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <div
                               className={`absolute h-full rounded cursor-pointer transition-opacity hover:opacity-80 ${getStatusColor(
                                 status
                               )}`}
-                              style={getBarPosition(
-                                milestone.start_date!,
-                                milestone.end_date!
-                              )}
+                              style={getBarPosition(startDateStr, endDateStr)}
                             >
                               <span className="absolute inset-0 flex items-center justify-center text-xs text-white font-medium">
-                                {milestone.progress}%
+                                {goal.is_completed ? "완료" : formatDate(goal.deadline)}
                               </span>
                             </div>
                           </TooltipTrigger>
                           <TooltipContent>
                             <div className="text-xs space-y-1">
-                              <p className="font-medium">{milestone.title}</p>
-                              <p>
-                                {formatDate(milestone.start_date!)} ~{" "}
-                                {formatDate(milestone.end_date!)}
-                              </p>
-                              <p>
-                                진행률: {milestone.progress}% ({getStatusLabel(status)})
-                              </p>
+                              <p className="font-medium">{goal.content}</p>
+                              <p>마감일: {formatDate(goal.deadline)}</p>
+                              <p>상태: {getStatusLabel(status)}</p>
+                              {goal.linked_stage && (
+                                <p>연결 단계: {getStageLabel(goal.linked_stage)}</p>
+                              )}
                             </div>
                           </TooltipContent>
                         </Tooltip>
-                      )}
-                      {!hasDateRange && (
-                        <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
-                          일정 미설정
-                        </div>
-                      )}
+                      </div>
+
+                      {/* 연결 단계 배지 */}
+                      <div className="w-16 shrink-0 flex justify-end pl-2">
+                        {goal.linked_stage && (
+                          <Badge variant="outline" className="text-[10px] px-1.5">
+                            {getStageLabel(goal.linked_stage)}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              ) : (
+                // 마일스톤 기반 타임라인 (기존 로직)
+                sortedMilestones.map((milestone, index) => {
+                  const status = getMilestoneStatus(milestone, today);
+                  const hasDateRange = milestone.start_date && milestone.end_date;
+
+                  return (
+                    <div key={milestone.id} className="flex items-center h-10">
+                      {/* 단계명 */}
+                      <div className="w-32 shrink-0 flex items-center gap-2 pr-2">
+                        <span className="text-xs font-medium truncate">
+                          {index + 1}. {milestone.title}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5 shrink-0"
+                          onClick={() => handleEditMilestone(milestone)}
+                        >
+                          <Edit2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+
+                      {/* 바 영역 */}
+                      <div className="flex-1 relative h-6 bg-muted/30 rounded">
+                        {hasDateRange && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div
+                                className={`absolute h-full rounded cursor-pointer transition-opacity hover:opacity-80 ${getStatusColor(
+                                  status
+                                )}`}
+                                style={getBarPosition(
+                                  milestone.start_date!,
+                                  milestone.end_date!
+                                )}
+                              >
+                                <span className="absolute inset-0 flex items-center justify-center text-xs text-white font-medium">
+                                  {milestone.progress}%
+                                </span>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <div className="text-xs space-y-1">
+                                <p className="font-medium">{milestone.title}</p>
+                                <p>
+                                  {formatDate(milestone.start_date!)} ~{" "}
+                                  {formatDate(milestone.end_date!)}
+                                </p>
+                                <p>
+                                  진행률: {milestone.progress}% ({getStatusLabel(status)})
+                                </p>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                        {!hasDateRange && (
+                          <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
+                            일정 미설정
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </TooltipProvider>
 
             {/* 오늘 표시 선 */}

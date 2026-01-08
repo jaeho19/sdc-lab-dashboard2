@@ -568,6 +568,7 @@ export default function ResearchDetailPage() {
         }))}
         projectDeadline={project.target_date}
         onRefresh={fetchData}
+        goals={weeklyGoals}
       />
 
       {/* 6단계 진행 카드 - 타임라인 아래 배치 */}
