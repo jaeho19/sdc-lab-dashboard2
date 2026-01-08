@@ -1,14 +1,16 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
+import type { EventClickArg } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Calendar, X } from "lucide-react";
 import { CALENDAR_CATEGORY_CONFIG } from "@/lib/constants";
 import type { CalendarCategory } from "@/types/database.types";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 interface CalendarEvent {
   id: string;
@@ -24,7 +26,7 @@ interface DashboardCalendarProps {
 }
 
 export function DashboardCalendar({ events }: DashboardCalendarProps) {
-  const router = useRouter();
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
   const calendarEvents = events.map((event) => ({
     id: event.id,
@@ -36,13 +38,31 @@ export function DashboardCalendar({ events }: DashboardCalendarProps) {
     borderColor: CALENDAR_CATEGORY_CONFIG[event.category]?.color || "#6b7280",
   }));
 
-  const handleEventClick = useCallback(() => {
-    router.push("/calendar");
-  }, [router]);
+  const handleEventClick = useCallback(
+    (clickInfo: EventClickArg) => {
+      const eventId = clickInfo.event.id;
+      const event = events.find((e) => e.id === eventId);
+      if (event) {
+        // Toggle: 같은 이벤트 클릭 시 닫기, 다른 이벤트 클릭 시 변경
+        setSelectedEvent((prev) => (prev?.id === event.id ? null : event));
+      }
+    },
+    [events]
+  );
 
-  const handleDateClick = useCallback(() => {
-    router.push("/calendar");
-  }, [router]);
+  const formatEventDate = (dateStr: string, allDay: boolean) => {
+    const date = new Date(dateStr);
+    const options: Intl.DateTimeFormatOptions = {
+      month: "long",
+      day: "numeric",
+      weekday: "short",
+    };
+    if (!allDay) {
+      options.hour = "2-digit";
+      options.minute = "2-digit";
+    }
+    return date.toLocaleDateString("ko-KR", options);
+  };
 
   return (
     <Card>
@@ -83,11 +103,52 @@ export function DashboardCalendar({ events }: DashboardCalendarProps) {
               weekday: "narrow",
             }}
             eventClick={handleEventClick}
-            dateClick={handleDateClick}
             selectable={false}
             editable={false}
           />
         </div>
+
+        {/* 선택된 이벤트 상세 정보 */}
+        {selectedEvent && (
+          <div className="mt-4 p-3 border rounded-lg bg-muted/50">
+            <div className="flex items-center justify-between mb-2">
+              <Badge
+                style={{
+                  backgroundColor: CALENDAR_CATEGORY_CONFIG[selectedEvent.category]?.color || "#6b7280",
+                  color: "white",
+                }}
+              >
+                {CALENDAR_CATEGORY_CONFIG[selectedEvent.category]?.label || "일정"}
+              </Badge>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0"
+                onClick={() => setSelectedEvent(null)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <h4 className="font-semibold text-sm md:text-base mb-1">
+              {selectedEvent.title}
+            </h4>
+            <p className="text-xs md:text-sm text-muted-foreground mb-2">
+              {formatEventDate(selectedEvent.start_date, selectedEvent.all_day)}
+              {selectedEvent.end_date && (
+                <> ~ {formatEventDate(selectedEvent.end_date, selectedEvent.all_day)}</>
+              )}
+              {selectedEvent.all_day && (
+                <span className="ml-2 text-xs">(종일)</span>
+              )}
+            </p>
+            <Link
+              href="/calendar"
+              className="text-xs md:text-sm text-primary hover:underline"
+            >
+              캘린더에서 보기 →
+            </Link>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
