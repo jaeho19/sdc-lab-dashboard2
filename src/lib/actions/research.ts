@@ -843,3 +843,172 @@ export async function updateSubmissionStatus(
   revalidatePath("/dashboard");
   return { success: true };
 }
+
+// ============================================
+// 즐겨찾기 관련 액션
+// ============================================
+
+// 즐겨찾기 상태 확인
+export async function checkFavoriteStatus(projectId: string): Promise<boolean> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.email) {
+    return false;
+  }
+
+  // 현재 사용자의 member 정보 조회
+  const { data: member } = await supabase
+    .from("members")
+    .select("id")
+    .eq("email", user.email)
+    .single();
+
+  if (!member) {
+    return false;
+  }
+
+  const memberData = member as { id: string };
+
+  const { data } = await supabase
+    .from("research_project_favorites")
+    .select("id")
+    .eq("user_id", memberData.id)
+    .eq("project_id", projectId)
+    .single();
+
+  return !!data;
+}
+
+// 즐겨찾기 토글
+export async function toggleFavoriteProject(projectId: string): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.email) {
+    return { error: "로그인이 필요합니다." };
+  }
+
+  // 현재 사용자의 member 정보 조회
+  const { data: member } = await supabase
+    .from("members")
+    .select("id")
+    .eq("email", user.email)
+    .single();
+
+  if (!member) {
+    return { error: "사용자 정보를 찾을 수 없습니다." };
+  }
+
+  const memberData = member as { id: string };
+
+  // 현재 즐겨찾기 상태 확인
+  const { data: existing } = await supabase
+    .from("research_project_favorites")
+    .select("id")
+    .eq("user_id", memberData.id)
+    .eq("project_id", projectId)
+    .single();
+
+  if (existing) {
+    // 즐겨찾기 해제
+    const { error } = await supabase
+      .from("research_project_favorites")
+      .delete()
+      .eq("id", (existing as { id: string }).id);
+
+    if (error) {
+      console.error("Favorite deletion error:", error);
+      return { error: "즐겨찾기 해제 중 오류가 발생했습니다." };
+    }
+
+    revalidatePath(`/research/${projectId}`);
+    return { success: true, data: { isFavorite: false } };
+  } else {
+    // 즐겨찾기 추가
+    const { error } = await supabase
+      .from("research_project_favorites")
+      .insert({
+        user_id: memberData.id,
+        project_id: projectId,
+      } as never);
+
+    if (error) {
+      console.error("Favorite insertion error:", error);
+      return { error: "즐겨찾기 추가 중 오류가 발생했습니다." };
+    }
+
+    revalidatePath(`/research/${projectId}`);
+    return { success: true, data: { isFavorite: true } };
+  }
+}
+
+// 즐겨찾기한 프로젝트 목록 조회
+export async function getFavoriteProjects(): Promise<{
+  error?: string;
+  data?: { id: string; title: string; category: string }[];
+}> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.email) {
+    return { error: "로그인이 필요합니다." };
+  }
+
+  // 현재 사용자의 member 정보 조회
+  const { data: member } = await supabase
+    .from("members")
+    .select("id")
+    .eq("email", user.email)
+    .single();
+
+  if (!member) {
+    return { error: "사용자 정보를 찾을 수 없습니다." };
+  }
+
+  const memberData = member as { id: string };
+
+  // 즐겨찾기한 프로젝트 ID 조회
+  const { data: favorites, error: favError } = await supabase
+    .from("research_project_favorites")
+    .select("project_id")
+    .eq("user_id", memberData.id)
+    .order("created_at", { ascending: false });
+
+  if (favError) {
+    console.error("Favorite projects fetch error:", favError);
+    return { error: "즐겨찾기 목록 조회 중 오류가 발생했습니다." };
+  }
+
+  if (!favorites || favorites.length === 0) {
+    return { data: [] };
+  }
+
+  // 프로젝트 정보 조회
+  const projectIds = (favorites as { project_id: string }[]).map((f) => f.project_id);
+  const { data: projects, error: projectsError } = await supabase
+    .from("research_projects")
+    .select("id, title, category")
+    .in("id", projectIds);
+
+  if (projectsError) {
+    console.error("Projects fetch error:", projectsError);
+    return { error: "프로젝트 정보 조회 중 오류가 발생했습니다." };
+  }
+
+  // 즐겨찾기 순서대로 정렬
+  const orderedProjects = projectIds
+    .map((id) => (projects as { id: string; title: string; category: string }[]).find((p) => p.id === id))
+    .filter((p): p is { id: string; title: string; category: string } => p !== undefined);
+
+  return { data: orderedProjects };
+}

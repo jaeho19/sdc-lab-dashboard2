@@ -48,6 +48,8 @@ import {
   deleteProjectAuthor,
   updateProject,
   updateSubmissionStatus,
+  toggleFavoriteProject,
+  checkFavoriteStatus,
 } from "@/lib/actions/research";
 import type { SubmissionStatus } from "@/types/database.types";
 import {
@@ -65,6 +67,7 @@ import {
   CalendarDays,
   Users,
   Loader2,
+  Star,
 } from "lucide-react";
 import Link from "next/link";
 import { WeeklyGoals } from "@/components/features/research/weekly-goals";
@@ -139,6 +142,8 @@ export default function ResearchDetailPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [canDelete, setCanDelete] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
 
   // 편집 상태
   const [isEditingHeader, setIsEditingHeader] = useState(false);
@@ -189,6 +194,10 @@ export default function ResearchDetailPage() {
       const isAdmin = member?.position === "professor";
       const isCreator = p.created_by === user.id;
       setCanDelete(isAdmin || isCreator);
+
+      // 즐겨찾기 상태 확인
+      const favoriteStatus = await checkFavoriteStatus(id);
+      setIsFavorite(favoriteStatus);
     }
 
     // 마일스톤 및 체크리스트
@@ -274,6 +283,16 @@ export default function ResearchDetailPage() {
     await fetchData();
   };
 
+  // 즐겨찾기 토글
+  const handleToggleFavorite = async () => {
+    setFavoriteLoading(true);
+    const result = await toggleFavoriteProject(id);
+    if (result.success && result.data) {
+      setIsFavorite((result.data as { isFavorite: boolean }).isFavorite);
+    }
+    setFavoriteLoading(false);
+  };
+
   // 마일스톤 진행률 계산
   const getMilestoneProgress = (checklist: ChecklistItem[]): number => {
     if (checklist.length === 0) return 0;
@@ -353,6 +372,23 @@ export default function ResearchDetailPage() {
         </div>
         {!isEditingHeader ? (
           <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleToggleFavorite}
+              disabled={favoriteLoading}
+              title={isFavorite ? "즐겨찾기 해제" : "즐겨찾기 추가"}
+            >
+              {favoriteLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Star
+                  className={`h-5 w-5 ${
+                    isFavorite ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
+                  }`}
+                />
+              )}
+            </Button>
             <Button variant="outline" onClick={() => setIsEditingHeader(true)}>
               <Edit className="h-4 w-4 mr-2" />
               수정
@@ -517,7 +553,24 @@ export default function ResearchDetailPage() {
         onRefresh={fetchData}
       />
 
-      {/* 6단계 진행 카드 */}
+      {/* 프로젝트 타임라인 - 목표 바로 아래 배치 */}
+      <ProjectTimeline
+        projectId={id}
+        milestones={milestones.map((m) => ({
+          id: m.id,
+          title: m.title,
+          stage: m.stage,
+          weight: m.weight,
+          order_index: m.order_index,
+          progress: getMilestoneProgress(m.checklist_items),
+          start_date: m.start_date,
+          end_date: m.end_date,
+        }))}
+        projectDeadline={project.target_date}
+        onRefresh={fetchData}
+      />
+
+      {/* 6단계 진행 카드 - 타임라인 아래 배치 */}
       <div className="space-y-4">
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <Target className="h-5 w-5" />
@@ -617,23 +670,6 @@ export default function ResearchDetailPage() {
             })}
         </div>
       </div>
-
-      {/* 프로젝트 타임라인 */}
-      <ProjectTimeline
-        projectId={id}
-        milestones={milestones.map((m) => ({
-          id: m.id,
-          title: m.title,
-          stage: m.stage,
-          weight: m.weight,
-          order_index: m.order_index,
-          progress: getMilestoneProgress(m.checklist_items),
-          start_date: m.start_date,
-          end_date: m.end_date,
-        }))}
-        projectDeadline={project.target_date}
-        onRefresh={fetchData}
-      />
 
       {/* 연구노트 */}
       <ResearchNotesSection

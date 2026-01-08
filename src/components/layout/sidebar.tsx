@@ -22,6 +22,7 @@ import {
   BookOpen,
   ChevronDown,
   ChevronRight,
+  Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ import {
 import { logout } from "@/lib/supabase/actions";
 import { getInitials, getPositionLabel } from "@/lib/utils";
 import type { Database } from "@/types/database.types";
+import { getFavoriteProjects } from "@/lib/actions/research";
 
 type Member = Database["public"]["Tables"]["members"]["Row"];
 
@@ -52,6 +54,12 @@ interface FulltimeMember {
   id: string;
   name: string;
   avatar_url: string | null;
+}
+
+interface FavoriteProject {
+  id: string;
+  title: string;
+  category: string;
 }
 
 // 사이드바 멤버 커스텀 순서
@@ -122,6 +130,8 @@ function SidebarContent({
   const isAdmin = member.position === "professor";
   const [fulltimeMembers, setFulltimeMembers] = useState<FulltimeMember[]>([]);
   const [isMembersExpanded, setIsMembersExpanded] = useState(true);
+  const [favoriteProjects, setFavoriteProjects] = useState<FavoriteProject[]>([]);
+  const [isResearchExpanded, setIsResearchExpanded] = useState(true);
 
   // 풀타임 멤버 목록 로드
   useEffect(() => {
@@ -154,6 +164,18 @@ function SidebarContent({
 
     loadFulltimeMembers();
   }, []);
+
+  // 즐겨찾기 프로젝트 목록 로드
+  useEffect(() => {
+    async function loadFavoriteProjects() {
+      const result = await getFavoriteProjects();
+      if (result.data) {
+        setFavoriteProjects(result.data);
+      }
+    }
+
+    loadFavoriteProjects();
+  }, [pathname]); // pathname 변경 시 새로고침 (즐겨찾기 토글 후 반영)
 
   async function handleLogout() {
     await logout();
@@ -194,6 +216,9 @@ function SidebarContent({
         {navigation.map((item) => {
           const isActive = pathname.startsWith(item.href);
           const isMembers = item.name === "Members";
+
+          const isResearch = item.name === "Research";
+          const hasFavorites = favoriteProjects.length > 0;
 
           return (
             <div key={item.name}>
@@ -257,6 +282,67 @@ function SidebarContent({
                               </AvatarFallback>
                             </Avatar>
                             <span className="truncate">{m.name}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              ) : isResearch && !isCollapsed && hasFavorites ? (
+                <>
+                  {/* Research 메뉴 with 즐겨찾기 */}
+                  <button
+                    onClick={() => setIsResearchExpanded(!isResearchExpanded)}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors w-full",
+                      isActive
+                        ? "bg-sidebar-primary text-white"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent"
+                    )}
+                  >
+                    <item.icon className="h-5 w-5 shrink-0" />
+                    <span className="flex-1 text-left">{item.name}</span>
+                    {isResearchExpanded ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                  </button>
+
+                  {/* 즐겨찾기 프로젝트 목록 */}
+                  {isResearchExpanded && (
+                    <div className="ml-4 mt-1 space-y-0.5">
+                      {/* 전체 연구 보기 링크 */}
+                      <Link
+                        href="/research"
+                        onClick={onLinkClick}
+                        className={cn(
+                          "flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                          pathname === "/research"
+                            ? "bg-sidebar-accent text-sidebar-foreground"
+                            : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                        )}
+                      >
+                        <BookOpen className="h-3.5 w-3.5" />
+                        <span>전체 연구</span>
+                      </Link>
+                      {/* 즐겨찾기 프로젝트들 */}
+                      {favoriteProjects.map((project) => {
+                        const isProjectActive = pathname === `/research/${project.id}`;
+                        return (
+                          <Link
+                            key={project.id}
+                            href={`/research/${project.id}`}
+                            onClick={onLinkClick}
+                            className={cn(
+                              "flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                              isProjectActive
+                                ? "bg-sidebar-accent text-sidebar-foreground"
+                                : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                            )}
+                          >
+                            <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                            <span className="truncate">{project.title}</span>
                           </Link>
                         );
                       })}
