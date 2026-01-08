@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Clock, Target, Calendar, CheckCircle2 } from "lucide-react";
+import { Clock, Target, Calendar, CheckCircle2, History } from "lucide-react";
 import { getInitials, getCalendarCategoryLabel } from "@/lib/utils";
 import Link from "next/link";
 
@@ -24,6 +24,10 @@ export interface UnifiedDeadlineItem {
 
 interface UnifiedDeadlineViewProps {
   items: UnifiedDeadlineItem[];
+  title?: string;
+  icon?: "clock" | "history";
+  variant?: "upcoming" | "past";
+  maxHeight?: string;
 }
 
 function getDeadlineStatus(
@@ -57,19 +61,27 @@ function formatDate(dateStr: string): { month: string; day: number; weekday: str
   };
 }
 
-export function UnifiedDeadlineView({ items }: UnifiedDeadlineViewProps) {
+export function UnifiedDeadlineView({
+  items,
+  title = "다가오는 마감일",
+  icon = "clock",
+  variant = "upcoming",
+  maxHeight = "800px",
+}: UnifiedDeadlineViewProps) {
+  const IconComponent = icon === "clock" ? Clock : History;
+
   if (items.length === 0) {
     return (
       <Card>
         <CardHeader className="p-4 md:p-6">
           <CardTitle className="flex items-center gap-2 text-base md:text-lg">
-            <Clock className="h-4 w-4 md:h-5 md:w-5" />
-            다가오는 마감일
+            <IconComponent className="h-4 w-4 md:h-5 md:w-5" />
+            {title}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
           <p className="text-center text-muted-foreground py-4">
-            예정된 마감일이 없습니다.
+            {variant === "upcoming" ? "예정된 마감일이 없습니다." : "완료된 목표가 없습니다."}
           </p>
         </CardContent>
       </Card>
@@ -80,15 +92,15 @@ export function UnifiedDeadlineView({ items }: UnifiedDeadlineViewProps) {
     <Card>
       <CardHeader className="p-4 md:p-6">
         <CardTitle className="flex items-center gap-2 text-base md:text-lg">
-          <Clock className="h-4 w-4 md:h-5 md:w-5" />
-          다가오는 마감일
+          <IconComponent className="h-4 w-4 md:h-5 md:w-5" />
+          {title}
           <Badge variant="secondary" className="ml-auto text-xs">
             {items.length}건
           </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
-        <div className="space-y-3 max-h-[800px] overflow-y-auto pr-1">
+        <div className="space-y-3 overflow-y-auto pr-1" style={{ maxHeight }}>
           {items.map((item) => {
             const status = getDeadlineStatus(item.date, item.type, item.isCompleted);
             const { month, day, weekday } = formatDate(item.date);

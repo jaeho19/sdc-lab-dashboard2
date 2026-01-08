@@ -231,17 +231,17 @@ export default async function DashboardPage() {
       isAllDay: event.all_day,
     }));
 
-  // 통합 마감일 목록 (미완료 우선, 그 다음 완료된 항목, 각각 날짜순 정렬)
-  const unifiedDeadlines = [...goalDeadlines, ...calendarDeadlines]
-    .sort((a, b) => {
-      // 완료된 항목은 뒤로
-      if (a.isCompleted !== b.isCompleted) {
-        return a.isCompleted ? 1 : -1;
-      }
-      // 같은 상태면 날짜순
-      return new Date(a.date).getTime() - new Date(b.date).getTime();
-    })
-    .slice(0, 25);
+  // 다가오는 마감일: 미완료 목표 + 오늘 이후 일정 (날짜 오름차순)
+  const upcomingDeadlines = [...goalDeadlines, ...calendarDeadlines]
+    .filter((item) => !item.isCompleted)  // 미완료만
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, 20);
+
+  // 완료된 목표: 완료된 목표만 (날짜 내림차순 - 최근 완료 순)
+  const completedDeadlines = goalDeadlines
+    .filter((item) => item.isCompleted)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 10);
 
   const mentoringList = (recentMentoring || []) as Array<{
     id: string;
@@ -326,8 +326,24 @@ export default async function DashboardPage() {
 
       {/* 2열 레이아웃: 왼쪽 - 다가오는 일정, 오른쪽 - 캘린더 + 투고중인 연구 */}
       <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2">
-        {/* 왼쪽: 다가오는 마감일 (목표 + 일정 통합) */}
-        <UnifiedDeadlineView items={unifiedDeadlines} />
+        {/* 왼쪽: 다가오는 마감일 + 완료된 목표 */}
+        <div className="space-y-4">
+          <UnifiedDeadlineView
+            items={upcomingDeadlines}
+            title="다가오는 마감일"
+            icon="clock"
+            variant="upcoming"
+          />
+          {completedDeadlines.length > 0 && (
+            <UnifiedDeadlineView
+              items={completedDeadlines}
+              title="완료된 목표"
+              icon="history"
+              variant="past"
+              maxHeight="300px"
+            />
+          )}
+        </div>
 
         {/* 오른쪽: 캘린더 + 투고 중인 연구 */}
         <div className="space-y-4 md:space-y-6">
