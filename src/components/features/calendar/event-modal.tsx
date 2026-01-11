@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +27,21 @@ import {
   deleteCalendarEvent,
 } from "@/lib/actions/calendar";
 import { Loader2, Trash2 } from "lucide-react";
+
+// 1시간 단위 시간 옵션 생성 (오전/오후 표시)
+const TIME_OPTIONS = Array.from({ length: 24 }, (_, h) => {
+  const hour24 = `${String(h).padStart(2, "0")}:00`;
+  const period = h < 12 ? "오전" : "오후";
+  const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  const label = `${period} ${hour12}:00`;
+  return { value: hour24, label };
+});
+
+// 시간을 가장 가까운 정시로 변환 (HH:MM -> HH:00)
+const roundToHour = (timeStr: string) => {
+  const hours = parseInt(timeStr.split(":")[0], 10);
+  return `${String(hours).padStart(2, "0")}:00`;
+};
 
 interface CalendarEvent {
   id: string;
@@ -82,11 +97,14 @@ export function EventModal({
       setDescription(event.description || "");
       const start = new Date(event.start_date);
       setStartDate(formatLocalDate(start));
-      setStartTime(start.toTimeString().slice(0, 5));
+      // 기존 시간을 정시로 변환 (드롭다운 호환)
+      const startTimeRaw = start.toTimeString().slice(0, 5);
+      setStartTime(roundToHour(startTimeRaw));
       if (event.end_date) {
         const end = new Date(event.end_date);
         setEndDate(formatLocalDate(end));
-        setEndTime(end.toTimeString().slice(0, 5));
+        const endTimeRaw = end.toTimeString().slice(0, 5);
+        setEndTime(roundToHour(endTimeRaw));
       } else {
         setEndDate("");
         setEndTime("");
@@ -116,18 +134,45 @@ export function EventModal({
     }
   }
 
+  // 시작 시간 변경 시 종료 시간을 자동으로 +1시간 설정
+  const handleStartTimeChange = useCallback((value: string) => {
+    setStartTime(value);
+    const hours = parseInt(value.split(":")[0], 10);
+    const endHours = (hours + 1) % 24;
+    const newEndTime = `${String(endHours).padStart(2, "0")}:00`;
+    setEndTime(newEndTime);
+    // 시작 시간이 23:00인 경우 종료일도 다음날로 설정
+    if (hours === 23 && startDate) {
+      const nextDay = new Date(startDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      setEndDate(formatLocalDate(nextDay));
+    } else if (startDate) {
+      setEndDate(startDate);
+    }
+  }, [startDate]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim() || !startDate) return;
 
     setLoading(true);
 
-    const startDateStr = isAllDay
-      ? `${startDate}T00:00:00`
-      : `${startDate}T${startTime}:00`;
+    // 타임존 버그 수정: 로컬 Date 객체를 생성한 후 ISO 문자열로 변환
+    // 이렇게 하면 타임존 정보가 포함되어 서버에서 올바르게 처리됨
+    let startDateStr: string;
+    if (isAllDay) {
+      // 종일 이벤트는 날짜만 사용
+      startDateStr = `${startDate}T00:00:00`;
+    } else {
+      const startDateTime = new Date(`${startDate}T${startTime}`);
+      startDateStr = startDateTime.toISOString();
+    }
 
-    const endDateStr =
-      endDate && !isAllDay ? `${endDate}T${endTime}:00` : null;
+    let endDateStr: string | null = null;
+    if (endDate && !isAllDay) {
+      const endDateTime = new Date(`${endDate}T${endTime}`);
+      endDateStr = endDateTime.toISOString();
+    }
 
     const input = {
       title: title.trim(),
@@ -260,13 +305,19 @@ export function EventModal({
             </div>
             {!isAllDay && (
               <div className="space-y-2">
-                <Label htmlFor="start_time">시작 시간</Label>
-                <Input
-                  id="start_time"
-                  type="time"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                />
+                <Label>시작 시간</Label>
+                <Select value={startTime} onValueChange={handleStartTimeChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="시간 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIME_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
           </div>
@@ -283,13 +334,19 @@ export function EventModal({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="end_time">종료 시간</Label>
-                <Input
-                  id="end_time"
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                />
+                <Label>종료 시간</Label>
+                <Select value={endTime} onValueChange={setEndTime}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="시간 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIME_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           )}
