@@ -22,6 +22,8 @@ const positionOrder: Record<string, number> = {
 const customNameOrder: Record<string, number> = {
   "이지윤": 1,
   "김은솔": 2,
+  "김주현": 3,
+  "이다연": 4,
 };
 
 export default async function MembersPage() {
