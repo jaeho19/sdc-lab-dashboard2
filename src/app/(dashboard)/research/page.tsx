@@ -22,10 +22,19 @@ const positionOrder: Record<string, number> = {
   ms: 5,
 };
 
-// 같은 직책 내 커스텀 정렬 (Members 페이지와 동일)
-const customNameOrder: Record<string, number> = {
-  "이지윤": 1,
-  "김은솔": 2,
+// 전체 정렬에서 특정 멤버의 순서를 강제 지정 (직책 무시)
+// 값이 작을수록 먼저 표시됨
+const globalNameOrder: Record<string, number> = {
+  "강성익": 10,
+  "오재인": 11,
+  "이지윤": 20,
+  "김은솔": 21,
+  "김주현": 22,  // 김은솔(21) 다음, 이다연(23) 전
+  "이다연": 23,
+  "김가인": 30,
+  "배성훈": 31,
+  "이은진": 32,
+  "최희진": 33,
 };
 
 export default async function ResearchPage() {
@@ -80,20 +89,25 @@ export default async function ResearchPage() {
 
   const memberList = (members || []) as MemberWithProjects[];
 
-  // 직책별 정렬 함수 (Members 페이지와 동일)
+  // 정렬 함수: globalNameOrder를 우선 적용하여 직책과 관계없이 원하는 순서로 정렬
   const sortByPosition = (a: MemberWithProjects, b: MemberWithProjects) => {
+    const nameOrderA = globalNameOrder[a.name];
+    const nameOrderB = globalNameOrder[b.name];
+
+    // 둘 다 globalNameOrder에 있으면 그 순서대로
+    if (nameOrderA !== undefined && nameOrderB !== undefined) {
+      return nameOrderA - nameOrderB;
+    }
+
+    // 한쪽만 globalNameOrder에 있으면 그쪽 우선
+    if (nameOrderA !== undefined) return -1;
+    if (nameOrderB !== undefined) return 1;
+
+    // 둘 다 없으면 직책순 -> 이름순
     const posA = positionOrder[a.position] || 99;
     const posB = positionOrder[b.position] || 99;
     if (posA !== posB) return posA - posB;
 
-    // 같은 직책이면 커스텀 순서 적용
-    const nameOrderA = customNameOrder[a.name] || 99;
-    const nameOrderB = customNameOrder[b.name] || 99;
-    if (nameOrderA !== 99 || nameOrderB !== 99) {
-      return nameOrderA - nameOrderB;
-    }
-
-    // 그 외에는 이름순
     return a.name.localeCompare(b.name, "ko");
   };
 
