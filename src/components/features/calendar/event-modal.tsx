@@ -28,19 +28,34 @@ import {
 } from "@/lib/actions/calendar";
 import { Loader2, Trash2 } from "lucide-react";
 
-// 1시간 단위 시간 옵션 생성 (오전/오후 표시)
-const TIME_OPTIONS = Array.from({ length: 24 }, (_, h) => {
-  const hour24 = `${String(h).padStart(2, "0")}:00`;
-  const period = h < 12 ? "오전" : "오후";
-  const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  const label = `${period} ${hour12}:00`;
-  return { value: hour24, label };
+// 30분 단위 시간 옵션 생성 (구글 캘린더 스타일)
+const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
+  const hours = Math.floor(i / 2);
+  const minutes = (i % 2) * 30;
+  const value = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+  const period = hours < 12 ? "오전" : "오후";
+  const hour12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+  const label = `${period} ${hour12}:${String(minutes).padStart(2, "0")}`;
+  return { value, label };
 });
 
-// 시간을 가장 가까운 정시로 변환 (HH:MM -> HH:00)
-const roundToHour = (timeStr: string) => {
-  const hours = parseInt(timeStr.split(":")[0], 10);
-  return `${String(hours).padStart(2, "0")}:00`;
+// 시간을 가장 가까운 30분 단위로 변환 (HH:MM -> HH:00 or HH:30)
+const roundToHalfHour = (timeStr: string) => {
+  const [hoursStr, minutesStr] = timeStr.split(":");
+  const hours = parseInt(hoursStr, 10);
+  const minutes = parseInt(minutesStr, 10);
+  const roundedMinutes = minutes < 15 ? 0 : minutes < 45 ? 30 : 0;
+  const roundedHours = minutes >= 45 ? (hours + 1) % 24 : hours;
+  return `${String(roundedHours).padStart(2, "0")}:${String(roundedMinutes).padStart(2, "0")}`;
+};
+
+// 시작 시간에 30분을 더한 종료 시간 계산
+const addMinutesToTime = (timeStr: string, minutesToAdd: number) => {
+  const [hoursStr, minutesStr] = timeStr.split(":");
+  const totalMinutes = parseInt(hoursStr, 10) * 60 + parseInt(minutesStr, 10) + minutesToAdd;
+  const newHours = Math.floor(totalMinutes / 60) % 24;
+  const newMinutes = totalMinutes % 60;
+  return `${String(newHours).padStart(2, "0")}:${String(newMinutes).padStart(2, "0")}`;
 };
 
 interface CalendarEvent {
@@ -97,14 +112,14 @@ export function EventModal({
       setDescription(event.description || "");
       const start = new Date(event.start_date);
       setStartDate(formatLocalDate(start));
-      // 기존 시간을 정시로 변환 (드롭다운 호환)
+      // 기존 시간을 30분 단위로 변환 (드롭다운 호환)
       const startTimeRaw = start.toTimeString().slice(0, 5);
-      setStartTime(roundToHour(startTimeRaw));
+      setStartTime(roundToHalfHour(startTimeRaw));
       if (event.end_date) {
         const end = new Date(event.end_date);
         setEndDate(formatLocalDate(end));
         const endTimeRaw = end.toTimeString().slice(0, 5);
-        setEndTime(roundToHour(endTimeRaw));
+        setEndTime(roundToHalfHour(endTimeRaw));
       } else {
         setEndDate("");
         setEndTime("");
@@ -127,22 +142,25 @@ export function EventModal({
       setTitle("");
       setDescription("");
       setStartTime("09:00");
-      setEndTime("10:00");
+      setEndTime("09:30"); // 기본 30분 미팅
       setIsAllDay(false);
       setCategory("lab_meeting");
       setIsShared(true);
     }
   }
 
-  // 시작 시간 변경 시 종료 시간을 자동으로 +1시간 설정
+  // 시작 시간 변경 시 종료 시간을 자동으로 +30분 설정 (구글 캘린더 스타일)
   const handleStartTimeChange = useCallback((value: string) => {
     setStartTime(value);
-    const hours = parseInt(value.split(":")[0], 10);
-    const endHours = (hours + 1) % 24;
-    const newEndTime = `${String(endHours).padStart(2, "0")}:00`;
+    // 종료 시간을 시작 시간 + 30분으로 설정
+    const newEndTime = addMinutesToTime(value, 30);
     setEndTime(newEndTime);
-    // 시작 시간이 23:00인 경우 종료일도 다음날로 설정
-    if (hours === 23 && startDate) {
+    // 시작 시간이 23:30인 경우 종료일도 다음날로 설정
+    const [hoursStr] = value.split(":");
+    const hours = parseInt(hoursStr, 10);
+    const [, minutesStr] = value.split(":");
+    const minutes = parseInt(minutesStr, 10);
+    if (hours === 23 && minutes === 30 && startDate) {
       const nextDay = new Date(startDate);
       nextDay.setDate(nextDay.getDate() + 1);
       setEndDate(formatLocalDate(nextDay));
