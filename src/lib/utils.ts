@@ -219,6 +219,11 @@ export const SUBMISSION_STATUS_CONFIG = {
     color: "bg-gray-100 text-gray-700",
     badgeVariant: "secondary" as const,
   },
+  ready_to_submit: {
+    label: "투고 준비 완료",
+    color: "bg-emerald-100 text-emerald-700",
+    badgeVariant: "default" as const,
+  },
   // Under Review Phase
   submitted: {
     label: "Submitted",

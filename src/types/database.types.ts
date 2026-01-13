@@ -73,6 +73,7 @@ export type PeerReviewStatus = "pending" | "processing" | "completed" | "error";
 // 투고 상태 (진행률 100% 이후)
 export type SubmissionStatus =
   | "not_submitted"      // Not yet submitted
+  | "ready_to_submit"    // Ready to submit (100% progress)
   // Under Review Phase
   | "submitted"          // Submission completed
   | "under_review"       // Review in progress

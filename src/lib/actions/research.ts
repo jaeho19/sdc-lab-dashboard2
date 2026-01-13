@@ -384,11 +384,35 @@ async function recalculateProgress(projectId: string): Promise<void> {
     totalProgress += milestoneProgress;
   }
 
+  const finalProgress = Math.round(totalProgress * 10) / 10;
+
   // 프로젝트 진행률 업데이트
   await supabase
     .from("research_projects")
-    .update({ overall_progress: Math.round(totalProgress * 10) / 10 } as never)
+    .update({ overall_progress: finalProgress } as never)
     .eq("id", projectId);
+
+  // 진행률이 100%가 되면 자동으로 투고 상태를 "투고 준비 완료"로 변경
+  if (finalProgress >= 100) {
+    // 현재 투고 상태 확인
+    const { data: project } = await supabase
+      .from("research_projects")
+      .select("submission_status")
+      .eq("id", projectId)
+      .single();
+
+    const projectData = project as { submission_status: string } | null;
+
+    // 아직 미투고 상태인 경우에만 자동으로 "투고 준비 완료"로 변경
+    if (projectData && projectData.submission_status === "not_submitted") {
+      await supabase
+        .from("research_projects")
+        .update({
+          submission_status: "ready_to_submit",
+        } as never)
+        .eq("id", projectId);
+    }
+  }
 }
 
 // 마일스톤 메모 업데이트
