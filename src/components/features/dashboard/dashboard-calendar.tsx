@@ -7,10 +7,12 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, X } from "lucide-react";
+import { Calendar, X, Plus } from "lucide-react";
 import { CALENDAR_CATEGORY_CONFIG } from "@/lib/constants";
 import type { CalendarCategory } from "@/types/database.types";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { EventModal } from "@/components/features/calendar/event-modal";
 
 interface CalendarEvent {
   id: string;
@@ -26,7 +28,21 @@ interface DashboardCalendarProps {
 }
 
 export function DashboardCalendar({ events }: DashboardCalendarProps) {
+  const router = useRouter();
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
+  // + 버튼 클릭 핸들러 (오늘 날짜로 새 일정 생성)
+  const handleAddClick = useCallback(() => {
+    setSelectedDate(new Date());
+    setModalOpen(true);
+  }, []);
+
+  // 일정 생성 성공 시 새로고침
+  const handleSuccess = useCallback(() => {
+    router.refresh();
+  }, [router]);
 
   const calendarEvents = events.map((event) => ({
     id: event.id,
@@ -71,12 +87,23 @@ export function DashboardCalendar({ events }: DashboardCalendarProps) {
           <Calendar className="h-4 w-4 md:h-5 md:w-5" />
           캘린더
         </CardTitle>
-        <Link
-          href="/calendar"
-          className="text-xs md:text-sm text-primary hover:underline"
-        >
-          전체 보기
-        </Link>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={handleAddClick}
+            title="일정 추가"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+          <Link
+            href="/calendar"
+            className="text-xs md:text-sm text-primary hover:underline"
+          >
+            전체 보기
+          </Link>
+        </div>
       </CardHeader>
       <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
         <div className="dashboard-mini-calendar">
@@ -150,6 +177,14 @@ export function DashboardCalendar({ events }: DashboardCalendarProps) {
           </div>
         )}
       </CardContent>
+
+      {/* 일정 추가 모달 */}
+      <EventModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        defaultDate={selectedDate}
+        onSuccess={handleSuccess}
+      />
     </Card>
   );
 }

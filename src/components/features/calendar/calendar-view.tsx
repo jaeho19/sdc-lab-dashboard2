@@ -10,6 +10,8 @@ import type { CalendarCategory } from "@/types/database.types";
 import { EventModal } from "./event-modal";
 import { updateEventDates } from "@/lib/actions/calendar";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 interface CalendarEvent {
   id: string;
@@ -94,8 +96,26 @@ export function CalendarView({ events }: CalendarViewProps) {
     router.refresh();
   }, [router]);
 
+  // + 버튼 클릭 핸들러 (오늘 날짜로 새 일정 생성)
+  const handleAddClick = useCallback(() => {
+    setSelectedEvent(null);
+    setSelectedDate(new Date());
+    setModalOpen(true);
+  }, []);
+
   return (
     <>
+      {/* 안내 메시지 및 추가 버튼 */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+        <p className="text-xs md:text-sm text-muted-foreground">
+          날짜를 클릭하여 새 일정을 추가하거나, 일정을 드래그하여 날짜를 변경할 수 있습니다.
+        </p>
+        <Button size="sm" onClick={handleAddClick}>
+          <Plus className="h-4 w-4 mr-1" />
+          일정 추가
+        </Button>
+      </div>
+
       <div className="bg-white rounded-lg border p-2 md:p-4 calendar-mobile">
         <FullCalendar
           plugins={[dayGridPlugin, interactionPlugin]}
