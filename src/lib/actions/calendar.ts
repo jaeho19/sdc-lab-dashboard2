@@ -180,7 +180,7 @@ function parseFormData(formData: FormData): CalendarEventInput {
   const endDateStr = formData.get("end_date") as string | null;
   const endTime = formData.get("end_time") as string | null;
   const allDay = formData.get("all_day") === "true";
-  const category = (formData.get("category") as CalendarCategory) || "other";
+  const category = (formData.get("category") as CalendarCategory) || "meeting";
   const isPublic = formData.get("is_public") === "true";
 
   // Build datetime strings
