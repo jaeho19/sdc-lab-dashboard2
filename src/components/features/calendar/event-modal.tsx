@@ -95,7 +95,7 @@ export function EventModal({
   const [endDate, setEndDate] = useState("");
   const [endTime, setEndTime] = useState("10:00");
   const [isAllDay, setIsAllDay] = useState(false);
-  const [category, setCategory] = useState<CalendarCategory>("lab_meeting");
+  const [category, setCategory] = useState<CalendarCategory>("meeting");
   const [isShared, setIsShared] = useState(true);
 
   // 로컬 타임존 기준으로 날짜 문자열 생성 (YYYY-MM-DD)
@@ -144,7 +144,7 @@ export function EventModal({
       setStartTime("09:00");
       setEndTime("09:30"); // 기본 30분 미팅
       setIsAllDay(false);
-      setCategory("lab_meeting");
+      setCategory("meeting");
       setIsShared(true);
     }
   }

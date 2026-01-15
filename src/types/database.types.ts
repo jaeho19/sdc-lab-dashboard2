@@ -48,13 +48,12 @@ export type ProjectType = "advanced" | "general";  // 선진연구 / 일반연�
 export type ProjectMemberRole = "first_author" | "corresponding" | "co_author";
 
 export type CalendarCategory =
-  | "lab_meeting"
+  | "meeting"
   | "conference"
-  | "social"
+  | "lecture"
   | "deadline"
+  | "proposal"
   | "seminar"
-  | "study"
-  | "field_trip"
   | "vacation";
 
 export type NotificationType =

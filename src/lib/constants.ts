@@ -87,33 +87,29 @@ export const MILESTONE_STAGE_COLORS = {
 
 // Calendar Category 라벨 및 색상
 export const CALENDAR_CATEGORY_CONFIG = {
-  lab_meeting: {
-    label: "랩미팅",
+  meeting: {
+    label: "미팅",
     color: "#3b82f6",
   },
   conference: {
     label: "학회",
     color: "#8b5cf6",
   },
-  social: {
-    label: "친목",
+  lecture: {
+    label: "강의 / 수업",
     color: "#f59e0b",
   },
   deadline: {
     label: "마감",
     color: "#ef4444",
   },
+  proposal: {
+    label: "제안서 발표",
+    color: "#06b6d4",
+  },
   seminar: {
     label: "세미나",
     color: "#10b981",
-  },
-  study: {
-    label: "스터디",
-    color: "#06b6d4",
-  },
-  field_trip: {
-    label: "현장조사",
-    color: "#84cc16",
   },
   vacation: {
     label: "휴가",
