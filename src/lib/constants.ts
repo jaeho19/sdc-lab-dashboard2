@@ -115,6 +115,10 @@ export const CALENDAR_CATEGORY_CONFIG = {
     label: "휴가",
     color: "#6b7280",
   },
+  dinner: {
+    label: "회식",
+    color: "#ec4899",
+  },
 } as const;
 
 // 타임라인 아이템 타입 설정

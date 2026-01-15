@@ -54,7 +54,8 @@ export type CalendarCategory =
   | "deadline"
   | "proposal"
   | "seminar"
-  | "vacation";
+  | "vacation"
+  | "dinner";
 
 export type NotificationType =
   | "deadline_reminder"
