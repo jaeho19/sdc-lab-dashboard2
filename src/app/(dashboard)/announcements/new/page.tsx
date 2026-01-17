@@ -26,10 +26,10 @@ export default async function NewAnnouncementPage() {
   const { data: member } = await supabase
     .from("members")
     .select("position")
-    .eq("user_id", user.id)
-    .single();
+    .eq("id", user.id)
+    .single() as { data: { position: string } | null; error: unknown };
 
-  if (member?.position !== "professor") {
+  if (!member || member.position !== "professor") {
     redirect("/announcements");
   }
 

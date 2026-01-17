@@ -119,8 +119,8 @@ export async function createAnnouncement(
   const { data: member } = await supabase
     .from("members")
     .select("id, position")
-    .eq("user_id", user.id)
-    .single();
+    .eq("id", user.id)
+    .single() as { data: { id: string; position: string } | null; error: unknown };
 
   if (!member) {
     return { error: "회원 정보를 찾을 수 없습니다." };
@@ -141,7 +141,8 @@ export async function createAnnouncement(
     return { error: "제목과 내용을 입력해주세요." };
   }
 
-  const { error } = await supabase.from("announcements").insert({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase.from("announcements") as any).insert({
     title,
     content,
     priority,
@@ -179,8 +180,8 @@ export async function updateAnnouncement(
   const { data: member } = await supabase
     .from("members")
     .select("id, position")
-    .eq("user_id", user.id)
-    .single();
+    .eq("id", user.id)
+    .single() as { data: { id: string; position: string } | null; error: unknown };
 
   if (!member || member.position !== "professor") {
     return { error: "공지사항 수정 권한이 없습니다." };
@@ -192,8 +193,8 @@ export async function updateAnnouncement(
   const is_pinned = formData.get("is_pinned") === "true";
   const expires_at = formData.get("expires_at") as string | null;
 
-  const { error } = await supabase
-    .from("announcements")
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase.from("announcements") as any)
     .update({
       title,
       content,
@@ -231,14 +232,15 @@ export async function deleteAnnouncement(
   const { data: member } = await supabase
     .from("members")
     .select("id, position")
-    .eq("user_id", user.id)
-    .single();
+    .eq("id", user.id)
+    .single() as { data: { id: string; position: string } | null; error: unknown };
 
   if (!member || member.position !== "professor") {
     return { error: "공지사항 삭제 권한이 없습니다." };
   }
 
-  const { error } = await supabase.from("announcements").delete().eq("id", id);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase.from("announcements") as any).delete().eq("id", id);
 
   if (error) {
     console.error("Delete announcement error:", error);

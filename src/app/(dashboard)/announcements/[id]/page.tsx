@@ -55,8 +55,8 @@ export default async function AnnouncementDetailPage({
     const { data: member } = await supabase
       .from("members")
       .select("position")
-      .eq("user_id", user.id)
-      .single();
+      .eq("id", user.id)
+      .single() as { data: { position: string } | null; error: unknown };
     isProfessor = member?.position === "professor";
   }
 
