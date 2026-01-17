@@ -70,6 +70,8 @@ export type FileEntityType = "project" | "mentoring_post" | "flowchart" | "resea
 
 export type PeerReviewStatus = "pending" | "processing" | "completed" | "error";
 
+export type AnnouncementPriority = "normal" | "important" | "urgent";
+
 // 투고 상태 (진행률 100% 이후)
 export type SubmissionStatus =
   | "not_submitted"      // Not yet submitted
@@ -681,6 +683,41 @@ export interface Database {
           note_id?: string;
           author_id?: string;
           content?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      announcements: {
+        Row: {
+          id: string;
+          title: string;
+          content: string;
+          priority: AnnouncementPriority;
+          is_pinned: boolean;
+          author_id: string | null;
+          expires_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          content: string;
+          priority?: AnnouncementPriority;
+          is_pinned?: boolean;
+          author_id?: string | null;
+          expires_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          content?: string;
+          priority?: AnnouncementPriority;
+          is_pinned?: boolean;
+          author_id?: string | null;
+          expires_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

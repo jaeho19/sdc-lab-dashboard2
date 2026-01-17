@@ -26,6 +26,8 @@ import Link from "next/link";
 import { SubmittedProjectsCard } from "@/components/features/SubmittedProjectsCard";
 import { UnifiedDeadlineView, type UnifiedDeadlineItem } from "@/components/features/dashboard/unified-deadline-view";
 import { DashboardCalendar } from "@/components/features/dashboard/dashboard-calendar";
+import { AnnouncementsSection } from "@/components/features/dashboard/announcements-section";
+import type { AnnouncementPriority } from "@/types/database.types";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -99,6 +101,53 @@ export default async function DashboardPage() {
     .gte("deadline", thirtyDaysAgoStr)
     .order("deadline", { ascending: true })
     .limit(50);
+
+  // 공지사항 조회 (만료되지 않은 것만)
+  const now = new Date().toISOString();
+  let announcements: Array<{
+    id: string;
+    title: string;
+    content: string;
+    priority: AnnouncementPriority;
+    is_pinned: boolean;
+    author_id: string | null;
+    expires_at: string | null;
+    created_at: string;
+    updated_at: string;
+    author: { id: string; name: string } | null;
+  }> = [];
+
+  try {
+    const { data: announcementsData, error: announcementsError } = await supabase
+      .from("announcements")
+      .select(`
+        id,
+        title,
+        content,
+        priority,
+        is_pinned,
+        author_id,
+        expires_at,
+        created_at,
+        updated_at,
+        author:members (
+          id,
+          name
+        )
+      `)
+      .or(`expires_at.is.null,expires_at.gt.${now}`)
+      .order("is_pinned", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    if (announcementsError) {
+      console.error("Announcements fetch error:", announcementsError);
+    } else {
+      announcements = (announcementsData || []) as typeof announcements;
+    }
+  } catch (e) {
+    console.error("Announcements query failed:", e);
+  }
 
   const { data: recentMentoring } = await supabase
     .from("mentoring_posts")
@@ -323,6 +372,34 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* 공지사항 섹션 */}
+      {announcements && announcements.length > 0 && (
+        <AnnouncementsSection
+          announcements={(announcements || []).map((a: {
+            id: string;
+            title: string;
+            content: string;
+            priority: AnnouncementPriority;
+            is_pinned: boolean;
+            author_id: string | null;
+            expires_at: string | null;
+            created_at: string;
+            updated_at: string;
+            author: { id: string; name: string } | null;
+          }) => ({
+            id: a.id,
+            title: a.title,
+            content: a.content,
+            priority: a.priority,
+            is_pinned: a.is_pinned,
+            expires_at: a.expires_at,
+            created_at: a.created_at,
+            author: a.author,
+          }))}
+          maxItems={3}
+        />
+      )}
 
       {/* 2열 레이아웃: 왼쪽 - 다가오는 일정, 오른쪽 - 캘린더 + 투고중인 연구 */}
       <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2">
