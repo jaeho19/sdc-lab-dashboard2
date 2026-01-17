@@ -388,3 +388,85 @@ export function calculateProjectStatus(
 
   return "on_track";
 }
+
+// ===== 풀타임 멤버 간트차트 관련 타입 및 헬퍼 함수 =====
+
+export type GanttMemberStatus = "active" | "graduating_soon" | "graduated";
+
+export interface GanttMemberData {
+  id: string;
+  name: string;
+  position: string;
+  startDate: string; // ISO 문자열 (서버-클라이언트 직렬화 호환)
+  endDate: string;   // ISO 문자열
+  status: GanttMemberStatus;
+}
+
+/**
+ * 멤버 데이터에서 풀타임 멤버만 필터링하여 간트차트용 데이터로 변환
+ */
+export function filterFullTimeMembersForGantt<T extends {
+  id: string;
+  name: string;
+  position: string;
+  employment_type: string;
+  admission_date: string | null;
+  graduation_date: string | null;
+  enrollment_year: number | null;
+  expected_graduation_year: number | null;
+  status: string;
+}>(members: T[]): GanttMemberData[] {
+  const today = new Date();
+
+  return members
+    .filter(m => m.employment_type === "full-time" && m.position !== "professor")
+    .map(m => {
+      // 시작일: admission_date 우선, 없으면 enrollment_year 사용
+      let startDate: Date;
+      if (m.admission_date) {
+        startDate = new Date(m.admission_date);
+      } else if (m.enrollment_year) {
+        // enrollment_year만 있는 경우 3월 1일로 가정
+        startDate = new Date(m.enrollment_year, 2, 1);
+      } else {
+        // 날짜 정보 없으면 현재 날짜
+        startDate = new Date();
+      }
+
+      // 종료일: graduation_date 우선, 없으면 expected_graduation_year 사용
+      let endDate: Date;
+      if (m.graduation_date) {
+        endDate = new Date(m.graduation_date);
+      } else if (m.expected_graduation_year) {
+        // expected_graduation_year만 있는 경우 2월 28일로 가정
+        endDate = new Date(m.expected_graduation_year, 1, 28);
+      } else {
+        // 날짜 정보 없으면 시작일 + 2년
+        endDate = new Date(startDate);
+        endDate.setFullYear(endDate.getFullYear() + 2);
+      }
+
+      // 상태 결정
+      let status: GanttMemberStatus = "active";
+      if (m.status === "graduated") {
+        status = "graduated";
+      } else {
+        const sixMonthsLater = new Date(today);
+        sixMonthsLater.setMonth(sixMonthsLater.getMonth() + 6);
+        if (endDate <= sixMonthsLater) {
+          status = "graduating_soon";
+        }
+      }
+
+      return {
+        id: m.id,
+        name: m.name,
+        position: m.position,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        status,
+      };
+    })
+    .filter(m => m.startDate && m.endDate) // 유효한 날짜가 있는 멤버만
+    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()); // 입학일 순 정렬
+}

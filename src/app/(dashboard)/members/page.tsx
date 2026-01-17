@@ -2,9 +2,10 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getInitials, getPositionLabel } from "@/lib/utils";
+import { getInitials, getPositionLabel, filterFullTimeMembersForGantt } from "@/lib/utils";
 import Link from "next/link";
 import type { Database } from "@/types/database.types";
+import { FullTimeMembersGantt } from "@/components/members/full-time-members-gantt";
 
 type Member = Database["public"]["Tables"]["members"]["Row"];
 type MemberPosition = Database["public"]["Tables"]["members"]["Row"]["position"];
@@ -98,6 +99,9 @@ export default async function MembersPage() {
   const fullTimeGroups = groupByPosition(fullTimeMembers);
   const partTimeGroups = groupByPosition(partTimeMembers);
 
+  // 간트차트용 데이터 변환
+  const ganttMembers = filterFullTimeMembersForGantt(members);
+
   function getPositionBadgeVariant(position: string): "professor" | "post-doc" | "post_doc" | "phd" | "researcher" | "ms" | "default" {
     const variants: Record<string, "professor" | "post-doc" | "phd" | "researcher" | "ms"> = {
       professor: "professor",
@@ -164,6 +168,11 @@ export default async function MembersPage() {
           SDC Lab 연구원 ({members.length}명)
         </p>
       </div>
+
+      {/* Full-time Members Timeline (Gantt Chart) */}
+      {ganttMembers.length > 0 && (
+        <FullTimeMembersGantt members={ganttMembers} showTodayLine />
+      )}
 
       {/* Professor Section */}
       {professors.length > 0 && (
