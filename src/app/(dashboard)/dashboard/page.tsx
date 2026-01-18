@@ -189,12 +189,17 @@ export default async function DashboardPage() {
     is_archived: boolean;
   }>;
 
-  // 투고 중인 연구 (투고 후, 아카이브되지 않은 것만)
-  const submittedProjects = projectList.filter(
+  // 투고 중인 연구 (투고 후)
+  const allSubmittedProjects = projectList.filter(
     (p) => p.submission_status &&
-           p.submission_status !== "not_submitted" &&
-           !p.is_archived
+           p.submission_status !== "not_submitted"
   );
+
+  // 활성 프로젝트 (아카이브되지 않은 것)
+  const activeProjects = allSubmittedProjects.filter((p) => !p.is_archived);
+
+  // 아카이브된 프로젝트
+  const archivedProjects = allSubmittedProjects.filter((p) => p.is_archived);
 
   const eventList = (upcomingEvents || []).map((event: {
     id: string;
@@ -405,14 +410,15 @@ export default async function DashboardPage() {
       )}
 
       {/* 2열 레이아웃: 왼쪽 - 다가오는 일정, 오른쪽 - 캘린더 + 투고중인 연구 */}
-      <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2">
+      <div className="grid gap-4 md:gap-6 grid-cols-1 lg:grid-cols-2">
         {/* 왼쪽: 다가오는 마감일 + 완료된 목표 */}
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           <UnifiedDeadlineView
             items={upcomingDeadlines}
             title="다가오는 마감일"
             icon="clock"
             variant="upcoming"
+            maxHeight="400px"
           />
           {completedDeadlines.length > 0 && (
             <UnifiedDeadlineView
@@ -420,18 +426,21 @@ export default async function DashboardPage() {
               title="완료된 목표"
               icon="history"
               variant="past"
-              maxHeight="300px"
+              maxHeight="280px"
             />
           )}
         </div>
 
         {/* 오른쪽: 캘린더 + 투고 중인 연구 */}
-        <div className="space-y-4 md:space-y-6">
+        <div className="flex flex-col gap-4">
           {/* 미니 캘린더 */}
           <DashboardCalendar events={eventList} />
 
           {/* 투고 중인 연구 (투고 후) - 클라이언트 컴포넌트 */}
-          <SubmittedProjectsCard projects={submittedProjects} />
+          <SubmittedProjectsCard
+            projects={activeProjects}
+            archivedProjects={archivedProjects}
+          />
         </div>
       </div>
 
