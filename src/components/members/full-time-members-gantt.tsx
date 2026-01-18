@@ -296,80 +296,82 @@ export function FullTimeMembersGantt({
             </div>
           </div>
 
-          {/* 오늘 표시선 */}
-          {showTodayLine && todayPosition >= 0 && todayPosition <= 100 && (
-            <div
-              className="absolute top-8 bottom-0 w-0.5 bg-red-500 z-10"
-              style={{ left: `${todayPosition}%` }}
-            >
-              <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] text-red-500 font-medium whitespace-nowrap">
-                Today
-              </div>
-            </div>
-          )}
-
-          {/* 멤버별 간트 바 */}
-          <div className="space-y-2">
-            {memberBars.map(member => (
-              <div key={member.id} className="flex items-center gap-2 h-8">
-                {/* 멤버 이름 (왼쪽 고정) */}
-                <div className="w-24 flex-shrink-0 flex items-center gap-1">
-                  <Link
-                    href={`/members/${member.id}`}
-                    className="text-sm font-medium text-slate-700 hover:text-blue-600 hover:underline truncate"
-                  >
-                    {member.name}
-                  </Link>
+          {/* 멤버별 간트 바 (relative 컨테이너로 Today 선을 전체에 걸쳐 표시) */}
+          <div className="relative">
+            {/* 오늘 표시선 - 전체 바 영역을 가로지르는 연속된 선 */}
+            {showTodayLine && todayPosition >= 0 && todayPosition <= 100 && (
+              <div
+                className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20 pointer-events-none"
+                style={{ left: `calc(96px + 8px + (100% - 96px - 8px) * ${todayPosition / 100})` }}
+              >
+                <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] text-red-500 font-medium whitespace-nowrap">
+                  Today
                 </div>
+              </div>
+            )}
 
-                {/* 간트 바 영역 */}
-                <div className="flex-1 relative h-6 bg-slate-50 rounded">
-                  {/* 연도 구분선 (배경) */}
-                  {yearMarkers.map(({ year, position }) => (
+            <div className="space-y-2">
+              {memberBars.map((member) => (
+                <div key={member.id} className="flex items-center gap-2 h-8">
+                  {/* 멤버 이름 (왼쪽 고정) */}
+                  <div className="w-24 flex-shrink-0 flex items-center gap-1">
+                    <Link
+                      href={`/members/${member.id}`}
+                      className="text-sm font-medium text-slate-700 hover:text-blue-600 hover:underline truncate"
+                    >
+                      {member.name}
+                    </Link>
+                  </div>
+
+                  {/* 간트 바 영역 */}
+                  <div className="flex-1 relative h-6 bg-slate-50 rounded">
+                    {/* 연도 구분선 (배경) */}
+                    {yearMarkers.map(({ year, position }) => (
+                      <div
+                        key={year}
+                        className="absolute top-0 h-full border-l border-slate-300"
+                        style={{ left: `${position}%` }}
+                      />
+                    ))}
+                    {/* 주요 달 구분선 (3월, 9월, 2월) */}
+                    {monthMarkers.map(({ year, month, position }, idx) => (
+                      <div
+                        key={`month-${idx}`}
+                        className={cn(
+                          "absolute top-0 h-full border-l border-dashed",
+                          month === 3 && "border-emerald-300",
+                          month === 9 && "border-blue-300",
+                          month === 2 && "border-rose-300"
+                        )}
+                        style={{ left: `${position}%` }}
+                      />
+                    ))}
+
+                    {/* 멤버 바 - 직급별 색상 적용 */}
                     <div
-                      key={year}
-                      className="absolute top-0 h-full border-l border-slate-300"
-                      style={{ left: `${position}%` }}
-                    />
-                  ))}
-                  {/* 주요 달 구분선 (3월, 9월, 2월) */}
-                  {monthMarkers.map(({ year, month, position }, idx) => (
-                    <div
-                      key={`month-${idx}`}
                       className={cn(
-                        "absolute top-0 h-full border-l border-dashed",
-                        month === 3 && "border-emerald-300",
-                        month === 9 && "border-blue-300",
-                        month === 2 && "border-rose-300"
+                        "absolute top-1 h-4 rounded-sm transition-all hover:brightness-110 cursor-pointer",
+                        getPositionColor(member.position),
+                        getStatusBorderClass(member.status)
                       )}
-                      style={{ left: `${position}%` }}
-                    />
-                  ))}
-
-                  {/* 멤버 바 - 직급별 색상 적용 */}
-                  <div
-                    className={cn(
-                      "absolute top-1 h-4 rounded-sm transition-all hover:brightness-110 cursor-pointer",
-                      getPositionColor(member.position),
-                      getStatusBorderClass(member.status)
-                    )}
-                    style={{
-                      left: `${member.left}%`,
-                      width: `${member.width}%`,
-                      minWidth: "4px",
-                    }}
-                    title={`${member.name} (${getPositionLabel(member.position)})\n입학: ${member.startDateObj.toLocaleDateString("ko-KR")}\n졸업예정: ${member.endDateObj.toLocaleDateString("ko-KR")}`}
-                  >
-                    {/* 바 안에 직위 표시 (바가 충분히 넓을 때만) */}
-                    {member.width > 8 && (
-                      <span className="absolute inset-0 flex items-center justify-center text-[10px] text-white font-medium truncate px-1">
-                        {getPositionLabel(member.position)}
-                      </span>
-                    )}
+                      style={{
+                        left: `${member.left}%`,
+                        width: `${member.width}%`,
+                        minWidth: "4px",
+                      }}
+                      title={`${member.name} (${getPositionLabel(member.position)})\n입학: ${member.startDateObj.toLocaleDateString("ko-KR")}\n졸업예정: ${member.endDateObj.toLocaleDateString("ko-KR")}`}
+                    >
+                      {/* 바 안에 직위 표시 (바가 충분히 넓을 때만) */}
+                      {member.width > 8 && (
+                        <span className="absolute inset-0 flex items-center justify-center text-[10px] text-white font-medium truncate px-1">
+                          {getPositionLabel(member.position)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
           {/* 통계 (하단) */}
