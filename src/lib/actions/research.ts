@@ -885,7 +885,7 @@ export async function toggleProjectArchive(
 
   const { error } = await supabase
     .from("research_projects")
-    .update({ is_archived: isArchived })
+    .update({ is_archived: isArchived } as { is_archived: boolean })
     .eq("id", projectId);
 
   if (error) {
