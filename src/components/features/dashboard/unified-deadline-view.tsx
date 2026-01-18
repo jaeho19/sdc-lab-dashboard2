@@ -27,7 +27,6 @@ interface UnifiedDeadlineViewProps {
   title?: string;
   icon?: "clock" | "history";
   variant?: "upcoming" | "past";
-  maxHeight?: string;
   className?: string;
 }
 
@@ -67,7 +66,6 @@ export function UnifiedDeadlineView({
   title = "다가오는 마감일",
   icon = "clock",
   variant = "upcoming",
-  maxHeight = "800px",
   className,
 }: UnifiedDeadlineViewProps) {
   const IconComponent = icon === "clock" ? Clock : History;
@@ -102,10 +100,7 @@ export function UnifiedDeadlineView({
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-0 md:p-6 md:pt-0 flex-1 overflow-hidden">
-        <div
-          className="space-y-3 overflow-y-auto pr-1 h-full"
-          style={maxHeight ? { maxHeight } : undefined}
-        >
+        <div className="space-y-3 overflow-y-auto pr-1 h-full">
           {items.map((item) => {
             const status = getDeadlineStatus(item.date, item.type, item.isCompleted);
             const { month, day, weekday } = formatDate(item.date);

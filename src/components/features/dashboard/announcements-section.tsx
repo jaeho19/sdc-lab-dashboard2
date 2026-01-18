@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Megaphone, Pin, AlertTriangle, AlertCircle } from "lucide-react";
-import { formatRelativeTime } from "@/lib/utils";
+import { formatRelativeTime, cn } from "@/lib/utils";
 import Link from "next/link";
 import type { AnnouncementPriority } from "@/types/database.types";
 
@@ -24,6 +24,7 @@ export interface AnnouncementItem {
 interface AnnouncementsSectionProps {
   announcements: AnnouncementItem[];
   maxItems?: number;
+  className?: string;
 }
 
 // 우선순위별 스타일 설정
@@ -51,6 +52,7 @@ const priorityConfig = {
 export function AnnouncementsSection({
   announcements,
   maxItems = 3,
+  className,
 }: AnnouncementsSectionProps) {
   // 고정 공지 우선, 그 다음 우선순위별, 최신순 정렬
   const sortedAnnouncements = [...announcements]
@@ -71,12 +73,11 @@ export function AnnouncementsSection({
     })
     .slice(0, maxItems);
 
-  if (sortedAnnouncements.length === 0) {
-    return null; // 공지가 없으면 섹션 숨김
-  }
+  // 공지가 없어도 카드는 표시 (빈 상태 메시지)
+  const isEmpty = sortedAnnouncements.length === 0;
 
   return (
-    <Card>
+    <Card className={cn("flex flex-col", className)}>
       <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6">
         <CardTitle className="flex items-center gap-2 text-base md:text-lg">
           <Megaphone className="h-4 w-4 md:h-5 md:w-5" />
@@ -94,8 +95,15 @@ export function AnnouncementsSection({
           </Link>
         )}
       </CardHeader>
-      <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
-        <div className="space-y-3">
+      <CardContent className="p-4 pt-0 md:p-6 md:pt-0 flex-1 overflow-hidden">
+        {isEmpty ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-center text-muted-foreground py-4">
+              공지사항이 없습니다.
+            </p>
+          </div>
+        ) : (
+        <div className="space-y-3 overflow-y-auto h-full">
           {sortedAnnouncements.map((announcement) => {
             const config = priorityConfig[announcement.priority];
             const IconComponent = config.icon;
@@ -155,6 +163,7 @@ export function AnnouncementsSection({
             );
           })}
         </div>
+        )}
       </CardContent>
     </Card>
   );
