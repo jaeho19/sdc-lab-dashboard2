@@ -57,22 +57,26 @@ interface FulltimeMember {
   position: string;
 }
 
-// 직급별 색상 설정 (간트 차트와 동일)
+// 직급별 색상 설정 (파스텔 톤, 구분 명확)
 const POSITION_SIDEBAR_COLORS: Record<string, { bg: string; label: string }> = {
   ms: {
-    bg: "bg-sky-500",        // 석사과정: 하늘색
+    bg: "bg-blue-400",       // 석사과정: 밝은 파랑
     label: "석사과정",
   },
   phd: {
-    bg: "bg-cyan-600",       // 박사과정: 청록색
+    bg: "bg-teal-500",       // 박사과정: 틸 (청록)
     label: "박사과정",
   },
   post_doc: {
-    bg: "bg-violet-600",     // 포닥: 보라색
+    bg: "bg-purple-400",     // 포닥: 보라
+    label: "포닥",
+  },
+  "post-doc": {
+    bg: "bg-purple-400",     // 포닥: 보라 (하이픈 버전)
     label: "포닥",
   },
   researcher: {
-    bg: "bg-emerald-600",    // 연구원: 에메랄드
+    bg: "bg-amber-400",      // 연구원: 앰버
     label: "연구원",
   },
 };

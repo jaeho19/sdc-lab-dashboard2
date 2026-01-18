@@ -6,31 +6,31 @@ import { Badge } from "@/components/ui/badge";
 import { cn, getPositionLabel, type GanttMemberData } from "@/lib/utils";
 import Link from "next/link";
 
-// 직급별 색상 설정 (tailwind의 position 색상과 연동)
+// 직급별 색상 설정 (파스텔 톤, 구분 명확)
 const POSITION_GANTT_COLORS = {
   ms: {
-    bg: "bg-sky-500",        // 석사과정: 하늘색
-    hex: "#0284c7",
+    bg: "bg-blue-400",       // 석사과정: 밝은 파랑
+    hex: "#60a5fa",
     label: "석사과정",
   },
   phd: {
-    bg: "bg-cyan-600",       // 박사과정: 청록색
-    hex: "#0891b2",
+    bg: "bg-teal-500",       // 박사과정: 틸 (청록)
+    hex: "#14b8a6",
     label: "박사과정",
   },
   post_doc: {
-    bg: "bg-violet-600",     // 포닥: 보라색
-    hex: "#7c3aed",
+    bg: "bg-purple-400",     // 포닥: 보라
+    hex: "#c084fc",
     label: "포닥",
   },
   researcher: {
-    bg: "bg-emerald-600",    // 연구원: 에메랄드
-    hex: "#059669",
+    bg: "bg-amber-400",      // 연구원: 앰버
+    hex: "#fbbf24",
     label: "연구원",
   },
   professor: {
-    bg: "bg-blue-800",       // 교수: 진한 남색
-    hex: "#1e40af",
+    bg: "bg-slate-600",      // 교수: 슬레이트
+    hex: "#475569",
     label: "교수",
   },
 } as const;
@@ -209,15 +209,7 @@ export function FullTimeMembersGantt({
     <Card>
       <CardHeader className="pb-2">
         <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Full-time Members Timeline</CardTitle>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded ring-2 ring-amber-400 ring-offset-1 bg-slate-300" />
-                <span>졸업예정</span>
-              </span>
-            </div>
-          </div>
+          <CardTitle className="text-lg">Full-time Members Timeline</CardTitle>
           {/* 직급별 색상 범례 */}
           <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
             <span className="font-medium text-slate-600">직급별:</span>
