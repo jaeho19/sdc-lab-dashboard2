@@ -458,12 +458,20 @@ export function filterFullTimeMembersForGantt<T extends {
         }
       }
 
+      // 타임존 문제 방지를 위해 YYYY-MM-DD 형식의 문자열로 저장
+      const formatDate = (d: Date) => {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
       return {
         id: m.id,
         name: m.name,
         position: m.position,
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
+        startDate: formatDate(startDate),
+        endDate: formatDate(endDate),
         status,
       };
     })

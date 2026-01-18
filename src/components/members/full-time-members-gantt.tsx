@@ -17,8 +17,13 @@ const POSITION_GANTT_COLORS = {
     hex: "#14b8a6",
     label: "박사과정",
   },
-  post_doc: {
+  "post-doc": {
     bg: "bg-purple-400",     // 포닥: 보라
+    hex: "#c084fc",
+    label: "포닥",
+  },
+  post_doc: {
+    bg: "bg-purple-400",     // 포닥: 보라 (언더스코어 호환)
     hex: "#c084fc",
     label: "포닥",
   },
@@ -36,7 +41,8 @@ const POSITION_GANTT_COLORS = {
 
 // 직급 우선순위 (낮을수록 상단에 표시)
 const POSITION_PRIORITY: Record<string, number> = {
-  post_doc: 0,    // 포닥 - 최상단
+  "post-doc": 0,  // 포닥 - 최상단 (하이픈)
+  post_doc: 0,    // 포닥 - 최상단 (언더스코어)
   phd: 1,         // 박사과정
   researcher: 2,  // 연구원
   ms: 3,          // 석사과정 - 최하단
@@ -67,13 +73,11 @@ export function FullTimeMembersGantt({
     const minDate = new Date(Math.min(...allDates.map(d => d.getTime())));
     const maxDate = new Date(Math.max(...allDates.map(d => d.getTime())));
 
-    // 여유 공간 추가 (앞뒤로 6개월씩)
-    const chartStart = new Date(minDate.getFullYear(), Math.floor(minDate.getMonth() / 6) * 6, 1);
-    const chartEnd = new Date(maxDate.getFullYear(), Math.ceil((maxDate.getMonth() + 1) / 6) * 6, 0);
-
-    const sYear = chartStart.getFullYear();
-    const eYear = chartEnd.getFullYear();
-    const months = (eYear - sYear) * 12 + (chartEnd.getMonth() - chartStart.getMonth()) + 1;
+    // 차트 범위: 시작 연도의 1월 ~ 종료 연도의 12월 (연도 단위로 정렬)
+    const sYear = minDate.getFullYear();
+    const eYear = maxDate.getFullYear();
+    // 총 월 수 = (종료연도 - 시작연도 + 1) * 12
+    const months = (eYear - sYear + 1) * 12;
 
     const now = new Date();
     const nowMonths = (now.getFullYear() - sYear) * 12 + now.getMonth();
@@ -98,24 +102,41 @@ export function FullTimeMembersGantt({
     return markers;
   }, [startYear, endYear, totalMonths]);
 
-  // 학기 마커 생성 (1학기: 3월, 2학기: 9월)
-  const semesterMarkers = useMemo(() => {
-    const markers = [];
+  // 주요 달 마커 생성 (3월: 1학기 시작, 9월: 2학기 시작, 2월: 졸업)
+  const monthMarkers = useMemo(() => {
+    const markers: { year: number; month: number; label: string; position: number; isImportant: boolean }[] = [];
     for (let year = startYear; year <= endYear; year++) {
-      // 1학기 (3월)
-      const sem1Months = (year - startYear) * 12 + 2; // 3월 = 인덱스 2
-      if (sem1Months >= 0 && sem1Months < totalMonths) {
+      // 2월 (졸업)
+      const febMonths = (year - startYear) * 12 + 1; // 2월 = 인덱스 1
+      if (febMonths >= 0 && febMonths < totalMonths) {
         markers.push({
-          label: `${year} 1학기`,
-          position: (sem1Months / totalMonths) * 100,
+          year,
+          month: 2,
+          label: "2월",
+          position: (febMonths / totalMonths) * 100,
+          isImportant: true,
         });
       }
-      // 2학기 (9월)
-      const sem2Months = (year - startYear) * 12 + 8; // 9월 = 인덱스 8
-      if (sem2Months >= 0 && sem2Months < totalMonths) {
+      // 3월 (1학기 시작)
+      const marMonths = (year - startYear) * 12 + 2; // 3월 = 인덱스 2
+      if (marMonths >= 0 && marMonths < totalMonths) {
         markers.push({
-          label: `${year} 2학기`,
-          position: (sem2Months / totalMonths) * 100,
+          year,
+          month: 3,
+          label: "3월",
+          position: (marMonths / totalMonths) * 100,
+          isImportant: true,
+        });
+      }
+      // 9월 (2학기 시작)
+      const sepMonths = (year - startYear) * 12 + 8; // 9월 = 인덱스 8
+      if (sepMonths >= 0 && sepMonths < totalMonths) {
+        markers.push({
+          year,
+          month: 9,
+          label: "9월",
+          position: (sepMonths / totalMonths) * 100,
+          isImportant: true,
         });
       }
     }
@@ -197,48 +218,82 @@ export function FullTimeMembersGantt({
       <CardHeader className="pb-2">
         <div className="flex flex-col gap-2">
           <CardTitle className="text-lg">Full-time Members Timeline</CardTitle>
-          {/* 직급별 색상 범례 */}
-          <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
-            <span className="font-medium text-slate-600">직급별:</span>
-            {Object.entries(POSITION_GANTT_COLORS)
-              .filter(([key]) => key !== "professor") // 교수 제외
-              .map(([key, config]) => (
-                <span key={key} className="flex items-center gap-1">
-                  <span className={cn("w-3 h-3 rounded", config.bg)} />
-                  <span>{config.label}</span>
-                </span>
-              ))}
+          {/* 범례 */}
+          <div className="flex items-center gap-6 text-xs text-muted-foreground flex-wrap">
+            {/* 직급별 색상 */}
+            <div className="flex items-center gap-3">
+              <span className="font-medium text-slate-600">직급:</span>
+              {Object.entries(POSITION_GANTT_COLORS)
+                .filter(([key]) => key !== "professor")
+                .map(([key, config]) => (
+                  <span key={key} className="flex items-center gap-1">
+                    <span className={cn("w-3 h-3 rounded", config.bg)} />
+                    <span>{config.label}</span>
+                  </span>
+                ))}
+            </div>
+            {/* 주요 달 색상 */}
+            <div className="flex items-center gap-3">
+              <span className="font-medium text-slate-600">주요 달:</span>
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-0.5 bg-emerald-400" />
+                <span className="text-emerald-600">3월</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-0.5 bg-blue-400" />
+                <span className="text-blue-600">9월</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-0.5 bg-rose-400" />
+                <span className="text-rose-600">2월</span>
+              </span>
+            </div>
           </div>
         </div>
       </CardHeader>
       <CardContent>
         <div className="relative">
-          {/* 연도/학기 헤더 */}
-          <div className="relative h-8 mb-2 border-b border-slate-200">
-            {yearMarkers.map(({ year, position }) => (
-              <div
-                key={year}
-                className="absolute top-0 h-full border-l border-slate-300"
-                style={{ left: `${position}%` }}
-              >
-                <span className="absolute -top-0.5 left-1 text-xs font-semibold text-slate-600">
-                  {year}
-                </span>
-              </div>
-            ))}
+          {/* 연도/학기 헤더 - 이름 영역(w-24 + gap-2 = 약 104px) 만큼 왼쪽 여백 */}
+          <div className="flex items-center gap-2 h-8 mb-2 border-b border-slate-200">
+            <div className="w-24 flex-shrink-0" /> {/* 이름 영역과 동일한 너비 */}
+            <div className="flex-1 relative h-full">
+              {yearMarkers.map(({ year, position }) => (
+                <div
+                  key={year}
+                  className="absolute top-0 h-full border-l border-slate-300"
+                  style={{ left: `${position}%` }}
+                >
+                  <span className="absolute -top-0.5 left-1 text-xs font-semibold text-slate-600">
+                    {year}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* 학기 서브헤더 */}
-          <div className="relative h-5 mb-3 border-b border-slate-100">
-            {semesterMarkers.map(({ label, position }, idx) => (
-              <div
-                key={idx}
-                className="absolute top-0 text-[10px] text-slate-400"
-                style={{ left: `${position}%` }}
-              >
-                {label.split(" ")[1]}
-              </div>
-            ))}
+          {/* 주요 달 서브헤더 (3월, 9월, 2월) - 이름 영역 만큼 왼쪽 여백 */}
+          <div className="flex items-center gap-2 h-6 mb-3 border-b border-slate-100">
+            <div className="w-24 flex-shrink-0" /> {/* 이름 영역과 동일한 너비 */}
+            <div className="flex-1 relative h-full">
+              {monthMarkers.map(({ year, month, label, position }, idx) => (
+                <div
+                  key={idx}
+                  className="absolute top-0 flex flex-col items-center"
+                  style={{ left: `${position}%`, transform: "translateX(-50%)" }}
+                >
+                  <span
+                    className={cn(
+                      "text-[10px] font-medium px-1 rounded",
+                      month === 3 && "text-emerald-600 bg-emerald-50",
+                      month === 9 && "text-blue-600 bg-blue-50",
+                      month === 2 && "text-rose-600 bg-rose-50"
+                    )}
+                  >
+                    {label}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* 오늘 표시선 */}
@@ -273,7 +328,20 @@ export function FullTimeMembersGantt({
                   {yearMarkers.map(({ year, position }) => (
                     <div
                       key={year}
-                      className="absolute top-0 h-full border-l border-slate-200"
+                      className="absolute top-0 h-full border-l border-slate-300"
+                      style={{ left: `${position}%` }}
+                    />
+                  ))}
+                  {/* 주요 달 구분선 (3월, 9월, 2월) */}
+                  {monthMarkers.map(({ year, month, position }, idx) => (
+                    <div
+                      key={`month-${idx}`}
+                      className={cn(
+                        "absolute top-0 h-full border-l border-dashed",
+                        month === 3 && "border-emerald-300",
+                        month === 9 && "border-blue-300",
+                        month === 2 && "border-rose-300"
+                      )}
                       style={{ left: `${position}%` }}
                     />
                   ))}
