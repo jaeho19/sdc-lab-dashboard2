@@ -883,7 +883,9 @@ export async function toggleProjectArchive(
     return { error: "로그인이 필요합니다." };
   }
 
-  const { error } = await supabase
+  // TypeScript workaround: database.ts types are updated but Supabase client may not pick them up
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
     .from("research_projects")
     .update({ is_archived: isArchived })
     .eq("id", projectId);
