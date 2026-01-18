@@ -186,11 +186,14 @@ export default async function DashboardPage() {
     updated_at: string;
     submission_status: SubmissionStatus;
     target_journal: string | null;
+    is_archived: boolean;
   }>;
 
-  // 투고 중인 연구 (투고 후)
+  // 투고 중인 연구 (투고 후, 아카이브되지 않은 것만)
   const submittedProjects = projectList.filter(
-    (p) => p.submission_status && p.submission_status !== "not_submitted"
+    (p) => p.submission_status &&
+           p.submission_status !== "not_submitted" &&
+           !p.is_archived
   );
 
   const eventList = (upcomingEvents || []).map((event: {

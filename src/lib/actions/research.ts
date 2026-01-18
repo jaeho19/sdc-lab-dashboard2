@@ -868,6 +868,37 @@ export async function updateSubmissionStatus(
   return { success: true };
 }
 
+// 프로젝트 아카이브 토글
+export async function toggleProjectArchive(
+  projectId: string,
+  isArchived: boolean
+): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "로그인이 필요합니다." };
+  }
+
+  const { error } = await supabase
+    .from("research_projects")
+    .update({ is_archived: isArchived })
+    .eq("id", projectId);
+
+  if (error) {
+    console.error("Archive toggle error:", error);
+    return { error: "아카이브 상태 변경 중 오류가 발생했습니다." };
+  }
+
+  revalidatePath(`/research/${projectId}`);
+  revalidatePath("/dashboard");
+  revalidatePath("/research");
+  return { success: true };
+}
+
 // ============================================
 // 즐겨찾기 관련 액션
 // ============================================

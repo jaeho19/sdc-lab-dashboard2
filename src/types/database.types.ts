@@ -168,6 +168,7 @@ export interface Database {
           corresponding_author: string | null;
           submission_status: SubmissionStatus;
           submitted_at: string | null;
+          is_archived: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -187,6 +188,7 @@ export interface Database {
           corresponding_author?: string | null;
           submission_status?: SubmissionStatus;
           submitted_at?: string | null;
+          is_archived?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -206,6 +208,7 @@ export interface Database {
           corresponding_author?: string | null;
           submission_status?: SubmissionStatus;
           submitted_at?: string | null;
+          is_archived?: boolean;
           created_at?: string;
           updated_at?: string;
         };
