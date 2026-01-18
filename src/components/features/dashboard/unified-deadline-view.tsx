@@ -102,7 +102,10 @@ export function UnifiedDeadlineView({
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-0 md:p-6 md:pt-0 flex-1 overflow-hidden">
-        <div className="space-y-3 overflow-y-auto pr-1 h-full" style={{ maxHeight }}>
+        <div
+          className="space-y-3 overflow-y-auto pr-1 h-full"
+          style={maxHeight ? { maxHeight } : undefined}
+        >
           {items.map((item) => {
             const status = getDeadlineStatus(item.date, item.type, item.isCompleted);
             const { month, day, weekday } = formatDate(item.date);

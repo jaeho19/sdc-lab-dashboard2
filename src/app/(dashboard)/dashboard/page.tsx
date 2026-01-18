@@ -412,32 +412,30 @@ export default async function DashboardPage() {
       {/* 2x2 그리드 레이아웃: 높이 동기화 */}
       <div className="grid gap-4 md:gap-6 grid-cols-1 lg:grid-cols-2">
         {/* 첫 번째 행: 다가오는 마감일 + 캘린더 */}
-        <div className="lg:min-h-[520px]">
+        <div className="lg:h-[520px]">
           <UnifiedDeadlineView
             items={upcomingDeadlines}
             title="다가오는 마감일"
             icon="clock"
             variant="upcoming"
-            maxHeight="420px"
             className="h-full"
           />
         </div>
-        <div className="lg:min-h-[520px]">
+        <div className="lg:h-[520px]">
           <DashboardCalendar events={eventList} className="h-full" />
         </div>
 
         {/* 두 번째 행: 완료된 목표 + 투고 중인 연구 */}
-        <div className="lg:min-h-[280px]">
+        <div className="lg:h-[280px]">
           <UnifiedDeadlineView
             items={completedDeadlines}
             title="완료된 목표"
             icon="history"
             variant="past"
-            maxHeight="180px"
             className="h-full"
           />
         </div>
-        <div className="lg:min-h-[280px]">
+        <div className="lg:h-[280px]">
           <SubmittedProjectsCard
             projects={activeProjects}
             archivedProjects={archivedProjects}
