@@ -6,6 +6,35 @@ import { Badge } from "@/components/ui/badge";
 import { cn, getPositionLabel, type GanttMemberData } from "@/lib/utils";
 import Link from "next/link";
 
+// 직급별 색상 설정 (tailwind의 position 색상과 연동)
+const POSITION_GANTT_COLORS = {
+  ms: {
+    bg: "bg-sky-500",        // 석사과정: 하늘색
+    hex: "#0284c7",
+    label: "석사과정",
+  },
+  phd: {
+    bg: "bg-cyan-600",       // 박사과정: 청록색
+    hex: "#0891b2",
+    label: "박사과정",
+  },
+  post_doc: {
+    bg: "bg-violet-600",     // 포닥: 보라색
+    hex: "#7c3aed",
+    label: "포닥",
+  },
+  researcher: {
+    bg: "bg-emerald-600",    // 연구원: 에메랄드
+    hex: "#059669",
+    label: "연구원",
+  },
+  professor: {
+    bg: "bg-blue-800",       // 교수: 진한 남색
+    hex: "#1e40af",
+    label: "교수",
+  },
+} as const;
+
 interface FullTimeMembersGanttProps {
   members: GanttMemberData[];
   showTodayLine?: boolean;
@@ -111,17 +140,21 @@ export function FullTimeMembersGantt({
     });
   }, [members, startYear, totalMonths]);
 
-  const getStatusColor = (status: GanttMemberData["status"]) => {
-    switch (status) {
-      case "active":
-        return "bg-blue-500";
-      case "graduating_soon":
-        return "bg-amber-500";
-      case "graduated":
-        return "bg-slate-400";
-      default:
-        return "bg-blue-500";
+  // 직급별 색상 반환
+  const getPositionColor = (position: string) => {
+    const config = POSITION_GANTT_COLORS[position as keyof typeof POSITION_GANTT_COLORS];
+    return config?.bg || "bg-slate-500";
+  };
+
+  // 졸업예정인 경우 테두리 추가를 위한 상태 확인
+  const getStatusBorderClass = (status: GanttMemberData["status"]) => {
+    if (status === "graduating_soon") {
+      return "ring-2 ring-amber-400 ring-offset-1";
     }
+    if (status === "graduated") {
+      return "opacity-60";
+    }
+    return "";
   };
 
   const getStatusBadge = (status: GanttMemberData["status"]) => {
@@ -155,15 +188,27 @@ export function FullTimeMembersGantt({
   return (
     <Card>
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Full-time Members Timeline</CardTitle>
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded bg-blue-500" /> 재학
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded bg-amber-500" /> 졸업예정 (6개월 내)
-            </span>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">Full-time Members Timeline</CardTitle>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 rounded ring-2 ring-amber-400 ring-offset-1 bg-slate-300" />
+                <span>졸업예정</span>
+              </span>
+            </div>
+          </div>
+          {/* 직급별 색상 범례 */}
+          <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+            <span className="font-medium text-slate-600">직급별:</span>
+            {Object.entries(POSITION_GANTT_COLORS)
+              .filter(([key]) => key !== "professor") // 교수 제외
+              .map(([key, config]) => (
+                <span key={key} className="flex items-center gap-1">
+                  <span className={cn("w-3 h-3 rounded", config.bg)} />
+                  <span>{config.label}</span>
+                </span>
+              ))}
           </div>
         </div>
       </CardHeader>
@@ -234,11 +279,12 @@ export function FullTimeMembersGantt({
                     />
                   ))}
 
-                  {/* 멤버 바 */}
+                  {/* 멤버 바 - 직급별 색상 적용 */}
                   <div
                     className={cn(
                       "absolute top-1 h-4 rounded-sm transition-all hover:brightness-110 cursor-pointer",
-                      getStatusColor(member.status)
+                      getPositionColor(member.position),
+                      getStatusBorderClass(member.status)
                     )}
                     style={{
                       left: `${member.left}%`,
@@ -264,14 +310,20 @@ export function FullTimeMembersGantt({
             ))}
           </div>
 
-          {/* 범례 (하단) */}
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-muted-foreground">
-            <span>
-              총 {members.length}명 |
-              재학 {members.filter(m => m.status === "active").length}명 ·
-              졸업예정 {members.filter(m => m.status === "graduating_soon").length}명
-            </span>
-            <span>
+          {/* 통계 (하단) */}
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-muted-foreground flex-wrap gap-2">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="font-medium">총 {members.length}명</span>
+              <span className="text-slate-300">|</span>
+              <span>석사 {members.filter(m => m.position === "ms").length}명</span>
+              <span>박사 {members.filter(m => m.position === "phd").length}명</span>
+              <span>포닥 {members.filter(m => m.position === "post_doc").length}명</span>
+              <span className="text-slate-300">|</span>
+              <span className="text-amber-600">
+                졸업예정 {members.filter(m => m.status === "graduating_soon").length}명
+              </span>
+            </div>
+            <span className="text-slate-400">
               {startYear}년 ~ {endYear}년
             </span>
           </div>
