@@ -37,6 +37,7 @@ export interface ResearchProject {
   target_date: string | null;
   flowchart_url: string | null;
   created_by: string;
+  is_archived: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -247,6 +248,7 @@ export interface Database {
           target_date?: string | null;
           flowchart_url?: string | null;
           created_by: string;
+          is_archived?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -261,6 +263,7 @@ export interface Database {
           target_date?: string | null;
           flowchart_url?: string | null;
           created_by?: string;
+          is_archived?: boolean;
           created_at?: string;
           updated_at?: string;
         };
