@@ -8,6 +8,7 @@ import type { SubmissionStatus, CalendarCategory } from "@/types/database.types"
 import { SubmittedProjectsCard } from "@/components/features/SubmittedProjectsCard";
 import { UnifiedDeadlineView, type UnifiedDeadlineItem } from "@/components/features/dashboard/unified-deadline-view";
 import { AnnouncementsSection } from "@/components/features/dashboard/announcements-section";
+import { DashboardCalendar } from "@/components/features/dashboard/dashboard-calendar";
 import type { AnnouncementPriority } from "@/types/database.types";
 
 export default async function DashboardPage() {
@@ -313,6 +314,9 @@ export default async function DashboardPage() {
           className="h-[600px] md:h-[675px]"
         />
       </div>
+
+      {/* 캘린더 - 전체 너비 */}
+      <DashboardCalendar events={eventList} className="h-[500px] md:h-[600px]" />
     </div>
   );
 }
