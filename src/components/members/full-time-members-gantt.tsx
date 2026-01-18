@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { cn, getPositionLabel, type GanttMemberData } from "@/lib/utils";
 import Link from "next/link";
 
@@ -177,18 +176,6 @@ export function FullTimeMembersGantt({
     return "";
   };
 
-  const getStatusBadge = (status: GanttMemberData["status"]) => {
-    switch (status) {
-      case "active":
-        return <Badge variant="default" className="text-[10px] px-1.5 py-0">재학</Badge>;
-      case "graduating_soon":
-        return <Badge variant="destructive" className="text-[10px] px-1.5 py-0 bg-amber-500">졸업예정</Badge>;
-      case "graduated":
-        return <Badge variant="secondary" className="text-[10px] px-1.5 py-0">졸업</Badge>;
-      default:
-        return null;
-    }
-  };
 
   if (members.length === 0) {
     return (
@@ -312,11 +299,6 @@ export function FullTimeMembersGantt({
                       </span>
                     )}
                   </div>
-                </div>
-
-                {/* 상태 뱃지 */}
-                <div className="w-16 flex-shrink-0 flex justify-end">
-                  {getStatusBadge(member.status)}
                 </div>
               </div>
             ))}
