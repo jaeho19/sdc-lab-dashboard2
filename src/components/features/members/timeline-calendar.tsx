@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, memo } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -150,47 +150,70 @@ export function TimelineCalendar({
     );
   }, [selectedDateStr, weeklyGoals, milestones, calendarEvents]);
 
-  const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
+  const weekdays = useMemo(() => ["일", "월", "화", "수", "목", "금", "토"], []);
+
+  // 완료되지 않은 주간 목표만 필터링 (메모이제이션)
+  const pendingGoals = useMemo(
+    () => weeklyGoals.filter((g) => !g.is_completed),
+    [weeklyGoals]
+  );
+
+  // 날짜 선택 핸들러
+  const handleSelectDate = useCallback((date: Date) => {
+    setSelectedDate(date);
+  }, []);
+
+  // 주차 이동 핸들러
+  const handlePrevWeek = useCallback(() => {
+    setWeekOffset((prev) => prev - 1);
+  }, []);
+
+  const handleNextWeek = useCallback(() => {
+    setWeekOffset((prev) => prev + 1);
+  }, []);
 
   // 바 위치 계산 (7열 기준, 주 단위) - 마일스톤과 주간 목표 모두 사용
-  function getBarStyle(
-    startDate: string,
-    endDate: string,
-    weekDates: Date[]
-  ): { startCol: number; span: number } | null {
-    const weekStart = formatDateString(weekDates[0]);
-    const weekEnd = formatDateString(weekDates[6]);
+  const getBarStyle = useCallback(
+    (
+      startDate: string,
+      endDate: string,
+      weekDates: Date[]
+    ): { startCol: number; span: number } | null => {
+      const weekStart = formatDateString(weekDates[0]);
+      const weekEnd = formatDateString(weekDates[6]);
 
-    // 이 주와 겹치지 않으면 null
-    if (endDate < weekStart || startDate > weekEnd) return null;
+      // 이 주와 겹치지 않으면 null
+      if (endDate < weekStart || startDate > weekEnd) return null;
 
-    // 시작 위치 계산
-    let startCol = 0;
-    if (startDate > weekStart) {
-      for (let i = 0; i < 7; i++) {
-        if (formatDateString(weekDates[i]) >= startDate) {
-          startCol = i;
-          break;
+      // 시작 위치 계산
+      let startCol = 0;
+      if (startDate > weekStart) {
+        for (let i = 0; i < 7; i++) {
+          if (formatDateString(weekDates[i]) >= startDate) {
+            startCol = i;
+            break;
+          }
         }
       }
-    }
 
-    // 종료 위치 계산
-    let endCol = 6;
-    if (endDate < weekEnd) {
-      for (let i = 6; i >= 0; i--) {
-        if (formatDateString(weekDates[i]) <= endDate) {
-          endCol = i;
-          break;
+      // 종료 위치 계산
+      let endCol = 6;
+      if (endDate < weekEnd) {
+        for (let i = 6; i >= 0; i--) {
+          if (formatDateString(weekDates[i]) <= endDate) {
+            endCol = i;
+            break;
+          }
         }
       }
-    }
 
-    return { startCol, span: endCol - startCol + 1 };
-  }
+      return { startCol, span: endCol - startCol + 1 };
+    },
+    []
+  );
 
   // 주간 목표의 시작일 계산 (마감일 7일 전 또는 오늘 중 늦은 날짜)
-  function getGoalStartDate(deadline: string): string {
+  const getGoalStartDate = useCallback((deadline: string): string => {
     const deadlineDate = new Date(deadline);
     const sevenDaysBeforeDeadline = new Date(deadlineDate);
     sevenDaysBeforeDeadline.setDate(deadlineDate.getDate() - 6);
@@ -199,13 +222,14 @@ export function TimelineCalendar({
     today.setHours(0, 0, 0, 0);
 
     // 7일 전과 오늘 중 늦은 날짜 사용
-    const startDate = sevenDaysBeforeDeadline > today ? sevenDaysBeforeDeadline : today;
+    const startDate =
+      sevenDaysBeforeDeadline > today ? sevenDaysBeforeDeadline : today;
     // 단, 시작일이 마감일보다 늦으면 마감일 사용
     if (startDate > deadlineDate) {
       return deadline;
     }
     return formatDateString(startDate);
-  }
+  }, []);
 
   return (
     <Card>
@@ -220,7 +244,7 @@ export function TimelineCalendar({
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              onClick={() => setWeekOffset((prev) => prev - 1)}
+              onClick={handlePrevWeek}
               disabled={weekOffset <= 0}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -232,7 +256,7 @@ export function TimelineCalendar({
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              onClick={() => setWeekOffset((prev) => prev + 1)}
+              onClick={handleNextWeek}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -381,7 +405,7 @@ export function TimelineCalendar({
               })}
 
               {/* 주간 목표 바 */}
-              {weeklyGoals.filter(g => !g.is_completed).map((goal) => {
+              {pendingGoals.map((goal) => {
                 const goalStart = getGoalStartDate(goal.deadline);
                 const barStyle = getBarStyle(
                   goalStart,
@@ -564,7 +588,7 @@ export function TimelineCalendar({
               })}
 
               {/* 주간 목표 바 */}
-              {weeklyGoals.filter(g => !g.is_completed).map((goal) => {
+              {pendingGoals.map((goal) => {
                 const goalStart = getGoalStartDate(goal.deadline);
                 const barStyle = getBarStyle(
                   goalStart,

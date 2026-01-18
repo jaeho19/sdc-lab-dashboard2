@@ -50,8 +50,20 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import dynamic from "next/dynamic";
+
+// 경량 마크다운 렌더러를 동적 임포트 (KaTeX 미포함)
+const MarkdownSimple = dynamic(
+  () => import("@/components/ui/markdown-simple").then((mod) => mod.MarkdownSimple),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center py-2">
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      </div>
+    ),
+  }
+);
 import { createClient } from "@/lib/supabase/client";
 import { createResearchNote, updateResearchNote, deleteResearchNote, addNoteComment, deleteNoteComment } from "@/lib/actions/research-notes";
 import { getInitials, formatDate } from "@/lib/utils";
@@ -932,12 +944,14 @@ export default function ResearchNotesPage() {
                           </div>
 
                           {/* 본문 미리보기 */}
-                          <div className="mt-3 prose prose-sm max-w-none dark:prose-invert">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                              {note.content.length > 500
-                                ? note.content.slice(0, 500) + "..."
-                                : note.content}
-                            </ReactMarkdown>
+                          <div className="mt-3">
+                            <MarkdownSimple
+                              content={
+                                note.content.length > 500
+                                  ? note.content.slice(0, 500) + "..."
+                                  : note.content
+                              }
+                            />
                           </div>
 
                           {/* 프로젝트 & 키워드 */}
@@ -1215,11 +1229,9 @@ export default function ResearchNotesPage() {
               </div>
 
               {previewMode ? (
-                <div className="border rounded-md p-4 min-h-[300px] prose prose-sm max-w-none dark:prose-invert bg-muted/30">
+                <div className="border rounded-md p-4 min-h-[300px] bg-muted/30">
                   {formContent ? (
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {formContent}
-                    </ReactMarkdown>
+                    <MarkdownSimple content={formContent} />
                   ) : (
                     <p className="text-muted-foreground">내용을 입력하세요...</p>
                   )}

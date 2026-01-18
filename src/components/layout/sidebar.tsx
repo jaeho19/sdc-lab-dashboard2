@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
-  FileText,
   Calendar,
   MessageSquare,
   Settings,
@@ -15,7 +14,6 @@ import {
   Menu,
   UserCheck,
   Bot,
-  X,
   ExternalLink,
   Download,
   Home,
@@ -23,6 +21,7 @@ import {
   ChevronDown,
   ChevronRight,
   Star,
+  LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -124,7 +123,15 @@ const adminNavigation = [
   { name: "가입 승인", href: "/admin/approvals", icon: Settings },
 ];
 
-const externalLinks = [
+interface ExternalLinkType {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  isExternal?: boolean;
+  isDownload?: boolean;
+}
+
+const externalLinks: ExternalLinkType[] = [
   {
     name: "연구실 홈페이지",
     href: "https://sdclab.netlify.app/",
@@ -139,8 +146,167 @@ const externalLinks = [
   },
 ];
 
+// ============================================
+// 메모이제이션된 서브컴포넌트들
+// ============================================
+
+// 네비게이션 아이템 (일반)
+interface NavItemProps {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  isActive: boolean;
+  isCollapsed: boolean;
+  onLinkClick?: () => void;
+}
+
+const NavItem = memo(function NavItem({
+  name,
+  href,
+  icon: Icon,
+  isActive,
+  isCollapsed,
+  onLinkClick,
+}: NavItemProps) {
+  return (
+    <Link
+      href={href}
+      onClick={onLinkClick}
+      className={cn(
+        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+        isActive
+          ? "bg-sidebar-primary text-white"
+          : "text-sidebar-foreground hover:bg-sidebar-accent"
+      )}
+    >
+      <Icon className="h-5 w-5 shrink-0" />
+      {!isCollapsed && <span>{name}</span>}
+    </Link>
+  );
+});
+
+// 멤버 서브메뉴 아이템
+interface MemberSubItemProps {
+  member: FulltimeMember;
+  isActive: boolean;
+  onLinkClick?: () => void;
+}
+
+const MemberSubItem = memo(function MemberSubItem({
+  member,
+  isActive,
+  onLinkClick,
+}: MemberSubItemProps) {
+  const positionColor = POSITION_SIDEBAR_COLORS[member.position];
+
+  return (
+    <Link
+      href={`/members/${member.id}`}
+      onClick={onLinkClick}
+      className={cn(
+        "flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+        isActive
+          ? "bg-sidebar-accent text-sidebar-foreground"
+          : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+      )}
+      title={positionColor?.label}
+    >
+      <Avatar className="h-5 w-5">
+        <AvatarImage src={member.avatar_url || undefined} />
+        <AvatarFallback className="bg-sidebar-primary text-white text-[10px]">
+          {getInitials(member.name)}
+        </AvatarFallback>
+      </Avatar>
+      <span className="truncate flex-1">{member.name}</span>
+      {positionColor && (
+        <span
+          className={cn(
+            "w-2 h-2 rounded-full shrink-0",
+            positionColor.bg
+          )}
+          title={positionColor.label}
+        />
+      )}
+    </Link>
+  );
+});
+
+// 즐겨찾기 프로젝트 서브메뉴 아이템
+interface FavoriteSubItemProps {
+  project: FavoriteProject;
+  isActive: boolean;
+  onLinkClick?: () => void;
+}
+
+const FavoriteSubItem = memo(function FavoriteSubItem({
+  project,
+  isActive,
+  onLinkClick,
+}: FavoriteSubItemProps) {
+  return (
+    <Link
+      href={`/research/${project.id}`}
+      onClick={onLinkClick}
+      className={cn(
+        "flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+        isActive
+          ? "bg-sidebar-accent text-sidebar-foreground"
+          : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+      )}
+    >
+      <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+      <span className="truncate">{project.title}</span>
+    </Link>
+  );
+});
+
+// 외부 링크 아이템
+interface ExternalLinkItemProps {
+  item: ExternalLinkType;
+  isCollapsed: boolean;
+  onLinkClick?: () => void;
+}
+
+const ExternalLinkItem = memo(function ExternalLinkItem({
+  item,
+  isCollapsed,
+  onLinkClick,
+}: ExternalLinkItemProps) {
+  const Icon = item.icon;
+  const linkProps = item.isExternal
+    ? { target: "_blank" as const, rel: "noopener noreferrer" }
+    : item.isDownload
+    ? { download: true }
+    : {};
+
+  return (
+    <a
+      href={item.href}
+      onClick={onLinkClick}
+      className={cn(
+        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+        "text-sidebar-foreground hover:bg-sidebar-accent"
+      )}
+      {...linkProps}
+    >
+      <Icon className="h-5 w-5 shrink-0" />
+      {!isCollapsed && (
+        <span className="flex items-center gap-1.5">
+          {item.name}
+          {item.isExternal && (
+            <ExternalLink className="h-3 w-3 opacity-60" />
+          )}
+          {item.isDownload && (
+            <Download className="h-3 w-3 opacity-60" />
+          )}
+        </span>
+      )}
+    </a>
+  );
+});
+
 // Shared sidebar content component
-function SidebarContent({
+const SidebarContent = memo(function SidebarContent({
   member,
   isCollapsed,
   onToggle,
@@ -158,7 +324,20 @@ function SidebarContent({
   const [favoriteProjects, setFavoriteProjects] = useState<FavoriteProject[]>([]);
   const [isResearchExpanded, setIsResearchExpanded] = useState(true);
 
-  // 풀타임 멤버 목록 로드
+  // 메모이제이션된 콜백들
+  const toggleMembersExpanded = useCallback(() => {
+    setIsMembersExpanded(prev => !prev);
+  }, []);
+
+  const toggleResearchExpanded = useCallback(() => {
+    setIsResearchExpanded(prev => !prev);
+  }, []);
+
+  const handleLogout = useCallback(async () => {
+    await logout();
+  }, []);
+
+  // 풀타임 멤버 목록 로드 (최초 1회만)
   useEffect(() => {
     async function loadFulltimeMembers() {
       const supabase = createClient();
@@ -190,7 +369,7 @@ function SidebarContent({
     loadFulltimeMembers();
   }, []);
 
-  // 즐겨찾기 프로젝트 목록 로드
+  // 즐겨찾기 프로젝트 목록 로드 (최초 1회만 - 페이지 이동 시 전체 리프레시됨)
   useEffect(() => {
     async function loadFavoriteProjects() {
       const result = await getFavoriteProjects();
@@ -200,11 +379,7 @@ function SidebarContent({
     }
 
     loadFavoriteProjects();
-  }, [pathname]); // pathname 변경 시 새로고침 (즐겨찾기 토글 후 반영)
-
-  async function handleLogout() {
-    await logout();
-  }
+  }, []); // pathname 의존성 제거 - 페이지 전환 시 Next.js가 자연스럽게 리프레시
 
   return (
     <div className="flex h-full flex-col">
@@ -251,7 +426,7 @@ function SidebarContent({
                 <>
                   {/* Members 메뉴 with 펼침/접기 */}
                   <button
-                    onClick={() => setIsMembersExpanded(!isMembersExpanded)}
+                    onClick={toggleMembersExpanded}
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors w-full",
                       isActive
@@ -286,42 +461,14 @@ function SidebarContent({
                         <span>전체 멤버</span>
                       </Link>
                       {/* 풀타임 멤버들 */}
-                      {fulltimeMembers.map((m) => {
-                        const isMemberActive = pathname === `/members/${m.id}`;
-                        const positionColor = POSITION_SIDEBAR_COLORS[m.position];
-                        return (
-                          <Link
-                            key={m.id}
-                            href={`/members/${m.id}`}
-                            onClick={onLinkClick}
-                            className={cn(
-                              "flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-                              isMemberActive
-                                ? "bg-sidebar-accent text-sidebar-foreground"
-                                : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                            )}
-                            title={positionColor?.label}
-                          >
-                            <Avatar className="h-5 w-5">
-                              <AvatarImage src={m.avatar_url || undefined} />
-                              <AvatarFallback className="bg-sidebar-primary text-white text-[10px]">
-                                {getInitials(m.name)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="truncate flex-1">{m.name}</span>
-                            {/* 직급 색상 도트 */}
-                            {positionColor && (
-                              <span
-                                className={cn(
-                                  "w-2 h-2 rounded-full shrink-0",
-                                  positionColor.bg
-                                )}
-                                title={positionColor.label}
-                              />
-                            )}
-                          </Link>
-                        );
-                      })}
+                      {fulltimeMembers.map((m) => (
+                        <MemberSubItem
+                          key={m.id}
+                          member={m}
+                          isActive={pathname === `/members/${m.id}`}
+                          onLinkClick={onLinkClick}
+                        />
+                      ))}
                     </div>
                   )}
                 </>
@@ -329,7 +476,7 @@ function SidebarContent({
                 <>
                   {/* Research 메뉴 with 즐겨찾기 */}
                   <button
-                    onClick={() => setIsResearchExpanded(!isResearchExpanded)}
+                    onClick={toggleResearchExpanded}
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors w-full",
                       isActive
@@ -364,42 +511,26 @@ function SidebarContent({
                         <span>전체 연구</span>
                       </Link>
                       {/* 즐겨찾기 프로젝트들 */}
-                      {favoriteProjects.map((project) => {
-                        const isProjectActive = pathname === `/research/${project.id}`;
-                        return (
-                          <Link
-                            key={project.id}
-                            href={`/research/${project.id}`}
-                            onClick={onLinkClick}
-                            className={cn(
-                              "flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-                              isProjectActive
-                                ? "bg-sidebar-accent text-sidebar-foreground"
-                                : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                            )}
-                          >
-                            <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                            <span className="truncate">{project.title}</span>
-                          </Link>
-                        );
-                      })}
+                      {favoriteProjects.map((project) => (
+                        <FavoriteSubItem
+                          key={project.id}
+                          project={project}
+                          isActive={pathname === `/research/${project.id}`}
+                          onLinkClick={onLinkClick}
+                        />
+                      ))}
                     </div>
                   )}
                 </>
               ) : (
-                <Link
+                <NavItem
+                  name={item.name}
                   href={item.href}
-                  onClick={onLinkClick}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-sidebar-primary text-white"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent"
-                  )}
-                >
-                  <item.icon className="h-5 w-5 shrink-0" />
-                  {!isCollapsed && <span>{item.name}</span>}
-                </Link>
+                  icon={item.icon}
+                  isActive={isActive}
+                  isCollapsed={isCollapsed}
+                  onLinkClick={onLinkClick}
+                />
               )}
             </div>
           );
@@ -416,25 +547,17 @@ function SidebarContent({
             >
               Admin
             </div>
-            {adminNavigation.map((item) => {
-              const isActive = pathname.startsWith(item.href);
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={onLinkClick}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-sidebar-primary text-white"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent"
-                  )}
-                >
-                  <item.icon className="h-5 w-5 shrink-0" />
-                  {!isCollapsed && <span>{item.name}</span>}
-                </Link>
-              );
-            })}
+            {adminNavigation.map((item) => (
+              <NavItem
+                key={item.name}
+                name={item.name}
+                href={item.href}
+                icon={item.icon}
+                isActive={pathname.startsWith(item.href)}
+                isCollapsed={isCollapsed}
+                onLinkClick={onLinkClick}
+              />
+            ))}
           </>
         )}
 
@@ -448,39 +571,14 @@ function SidebarContent({
         >
           Links
         </div>
-        {externalLinks.map((item) => {
-          const linkProps = item.isExternal
-            ? { target: "_blank", rel: "noopener noreferrer" }
-            : item.isDownload
-            ? { download: true }
-            : {};
-
-          return (
-            <a
-              key={item.name}
-              href={item.href}
-              onClick={onLinkClick}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                "text-sidebar-foreground hover:bg-sidebar-accent"
-              )}
-              {...linkProps}
-            >
-              <item.icon className="h-5 w-5 shrink-0" />
-              {!isCollapsed && (
-                <span className="flex items-center gap-1.5">
-                  {item.name}
-                  {item.isExternal && (
-                    <ExternalLink className="h-3 w-3 opacity-60" />
-                  )}
-                  {item.isDownload && (
-                    <Download className="h-3 w-3 opacity-60" />
-                  )}
-                </span>
-              )}
-            </a>
-          );
-        })}
+        {externalLinks.map((item) => (
+          <ExternalLinkItem
+            key={item.name}
+            item={item}
+            isCollapsed={isCollapsed}
+            onLinkClick={onLinkClick}
+          />
+        ))}
       </nav>
 
       {/* User Menu */}
@@ -494,7 +592,7 @@ function SidebarContent({
               )}
             >
               <Avatar className="h-8 w-8">
-                <AvatarImage src={member.avatar_url || undefined} />
+                <AvatarImage src={member.avatar_url || undefined} priority />
                 <AvatarFallback className="bg-sidebar-primary text-white text-xs">
                   {getInitials(member.name)}
                 </AvatarFallback>
@@ -544,7 +642,7 @@ function SidebarContent({
       </div>
     </div>
   );
-}
+});
 
 export function Sidebar({
   member,

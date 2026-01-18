@@ -1,17 +1,27 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import FullCalendar from "@fullcalendar/react";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import interactionPlugin from "@fullcalendar/interaction";
+import dynamic from "next/dynamic";
 import type { EventClickArg, DateSelectArg } from "@fullcalendar/core";
-import { CALENDAR_CATEGORY_CONFIG } from "@/lib/constants";
 import type { CalendarCategory } from "@/types/database.types";
 import { EventModal } from "./event-modal";
 import { updateEventDates } from "@/lib/actions/calendar";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
+
+// FullCalendar를 동적 임포트 (SSR 비활성화)
+const CalendarViewInner = dynamic(
+  () => import("./calendar-view-inner").then((mod) => mod.CalendarViewInner),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center h-[500px] bg-white rounded-lg border">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    ),
+  }
+);
 
 interface CalendarEvent {
   id: string;
@@ -36,22 +46,6 @@ export function CalendarView({ events }: CalendarViewProps) {
   );
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  // FullCalendar 이벤트 형식으로 변환
-  const calendarEvents = events.map((event) => ({
-    id: event.id,
-    title: event.title,
-    start: event.start_date,
-    end: event.end_date || undefined,
-    allDay: event.all_day,
-    backgroundColor: CALENDAR_CATEGORY_CONFIG[event.category]?.color || "#6b7280",
-    borderColor: CALENDAR_CATEGORY_CONFIG[event.category]?.color || "#6b7280",
-    extendedProps: {
-      description: event.description,
-      category: event.category,
-      is_public: event.is_public,
-    },
-  }));
-
   // 날짜 클릭 핸들러
   const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
     setSelectedEvent(null);
@@ -75,7 +69,9 @@ export function CalendarView({ events }: CalendarViewProps) {
 
   // 드래그 앤 드롭 핸들러
   const handleEventDrop = useCallback(
-    async (info: { event: { id: string; start: Date | null; end: Date | null } }) => {
+    async (info: {
+      event: { id: string; start: Date | null; end: Date | null };
+    }) => {
       const { id, start, end } = info.event;
       if (!start) return;
 
@@ -108,7 +104,8 @@ export function CalendarView({ events }: CalendarViewProps) {
       {/* 안내 메시지 및 추가 버튼 */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
         <p className="text-xs md:text-sm text-muted-foreground">
-          날짜를 클릭하여 새 일정을 추가하거나, 일정을 드래그하여 날짜를 변경할 수 있습니다.
+          날짜를 클릭하여 새 일정을 추가하거나, 일정을 드래그하여 날짜를 변경할
+          수 있습니다.
         </p>
         <Button size="sm" onClick={handleAddClick}>
           <Plus className="h-4 w-4 mr-1" />
@@ -116,48 +113,12 @@ export function CalendarView({ events }: CalendarViewProps) {
         </Button>
       </div>
 
-      <div className="bg-white rounded-lg border p-2 md:p-4 calendar-mobile">
-        <FullCalendar
-          plugins={[dayGridPlugin, interactionPlugin]}
-          initialView="dayGridMonth"
-          locale="ko"
-          headerToolbar={{
-            left: "prev,next",
-            center: "title",
-            right: "today",
-          }}
-          buttonText={{
-            today: "오늘",
-            month: "월",
-            week: "주",
-          }}
-          events={calendarEvents}
-          selectable={true}
-          selectMirror={true}
-          editable={true}
-          dayMaxEvents={2}
-          weekends={true}
-          select={handleDateSelect}
-          eventClick={handleEventClick}
-          eventDrop={handleEventDrop}
-          height="auto"
-          aspectRatio={1.2}
-          eventDisplay="block"
-          eventTimeFormat={{
-            hour: "2-digit",
-            minute: "2-digit",
-            meridiem: false,
-            hour12: false,
-          }}
-          dayHeaderFormat={{
-            weekday: "short",
-          }}
-          titleFormat={{
-            year: "numeric",
-            month: "long",
-          }}
-        />
-      </div>
+      <CalendarViewInner
+        events={events}
+        onDateSelect={handleDateSelect}
+        onEventClick={handleEventClick}
+        onEventDrop={handleEventDrop}
+      />
 
       <EventModal
         open={modalOpen}

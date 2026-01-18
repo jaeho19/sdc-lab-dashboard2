@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -232,7 +232,7 @@ export function WeeklyGoals({ projectId, goals, onRefresh }: WeeklyGoalsProps) {
     return groupGoalsByWeek(pendingGoals, monthInfo);
   }, [pendingGoals, monthInfo]);
 
-  const handleAddGoal = async () => {
+  const handleAddGoal = useCallback(async () => {
     if (!newContent.trim() || !newDeadline) return;
     setSaving(true);
     setError(null);
@@ -258,29 +258,29 @@ export function WeeklyGoals({ projectId, goals, onRefresh }: WeeklyGoalsProps) {
     setError(null);
     setIsAddDialogOpen(false);
     onRefresh();
-  };
+  }, [newContent, newDeadline, newLinkedStage, projectId, onRefresh]);
 
-  const handleToggleGoal = async (goalId: string, isCompleted: boolean) => {
+  const handleToggleGoal = useCallback(async (goalId: string, isCompleted: boolean) => {
     await toggleWeeklyGoal(goalId, isCompleted, projectId);
     onRefresh();
-  };
+  }, [projectId, onRefresh]);
 
-  const handleDeleteGoal = async (goalId: string) => {
+  const handleDeleteGoal = useCallback(async (goalId: string) => {
     if (!confirm("정말로 이 목표를 삭제하시겠습니까?")) return;
     await deleteWeeklyGoal(goalId, projectId);
     onRefresh();
-  };
+  }, [projectId, onRefresh]);
 
-  const handleOpenEditDialog = (goal: WeeklyGoal) => {
+  const handleOpenEditDialog = useCallback((goal: WeeklyGoal) => {
     setEditingGoal(goal);
     setEditContent(goal.content);
     setEditDeadline(goal.deadline);
     setEditLinkedStage(goal.linked_stage || "none");
     setEditError(null);
     setIsEditDialogOpen(true);
-  };
+  }, []);
 
-  const handleEditGoal = async () => {
+  const handleEditGoal = useCallback(async () => {
     if (!editingGoal || !editContent.trim() || !editDeadline) return;
     setSaving(true);
     setEditError(null);
@@ -304,14 +304,14 @@ export function WeeklyGoals({ projectId, goals, onRefresh }: WeeklyGoalsProps) {
     setIsEditDialogOpen(false);
     setEditingGoal(null);
     onRefresh();
-  };
+  }, [editingGoal, editContent, editDeadline, editLinkedStage, projectId, onRefresh]);
 
-  const formatDeadline = (deadline: string) => {
+  const formatDeadline = useCallback((deadline: string) => {
     const date = new Date(deadline);
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
     return `${month}/${day}`;
-  };
+  }, []);
 
   return (
     <Card>

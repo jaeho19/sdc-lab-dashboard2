@@ -27,11 +27,21 @@ import {
   Loader2,
   Paperclip,
 } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
-import "katex/dist/katex.min.css";
+import dynamic from "next/dynamic";
+import { Loader2 as MarkdownLoader } from "lucide-react";
+
+// KaTeX를 포함한 마크다운 렌더러를 동적 임포트
+const MarkdownRenderer = dynamic(
+  () => import("@/components/ui/markdown-renderer").then((mod) => mod.MarkdownRenderer),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center py-4">
+        <MarkdownLoader className="h-4 w-4 animate-spin text-muted-foreground" />
+      </div>
+    ),
+  }
+);
 import { deleteResearchNote, uploadNoteFile, deleteNoteFile } from "@/lib/actions/research-notes";
 import { formatDate, getInitials } from "@/lib/utils";
 import { MILESTONE_STAGE_LABEL } from "@/lib/constants";
@@ -253,14 +263,11 @@ export function ResearchNoteCard({
           <CardContent className="pt-2 space-y-4">
             {/* 본문 (마크다운 렌더링 - 연구흐름도와 동일 스타일) */}
             <div className="pl-8">
-              <div className="flowchart-content prose prose-sm max-w-none dark:prose-invert prose-p:text-muted-foreground prose-strong:text-foreground prose-code:text-primary prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-muted prose-pre:border">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm, remarkMath]}
-                  rehypePlugins={[rehypeKatex]}
-                >
-                  {note.content}
-                </ReactMarkdown>
-              </div>
+              <MarkdownRenderer
+                content={note.content}
+                enableMath={true}
+                className="flowchart-content"
+              />
             </div>
 
             {/* 첨부파일 */}

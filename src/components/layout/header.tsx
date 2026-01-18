@@ -84,7 +84,7 @@ export function Header({ member, notificationCount = 0 }: HeaderProps) {
             >
               <Avatar className="h-8 w-8">
                 {member?.avatar_url ? (
-                  <AvatarImage src={member.avatar_url} alt={member.name} />
+                  <AvatarImage src={member.avatar_url} alt={member.name} priority />
                 ) : null}
                 <AvatarFallback className="bg-primary/10 text-primary">
                   {member?.name?.charAt(0) || "U"}

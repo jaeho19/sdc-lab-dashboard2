@@ -5,6 +5,7 @@ import "./globals.css";
 import { QueryProvider } from "@/lib/react-query/provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
+import { WebVitalsReporter } from "@/components/web-vitals-reporter";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -35,6 +36,8 @@ const paperlogy = localFont({
     },
   ],
   variable: "--font-paperlogy",
+  display: "swap", // 폰트 로드 중 시스템 폰트 사용
+  preload: true,   // 중요 폰트 사전 로드
 });
 
 export const metadata: Metadata = {
@@ -61,6 +64,7 @@ export default function RootLayout({
               {children}
             </TooltipProvider>
           </QueryProvider>
+          <WebVitalsReporter />
         </ThemeProvider>
       </body>
     </html>

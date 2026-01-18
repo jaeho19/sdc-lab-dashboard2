@@ -67,34 +67,16 @@
   }
 }
 
-/* Pretendard 폰트 (CDN) */
-@font-face {
-  font-family: 'Pretendard';
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-  src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
-}
-
-/* Paperlogy 폰트 (한글용) */
-@font-face {
-  font-family: "Paperlogy";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-4Regular.woff2") format("woff2");
-  font-weight: 400;
-  font-display: swap;
-  unicode-range: U+AC00-D7A3; /* 한글 영역 */
-}
-
-/* Arial Latin (영문용) */
-@font-face {
-  font-family: "ArialLatin";
-  src: local("Arial");
-  unicode-range: U+0020-007E; /* 기본 ASCII 문자 (영문, 숫자, 기호) */
-}
+/*
+ * 폰트 설정 참고:
+ * - Paperlogy: next/font/local (layout.tsx)에서 로드
+ * - Inter: next/font/google (layout.tsx)에서 로드
+ * - font-display: swap 자동 적용
+ */
 
 /* 연구 흐름도 기본 스타일 */
 .flowchart-content {
-  font-family: "ArialLatin", "Paperlogy", sans-serif !important;
+  font-family: var(--font-paperlogy), var(--font-inter), sans-serif !important;
   line-height: 1.8;
   font-size: 0.95rem;
 }
@@ -127,7 +109,7 @@
 /* 연구 흐름도 컬러풀 헤딩 스타일 */
 /* H1 - 최상위 (들여쓰기 없음) */
 .flowchart-content h1 {
-  font-family: "ArialLatin", "Paperlogy", sans-serif !important;
+  font-family: var(--font-paperlogy), var(--font-inter), sans-serif !important;
   color: #D62D6B !important;
   font-size: 1.75em !important;
   line-height: 1.3 !important;
@@ -145,7 +127,7 @@
 
 /* H2 - 주요 섹션 */
 .flowchart-content h2 {
-  font-family: "ArialLatin", "Paperlogy", sans-serif !important;
+  font-family: var(--font-paperlogy), var(--font-inter), sans-serif !important;
   color: #AD6F2B !important;
   font-size: 1.45em !important;
   line-height: 1.35 !important;
@@ -167,7 +149,7 @@
 
 /* H3 - 하위 섹션 */
 .flowchart-content h3 {
-  font-family: "ArialLatin", "Paperlogy", sans-serif !important;
+  font-family: var(--font-paperlogy), var(--font-inter), sans-serif !important;
   color: #E8BB43 !important;
   font-size: 1.25em !important;
   line-height: 1.4 !important;
@@ -187,7 +169,7 @@
 
 /* H4 - 세부 항목 */
 .flowchart-content h4 {
-  font-family: "ArialLatin", "Paperlogy", sans-serif !important;
+  font-family: var(--font-paperlogy), var(--font-inter), sans-serif !important;
   color: #83B366 !important;
   font-size: 1.1em !important;
   line-height: 1.45 !important;
@@ -207,7 +189,7 @@
 
 /* H5 - 상세 항목 */
 .flowchart-content h5 {
-  font-family: "ArialLatin", "Paperlogy", sans-serif !important;
+  font-family: var(--font-paperlogy), var(--font-inter), sans-serif !important;
   color: #4185CC !important;
   font-size: 1em !important;
   line-height: 1.5 !important;
@@ -226,7 +208,7 @@
 
 /* H6 - 최하위 항목 */
 .flowchart-content h6 {
-  font-family: "ArialLatin", "Paperlogy", sans-serif !important;
+  font-family: var(--font-paperlogy), var(--font-inter), sans-serif !important;
   color: #916DB3 !important;
   font-size: 0.95em !important;
   line-height: 1.5 !important;

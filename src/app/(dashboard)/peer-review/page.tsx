@@ -15,8 +15,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2, FileText, Bot, Plus, History, ChevronRight, Calendar } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import dynamic from "next/dynamic";
+
+// 경량 마크다운 렌더러를 동적 임포트 (KaTeX 미포함)
+const MarkdownSimple = dynamic(
+  () => import("@/components/ui/markdown-simple").then((mod) => mod.MarkdownSimple),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center py-4">
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      </div>
+    ),
+  }
+);
 import { createClient } from "@/lib/supabase/client";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -427,10 +439,8 @@ export default function PeerReviewPage() {
                         AI 리뷰 결과
                       </h4>
                       {selectedReview.review_result ? (
-                        <div className="flowchart-content p-4 bg-purple-50/50 rounded-lg overflow-auto max-h-[600px] border border-purple-100">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {selectedReview.review_result}
-                          </ReactMarkdown>
+                        <div className="p-4 bg-purple-50/50 rounded-lg overflow-auto max-h-[600px] border border-purple-100">
+                          <MarkdownSimple content={selectedReview.review_result} />
                         </div>
                       ) : (
                         <div className="p-4 text-center text-muted-foreground">

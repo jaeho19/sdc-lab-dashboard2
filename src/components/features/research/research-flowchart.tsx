@@ -5,11 +5,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { updateFlowchart } from "@/lib/actions/research";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
-import "katex/dist/katex.min.css";
+import dynamic from "next/dynamic";
+import { Loader2 as MarkdownLoader } from "lucide-react";
+
+// KaTeX를 포함한 마크다운 렌더러를 동적 임포트
+const MarkdownRenderer = dynamic(
+  () => import("@/components/ui/markdown-renderer").then((mod) => mod.MarkdownRenderer),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center py-8">
+        <MarkdownLoader className="h-4 w-4 animate-spin text-muted-foreground" />
+      </div>
+    ),
+  }
+);
 import {
   FileText,
   Edit2,
@@ -143,14 +153,11 @@ export function ResearchFlowchart({
       <CardContent>
         {!isEditing ? (
           flowchartMd ? (
-            <div className="flowchart-content prose prose-sm max-w-none dark:prose-invert prose-p:text-muted-foreground prose-strong:text-foreground prose-code:text-primary prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-muted prose-pre:border">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm, remarkMath]}
-                rehypePlugins={[rehypeKatex]}
-              >
-                {flowchartMd}
-              </ReactMarkdown>
-            </div>
+            <MarkdownRenderer
+              content={flowchartMd}
+              enableMath={true}
+              className="flowchart-content"
+            />
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -207,14 +214,11 @@ export function ResearchFlowchart({
                 )}
                 <div className="border rounded-md p-4 min-h-[400px] overflow-auto bg-muted/30">
                   {content ? (
-                    <div className="flowchart-content prose prose-sm max-w-none dark:prose-invert prose-p:text-muted-foreground prose-strong:text-foreground prose-code:text-primary prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-muted prose-pre:border">
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm, remarkMath]}
-                        rehypePlugins={[rehypeKatex]}
-                      >
-                        {content}
-                      </ReactMarkdown>
-                    </div>
+                    <MarkdownRenderer
+                      content={content}
+                      enableMath={true}
+                      className="flowchart-content"
+                    />
                   ) : (
                     <p className="text-muted-foreground text-sm">
                       마크다운을 입력하면 미리보기가 표시됩니다.

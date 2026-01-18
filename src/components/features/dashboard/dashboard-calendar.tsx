@@ -1,19 +1,34 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import FullCalendar from "@fullcalendar/react";
+import dynamic from "next/dynamic";
 import type { EventClickArg } from "@fullcalendar/core";
-import dayGridPlugin from "@fullcalendar/daygrid";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, X, Plus } from "lucide-react";
+import { Calendar, X, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CALENDAR_CATEGORY_CONFIG } from "@/lib/constants";
 import type { CalendarCategory } from "@/types/database.types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { EventModal } from "@/components/features/calendar/event-modal";
+
+// FullCalendar를 동적 임포트 (SSR 비활성화)
+const DashboardCalendarInner = dynamic(
+  () =>
+    import("./dashboard-calendar-inner").then(
+      (mod) => mod.DashboardCalendarInner
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center h-[300px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    ),
+  }
+);
 
 interface CalendarEvent {
   id: string;
@@ -29,9 +44,14 @@ interface DashboardCalendarProps {
   className?: string;
 }
 
-export function DashboardCalendar({ events, className }: DashboardCalendarProps) {
+export function DashboardCalendar({
+  events,
+  className,
+}: DashboardCalendarProps) {
   const router = useRouter();
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
+    null
+  );
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
@@ -45,16 +65,6 @@ export function DashboardCalendar({ events, className }: DashboardCalendarProps)
   const handleSuccess = useCallback(() => {
     router.refresh();
   }, [router]);
-
-  const calendarEvents = events.map((event) => ({
-    id: event.id,
-    title: event.title,
-    start: event.start_date,
-    end: event.end_date || undefined,
-    allDay: event.all_day,
-    backgroundColor: CALENDAR_CATEGORY_CONFIG[event.category]?.color || "#6b7280",
-    borderColor: CALENDAR_CATEGORY_CONFIG[event.category]?.color || "#6b7280",
-  }));
 
   const handleEventClick = useCallback(
     (clickInfo: EventClickArg) => {
@@ -108,34 +118,10 @@ export function DashboardCalendar({ events, className }: DashboardCalendarProps)
         </div>
       </CardHeader>
       <CardContent className="p-4 pt-0 md:p-6 md:pt-0 flex-1">
-        <div className="dashboard-mini-calendar">
-          <FullCalendar
-            plugins={[dayGridPlugin]}
-            initialView="dayGridMonth"
-            locale="ko"
-            headerToolbar={{
-              left: "prev",
-              center: "title",
-              right: "next",
-            }}
-            events={calendarEvents}
-            height="auto"
-            aspectRatio={1.2}
-            dayMaxEvents={3}
-            eventDisplay="block"
-            displayEventTime={false}
-            titleFormat={{
-              year: "numeric",
-              month: "short",
-            }}
-            dayHeaderFormat={{
-              weekday: "narrow",
-            }}
-            eventClick={handleEventClick}
-            selectable={false}
-            editable={false}
-          />
-        </div>
+        <DashboardCalendarInner
+          events={events}
+          onEventClick={handleEventClick}
+        />
 
         {/* 선택된 이벤트 상세 정보 */}
         {selectedEvent && (
@@ -143,11 +129,14 @@ export function DashboardCalendar({ events, className }: DashboardCalendarProps)
             <div className="flex items-center justify-between mb-2">
               <Badge
                 style={{
-                  backgroundColor: CALENDAR_CATEGORY_CONFIG[selectedEvent.category]?.color || "#6b7280",
+                  backgroundColor:
+                    CALENDAR_CATEGORY_CONFIG[selectedEvent.category]?.color ||
+                    "#6b7280",
                   color: "white",
                 }}
               >
-                {CALENDAR_CATEGORY_CONFIG[selectedEvent.category]?.label || "일정"}
+                {CALENDAR_CATEGORY_CONFIG[selectedEvent.category]?.label ||
+                  "일정"}
               </Badge>
               <Button
                 variant="ghost"
@@ -164,7 +153,14 @@ export function DashboardCalendar({ events, className }: DashboardCalendarProps)
             <p className="text-xs md:text-sm text-muted-foreground mb-2">
               {formatEventDate(selectedEvent.start_date, selectedEvent.all_day)}
               {selectedEvent.end_date && (
-                <> ~ {formatEventDate(selectedEvent.end_date, selectedEvent.all_day)}</>
+                <>
+                  {" "}
+                  ~{" "}
+                  {formatEventDate(
+                    selectedEvent.end_date,
+                    selectedEvent.all_day
+                  )}
+                </>
               )}
               {selectedEvent.all_day && (
                 <span className="ml-2 text-xs">(종일)</span>

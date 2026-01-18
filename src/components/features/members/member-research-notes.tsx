@@ -26,8 +26,20 @@ import { formatDate, getInitials } from "@/lib/utils";
 import { MILESTONE_STAGE_LABEL } from "@/lib/constants";
 import type { MilestoneStage } from "@/types/database.types";
 import Link from "next/link";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import dynamic from "next/dynamic";
+
+// 경량 마크다운 렌더러를 동적 임포트 (KaTeX 미포함)
+const MarkdownSimple = dynamic(
+  () => import("@/components/ui/markdown-simple").then((mod) => mod.MarkdownSimple),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center py-2">
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      </div>
+    ),
+  }
+);
 
 const MILESTONE_STAGES: MilestoneStage[] = [
   "literature_review",
@@ -276,11 +288,7 @@ export function MemberResearchNotes({
                         {/* 내용 미리보기/전체 */}
                         <div className="text-sm text-muted-foreground">
                           {isExpanded ? (
-                            <div className="prose prose-sm dark:prose-invert max-w-none">
-                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                {note.content}
-                              </ReactMarkdown>
-                            </div>
+                            <MarkdownSimple content={note.content} />
                           ) : (
                             <p className="whitespace-pre-wrap">{contentPreview}</p>
                           )}
