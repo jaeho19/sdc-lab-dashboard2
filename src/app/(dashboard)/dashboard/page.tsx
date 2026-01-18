@@ -280,6 +280,9 @@ export default async function DashboardPage() {
         </p>
       </div>
 
+      {/* 캘린더 - 최상단 전체 너비 */}
+      <DashboardCalendar events={eventList} className="h-[500px] md:h-[600px]" />
+
       {/* 2×2 그리드 레이아웃 - 모든 카드 동일 높이 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         {/* 첫 번째 행 좌측: 다가오는 마감일 */}
@@ -291,19 +294,19 @@ export default async function DashboardPage() {
           className="h-[600px] md:h-[675px]"
         />
 
-        {/* 첫 번째 행 우측: 완료된 목표 */}
+        {/* 첫 번째 행 우측: 공지사항 */}
+        <AnnouncementsSection
+          announcements={announcementItems}
+          maxItems={5}
+          className="h-[600px] md:h-[675px]"
+        />
+
+        {/* 두 번째 행 좌측: 완료된 목표 */}
         <UnifiedDeadlineView
           items={completedDeadlines}
           title="완료된 목표"
           icon="history"
           variant="past"
-          className="h-[600px] md:h-[675px]"
-        />
-
-        {/* 두 번째 행 좌측: 공지사항 */}
-        <AnnouncementsSection
-          announcements={announcementItems}
-          maxItems={5}
           className="h-[600px] md:h-[675px]"
         />
 
@@ -314,9 +317,6 @@ export default async function DashboardPage() {
           className="h-[600px] md:h-[675px]"
         />
       </div>
-
-      {/* 캘린더 - 전체 너비 */}
-      <DashboardCalendar events={eventList} className="h-[500px] md:h-[600px]" />
     </div>
   );
 }
