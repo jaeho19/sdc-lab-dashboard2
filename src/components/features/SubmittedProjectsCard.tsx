@@ -24,6 +24,8 @@ const QUICK_STATUS_OPTIONS = [
   { value: "resubmitted", label: "Resubmitted" },
   { value: "under_2nd_review", label: "Under 2nd Review" },
   { value: "accepted", label: "Accepted" },
+  { value: "in_press", label: "In Press" },
+  { value: "published", label: "Published" },
   { value: "rejected", label: "Rejected" },
 ];
 
