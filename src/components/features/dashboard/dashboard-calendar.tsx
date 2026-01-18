@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, X, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { CALENDAR_CATEGORY_CONFIG } from "@/lib/constants";
 import type { CalendarCategory } from "@/types/database.types";
 import Link from "next/link";
@@ -25,9 +26,10 @@ interface CalendarEvent {
 
 interface DashboardCalendarProps {
   events: CalendarEvent[];
+  className?: string;
 }
 
-export function DashboardCalendar({ events }: DashboardCalendarProps) {
+export function DashboardCalendar({ events, className }: DashboardCalendarProps) {
   const router = useRouter();
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -81,7 +83,7 @@ export function DashboardCalendar({ events }: DashboardCalendarProps) {
   };
 
   return (
-    <Card>
+    <Card className={cn("flex flex-col", className)}>
       <CardHeader className="p-4 md:p-6 pb-2 flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2 text-base md:text-lg">
           <Calendar className="h-4 w-4 md:h-5 md:w-5" />
@@ -105,7 +107,7 @@ export function DashboardCalendar({ events }: DashboardCalendarProps) {
           </Link>
         </div>
       </CardHeader>
-      <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
+      <CardContent className="p-4 pt-0 md:p-6 md:pt-0 flex-1">
         <div className="dashboard-mini-calendar">
           <FullCalendar
             plugins={[dayGridPlugin]}

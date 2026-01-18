@@ -409,37 +409,39 @@ export default async function DashboardPage() {
         />
       )}
 
-      {/* 2열 레이아웃: 왼쪽 - 다가오는 일정, 오른쪽 - 캘린더 + 투고중인 연구 */}
+      {/* 2x2 그리드 레이아웃: 높이 동기화 */}
       <div className="grid gap-4 md:gap-6 grid-cols-1 lg:grid-cols-2">
-        {/* 왼쪽: 다가오는 마감일 + 완료된 목표 */}
-        <div className="flex flex-col gap-4">
+        {/* 첫 번째 행: 다가오는 마감일 + 캘린더 */}
+        <div className="lg:min-h-[520px]">
           <UnifiedDeadlineView
             items={upcomingDeadlines}
             title="다가오는 마감일"
             icon="clock"
             variant="upcoming"
-            maxHeight="480px"
+            maxHeight="420px"
+            className="h-full"
           />
-          {completedDeadlines.length > 0 && (
-            <UnifiedDeadlineView
-              items={completedDeadlines}
-              title="완료된 목표"
-              icon="history"
-              variant="past"
-              maxHeight="280px"
-            />
-          )}
+        </div>
+        <div className="lg:min-h-[520px]">
+          <DashboardCalendar events={eventList} className="h-full" />
         </div>
 
-        {/* 오른쪽: 캘린더 + 투고 중인 연구 */}
-        <div className="flex flex-col gap-4">
-          {/* 미니 캘린더 */}
-          <DashboardCalendar events={eventList} />
-
-          {/* 투고 중인 연구 (투고 후) - 클라이언트 컴포넌트 */}
+        {/* 두 번째 행: 완료된 목표 + 투고 중인 연구 */}
+        <div className="lg:min-h-[280px]">
+          <UnifiedDeadlineView
+            items={completedDeadlines}
+            title="완료된 목표"
+            icon="history"
+            variant="past"
+            maxHeight="180px"
+            className="h-full"
+          />
+        </div>
+        <div className="lg:min-h-[280px]">
           <SubmittedProjectsCard
             projects={activeProjects}
             archivedProjects={archivedProjects}
+            className="h-full"
           />
         </div>
       </div>

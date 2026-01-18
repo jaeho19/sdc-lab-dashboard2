@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Clock, Target, Calendar, CheckCircle2, History } from "lucide-react";
-import { getInitials, getCalendarCategoryLabel } from "@/lib/utils";
+import { getInitials, getCalendarCategoryLabel, cn } from "@/lib/utils";
 import Link from "next/link";
 
 export interface UnifiedDeadlineItem {
@@ -28,6 +28,7 @@ interface UnifiedDeadlineViewProps {
   icon?: "clock" | "history";
   variant?: "upcoming" | "past";
   maxHeight?: string;
+  className?: string;
 }
 
 function getDeadlineStatus(
@@ -67,19 +68,20 @@ export function UnifiedDeadlineView({
   icon = "clock",
   variant = "upcoming",
   maxHeight = "800px",
+  className,
 }: UnifiedDeadlineViewProps) {
   const IconComponent = icon === "clock" ? Clock : History;
 
   if (items.length === 0) {
     return (
-      <Card>
+      <Card className={cn("flex flex-col", className)}>
         <CardHeader className="p-4 md:p-6">
           <CardTitle className="flex items-center gap-2 text-base md:text-lg">
             <IconComponent className="h-4 w-4 md:h-5 md:w-5" />
             {title}
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
+        <CardContent className="p-4 pt-0 md:p-6 md:pt-0 flex-1 flex items-center justify-center">
           <p className="text-center text-muted-foreground py-4">
             {variant === "upcoming" ? "예정된 마감일이 없습니다." : "완료된 목표가 없습니다."}
           </p>
@@ -89,7 +91,7 @@ export function UnifiedDeadlineView({
   }
 
   return (
-    <Card>
+    <Card className={cn("flex flex-col", className)}>
       <CardHeader className="p-4 md:p-6">
         <CardTitle className="flex items-center gap-2 text-base md:text-lg">
           <IconComponent className="h-4 w-4 md:h-5 md:w-5" />
@@ -99,8 +101,8 @@ export function UnifiedDeadlineView({
           </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
-        <div className="space-y-3 overflow-y-auto pr-1" style={{ maxHeight }}>
+      <CardContent className="p-4 pt-0 md:p-6 md:pt-0 flex-1 overflow-hidden">
+        <div className="space-y-3 overflow-y-auto pr-1 h-full" style={{ maxHeight }}>
           {items.map((item) => {
             const status = getDeadlineStatus(item.date, item.type, item.isCompleted);
             const { month, day, weekday } = formatDate(item.date);
