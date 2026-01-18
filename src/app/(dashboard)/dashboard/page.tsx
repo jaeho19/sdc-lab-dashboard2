@@ -418,7 +418,7 @@ export default async function DashboardPage() {
             title="다가오는 마감일"
             icon="clock"
             variant="upcoming"
-            maxHeight="400px"
+            maxHeight="480px"
           />
           {completedDeadlines.length > 0 && (
             <UnifiedDeadlineView
