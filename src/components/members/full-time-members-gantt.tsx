@@ -35,6 +35,14 @@ const POSITION_GANTT_COLORS = {
   },
 } as const;
 
+// 직급 우선순위 (낮을수록 상단에 표시)
+const POSITION_PRIORITY: Record<string, number> = {
+  post_doc: 0,    // 포닥 - 최상단
+  phd: 1,         // 박사과정
+  researcher: 2,  // 연구원
+  ms: 3,          // 석사과정 - 최하단
+};
+
 interface FullTimeMembersGanttProps {
   members: GanttMemberData[];
   showTodayLine?: boolean;
@@ -115,9 +123,21 @@ export function FullTimeMembersGantt({
     return markers;
   }, [startYear, endYear, totalMonths]);
 
-  // 멤버별 바 위치 계산
+  // 멤버별 바 위치 계산 (직급순 정렬 적용)
   const memberBars = useMemo(() => {
-    return members.map(member => {
+    // 직급순 정렬 후 같은 직급 내에서는 이름순 정렬
+    const sortedMembers = [...members].sort((a, b) => {
+      const priorityA = POSITION_PRIORITY[a.position] ?? 99;
+      const priorityB = POSITION_PRIORITY[b.position] ?? 99;
+
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+      // 같은 직급 내에서는 이름순 정렬
+      return a.name.localeCompare(b.name, "ko");
+    });
+
+    return sortedMembers.map(member => {
       const startDate = new Date(member.startDate);
       const endDate = new Date(member.endDate);
       const startMonths =
