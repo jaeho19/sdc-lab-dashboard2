@@ -54,7 +54,28 @@ interface FulltimeMember {
   id: string;
   name: string;
   avatar_url: string | null;
+  position: string;
 }
+
+// 직급별 색상 설정 (간트 차트와 동일)
+const POSITION_SIDEBAR_COLORS: Record<string, { bg: string; label: string }> = {
+  ms: {
+    bg: "bg-sky-500",        // 석사과정: 하늘색
+    label: "석사과정",
+  },
+  phd: {
+    bg: "bg-cyan-600",       // 박사과정: 청록색
+    label: "박사과정",
+  },
+  post_doc: {
+    bg: "bg-violet-600",     // 포닥: 보라색
+    label: "포닥",
+  },
+  researcher: {
+    bg: "bg-emerald-600",    // 연구원: 에메랄드
+    label: "연구원",
+  },
+};
 
 interface FavoriteProject {
   id: string;
@@ -263,6 +284,7 @@ function SidebarContent({
                       {/* 풀타임 멤버들 */}
                       {fulltimeMembers.map((m) => {
                         const isMemberActive = pathname === `/members/${m.id}`;
+                        const positionColor = POSITION_SIDEBAR_COLORS[m.position];
                         return (
                           <Link
                             key={m.id}
@@ -274,6 +296,7 @@ function SidebarContent({
                                 ? "bg-sidebar-accent text-sidebar-foreground"
                                 : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                             )}
+                            title={positionColor?.label}
                           >
                             <Avatar className="h-5 w-5">
                               <AvatarImage src={m.avatar_url || undefined} />
@@ -281,7 +304,17 @@ function SidebarContent({
                                 {getInitials(m.name)}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="truncate">{m.name}</span>
+                            <span className="truncate flex-1">{m.name}</span>
+                            {/* 직급 색상 도트 */}
+                            {positionColor && (
+                              <span
+                                className={cn(
+                                  "w-2 h-2 rounded-full shrink-0",
+                                  positionColor.bg
+                                )}
+                                title={positionColor.label}
+                              />
+                            )}
                           </Link>
                         );
                       })}
