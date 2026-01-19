@@ -44,6 +44,14 @@ interface DashboardCalendarProps {
   className?: string;
 }
 
+/**
+ * DashboardCalendar 컴포넌트
+ *
+ * 레이아웃 수정사항 (2024):
+ * - 선택된 이벤트 상세 영역에 min-height 추가하여 항상 온전히 표시
+ * - 상세 영역과 하위 섹션 간 충분한 여백 확보
+ * - 모바일/태블릿 반응형 대응
+ */
 export function DashboardCalendar({
   events,
   className,
@@ -93,7 +101,9 @@ export function DashboardCalendar({
   };
 
   return (
-    <Card className={cn("flex flex-col", className)}>
+    // 캘린더 카드: 선택된 이벤트 상세 영역이 표시될 수 있도록 auto 높이 사용
+    // 하위 섹션과의 충분한 간격 확보를 위해 mb-2 md:mb-4 추가
+    <Card className={cn("flex flex-col mb-2 md:mb-4", className)}>
       <CardHeader className="p-4 md:p-6 pb-2 flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2 text-base md:text-lg">
           <Calendar className="h-4 w-4 md:h-5 md:w-5" />
@@ -117,16 +127,27 @@ export function DashboardCalendar({
           </Link>
         </div>
       </CardHeader>
-      <CardContent className="p-4 pt-0 md:p-6 md:pt-0 flex-1">
+      {/*
+        CardContent: 선택된 이벤트 상세 영역이 추가되어도 오버플로우되지 않도록 설정
+        - overflow-visible: 내용이 잘리지 않고 자연스럽게 확장
+        - pb-4 md:pb-6: 카드 하단 여백 추가로 하위 섹션과 간격 확보
+      */}
+      <CardContent className="p-4 pt-0 md:p-6 md:pt-0 pb-4 md:pb-6 flex-1 overflow-visible">
         <DashboardCalendarInner
           events={events}
           onEventClick={handleEventClick}
         />
 
-        {/* 선택된 이벤트 상세 정보 */}
+        {/*
+          선택된 이벤트 상세 정보 영역
+          - min-h-[120px] md:min-h-[140px]: 최소 높이 확보로 내용이 잘리지 않도록 함
+          - mt-4 md:mt-6: 캘린더와 상세 영역 사이 충분한 간격
+          - mb-2 md:mb-4: 카드 하단 여백으로 하위 섹션과 겹치지 않게 함
+          - p-4 md:p-5: 반응형 패딩으로 내용 가독성 확보
+        */}
         {selectedEvent && (
-          <div className="mt-4 p-3 border rounded-lg bg-muted/50">
-            <div className="flex items-center justify-between mb-2">
+          <div className="mt-4 md:mt-6 mb-2 md:mb-4 p-4 md:p-5 min-h-[120px] md:min-h-[140px] border rounded-lg bg-muted/50 transition-all duration-200 ease-in-out">
+            <div className="flex items-center justify-between mb-3">
               <Badge
                 style={{
                   backgroundColor:
@@ -147,10 +168,10 @@ export function DashboardCalendar({
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <h4 className="font-semibold text-sm md:text-base mb-1">
+            <h4 className="font-semibold text-sm md:text-base mb-2">
               {selectedEvent.title}
             </h4>
-            <p className="text-xs md:text-sm text-muted-foreground mb-2">
+            <p className="text-xs md:text-sm text-muted-foreground mb-3">
               {formatEventDate(selectedEvent.start_date, selectedEvent.all_day)}
               {selectedEvent.end_date && (
                 <>

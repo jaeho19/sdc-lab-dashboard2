@@ -271,7 +271,13 @@ export default async function DashboardPage() {
   }));
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    /**
+     * Dashboard 레이아웃 수정사항:
+     * - space-y-6 md:space-y-8: 섹션 간 기본 간격 증가
+     * - 캘린더: min-h 사용으로 선택된 이벤트 상세 영역 공간 확보
+     * - 그리드: gap-6 md:gap-8로 카드 간 여백 증가
+     */
+    <div className="space-y-6 md:space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
@@ -280,11 +286,22 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      {/* 캘린더 - 최상단 전체 너비 */}
-      <DashboardCalendar events={eventList} className="h-[500px] md:h-[600px]" />
+      {/*
+        캘린더 섹션
+        - min-h 사용: 선택된 이벤트 상세 영역이 표시될 때 자동 확장
+        - 고정 높이 대신 min-height 사용으로 내용이 잘리지 않음
+        - mb-4 md:mb-6: 하위 "다가오는 마감일" 섹션과 충분한 간격 확보
+      */}
+      <div className="mb-4 md:mb-6">
+        <DashboardCalendar events={eventList} className="min-h-[500px] md:min-h-[600px]" />
+      </div>
 
-      {/* 2×2 그리드 레이아웃 - 모든 카드 동일 높이 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+      {/*
+        2×2 그리드 레이아웃
+        - gap-6 md:gap-8: 카드 간 여백 증가 (기존 gap-4 md:gap-6)
+        - 모든 카드 동일 높이 유지
+      */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
         {/* 첫 번째 행 좌측: 다가오는 마감일 */}
         <UnifiedDeadlineView
           items={upcomingDeadlines}
