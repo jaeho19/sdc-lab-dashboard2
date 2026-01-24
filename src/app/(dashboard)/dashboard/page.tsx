@@ -1,8 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 
-// Disable caching to always fetch fresh data
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+// ISR: 60초마다 재검증 (페이지 캐시로 TTFB 대폭 감소)
+export const revalidate = 60;
 
 import type { SubmissionStatus, CalendarCategory } from "@/types/database.types";
 import { SubmittedProjectsCard } from "@/components/features/SubmittedProjectsCard";

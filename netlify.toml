@@ -13,3 +13,36 @@
 [functions]
   node_bundler = "esbuild"
   included_files = ["netlify/functions/**"]
+
+# 캐시 헤더 설정 (성능 최적화)
+[[headers]]
+  # 정적 자산 (JS, CSS) - 1년 캐시 (Next.js 해시 파일명 사용)
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  # 폰트 파일 - 1년 캐시
+  for = "/fonts/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  # 이미지 파일 - 1년 캐시
+  for = "/*.{png,jpg,jpeg,gif,svg,webp,avif,ico}"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  # Next.js 빌드 ID 기반 자산
+  for = "/_next/data/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  # HTML/페이지 - 항상 최신 확인
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"

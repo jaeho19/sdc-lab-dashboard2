@@ -15,22 +15,22 @@ const inter = Inter({
 const paperlogy = localFont({
   src: [
     {
-      path: "../../public/fonts/Paperlogy-4Regular.ttf",
+      path: "../../public/fonts/Paperlogy-4Regular.woff2",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../../public/fonts/Paperlogy-6SemiBold.ttf",
+      path: "../../public/fonts/Paperlogy-6SemiBold.woff2",
       weight: "600",
       style: "normal",
     },
     {
-      path: "../../public/fonts/Paperlogy-7Bold.ttf",
+      path: "../../public/fonts/Paperlogy-7Bold.woff2",
       weight: "700",
       style: "normal",
     },
     {
-      path: "../../public/fonts/Paperlogy-8ExtraBold.ttf",
+      path: "../../public/fonts/Paperlogy-8ExtraBold.woff2",
       weight: "800",
       style: "normal",
     },
