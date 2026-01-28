@@ -28,33 +28,73 @@ import {
 } from "@/lib/actions/calendar";
 import { Loader2, Trash2 } from "lucide-react";
 
-// 30분 단위 시간 옵션 생성 (구글 캘린더 스타일)
-const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
-  const hours = Math.floor(i / 2);
-  const minutes = (i % 2) * 30;
-  const value = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-  const period = hours < 12 ? "오전" : "오후";
-  const hour12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
-  const label = `${period} ${hour12}:${String(minutes).padStart(2, "0")}`;
-  return { value, label };
-});
+// 시간 범위 설정 상수 (8:00 AM ~ 6:00 PM)
+const TIME_RANGE_START_HOUR = 8;   // 시작 시간 (시)
+const TIME_RANGE_END_HOUR = 18;    // 종료 시간 (시)
+const TIME_STEP_MINUTES = 30;      // 간격 (분)
 
-// 시간을 가장 가까운 30분 단위로 변환 (HH:MM -> HH:00 or HH:30)
-const roundToHalfHour = (timeStr: string) => {
+// 30분 단위 시간 옵션 생성 (08:00 ~ 18:00)
+const TIME_OPTIONS = (() => {
+  const options: { value: string; label: string }[] = [];
+  for (let hour = TIME_RANGE_START_HOUR; hour <= TIME_RANGE_END_HOUR; hour++) {
+    for (let min = 0; min < 60; min += TIME_STEP_MINUTES) {
+      // 종료 시간(18:00)은 정각만 포함
+      if (hour === TIME_RANGE_END_HOUR && min > 0) break;
+      const value = `${String(hour).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+      const period = hour < 12 ? "오전" : "오후";
+      const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+      const label = `${period} ${hour12}:${String(min).padStart(2, "0")}`;
+      options.push({ value, label });
+    }
+  }
+  return options;
+})();
+
+// 시간을 유효한 범위 내로 조정 (08:00 ~ 18:00)
+const clampTimeToRange = (timeStr: string): string => {
+  const [hoursStr, minutesStr] = timeStr.split(":");
+  const hours = parseInt(hoursStr, 10);
+  const minutes = parseInt(minutesStr, 10);
+  const totalMinutes = hours * 60 + minutes;
+  const minMinutes = TIME_RANGE_START_HOUR * 60;
+  const maxMinutes = TIME_RANGE_END_HOUR * 60;
+
+  // 범위 밖이면 가장 가까운 유효한 시간으로 조정
+  if (totalMinutes < minMinutes) {
+    return `${String(TIME_RANGE_START_HOUR).padStart(2, "0")}:00`;
+  }
+  if (totalMinutes > maxMinutes) {
+    return `${String(TIME_RANGE_END_HOUR).padStart(2, "0")}:00`;
+  }
+
+  // 30분 단위로 반올림
+  const roundedMinutes = Math.round(totalMinutes / TIME_STEP_MINUTES) * TIME_STEP_MINUTES;
+  const clampedMinutes = Math.min(Math.max(roundedMinutes, minMinutes), maxMinutes);
+  const newHours = Math.floor(clampedMinutes / 60);
+  const newMinutes = clampedMinutes % 60;
+  return `${String(newHours).padStart(2, "0")}:${String(newMinutes).padStart(2, "0")}`;
+};
+
+// 시간을 가장 가까운 30분 단위로 변환하고 유효 범위 내로 조정
+const roundToHalfHour = (timeStr: string): string => {
   const [hoursStr, minutesStr] = timeStr.split(":");
   const hours = parseInt(hoursStr, 10);
   const minutes = parseInt(minutesStr, 10);
   const roundedMinutes = minutes < 15 ? 0 : minutes < 45 ? 30 : 0;
   const roundedHours = minutes >= 45 ? (hours + 1) % 24 : hours;
-  return `${String(roundedHours).padStart(2, "0")}:${String(roundedMinutes).padStart(2, "0")}`;
+  const roundedTime = `${String(roundedHours).padStart(2, "0")}:${String(roundedMinutes).padStart(2, "0")}`;
+  return clampTimeToRange(roundedTime);
 };
 
-// 시작 시간에 30분을 더한 종료 시간 계산
-const addMinutesToTime = (timeStr: string, minutesToAdd: number) => {
+// 시작 시간에 분을 더한 종료 시간 계산 (유효 범위 내로 조정)
+const addMinutesToTime = (timeStr: string, minutesToAdd: number): string => {
   const [hoursStr, minutesStr] = timeStr.split(":");
   const totalMinutes = parseInt(hoursStr, 10) * 60 + parseInt(minutesStr, 10) + minutesToAdd;
-  const newHours = Math.floor(totalMinutes / 60) % 24;
-  const newMinutes = totalMinutes % 60;
+  const maxMinutes = TIME_RANGE_END_HOUR * 60;
+  // 종료 시간이 범위를 초과하면 최대 시간으로 제한
+  const clampedMinutes = Math.min(totalMinutes, maxMinutes);
+  const newHours = Math.floor(clampedMinutes / 60);
+  const newMinutes = clampedMinutes % 60;
   return `${String(newHours).padStart(2, "0")}:${String(newMinutes).padStart(2, "0")}`;
 };
 
@@ -150,21 +190,14 @@ export function EventModal({
   }
 
   // 시작 시간 변경 시 종료 시간을 자동으로 +30분 설정 (구글 캘린더 스타일)
+  // 종료 시간이 18:00을 초과하면 18:00으로 자동 조정됨
   const handleStartTimeChange = useCallback((value: string) => {
     setStartTime(value);
-    // 종료 시간을 시작 시간 + 30분으로 설정
+    // 종료 시간을 시작 시간 + 30분으로 설정 (최대 18:00)
     const newEndTime = addMinutesToTime(value, 30);
     setEndTime(newEndTime);
-    // 시작 시간이 23:30인 경우 종료일도 다음날로 설정
-    const [hoursStr] = value.split(":");
-    const hours = parseInt(hoursStr, 10);
-    const [, minutesStr] = value.split(":");
-    const minutes = parseInt(minutesStr, 10);
-    if (hours === 23 && minutes === 30 && startDate) {
-      const nextDay = new Date(startDate);
-      nextDay.setDate(nextDay.getDate() + 1);
-      setEndDate(formatLocalDate(nextDay));
-    } else if (startDate) {
+    // 종료일을 시작일과 동일하게 설정
+    if (startDate) {
       setEndDate(startDate);
     }
   }, [startDate]);
