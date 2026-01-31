@@ -184,6 +184,24 @@ export const SIDEBAR_MENU = [
   },
 ] as const;
 
+// 사사표기 (Funding Acknowledgment) 매핑
+export const FUNDING_ACKNOWLEDGMENT: Record<string, string> = {
+  "502f916f-0553-4123-825d-bdd0d572cbdd": "우수신진연구",      // Beyond Distance
+  "94842eb1-cddc-4c15-95ef-d06816e4c5c5": "생애첫연구",        // Navigating Towards Inclusivity
+  "70244b6b-19be-4ac8-b6a0-8fd57a21bd7b": "교내 R&D",          // Beyond Proximity
+  "07cd46ab-6bcd-4433-8edc-af41c9f86210": "교내 R&D",          // From Quantity to Quality
+  "d1c58ad6-955b-4af2-aab8-38955e0cac7e": "우수신진연구",      // Does Urban Redevelopment
+  "88c9f4dc-716c-446e-acf0-5d9cdee6d504": "교내 학술연구비",   // Green Space Patterns
+} as const;
+
+// 사사표기 뱃지 색상
+export const FUNDING_BADGE_COLORS: Record<string, string> = {
+  "우수신진연구": "bg-violet-100 text-violet-700 border-violet-200",
+  "생애첫연구": "bg-emerald-100 text-emerald-700 border-emerald-200",
+  "교내 R&D": "bg-sky-100 text-sky-700 border-sky-200",
+  "교내 학술연구비": "bg-amber-100 text-amber-700 border-amber-200",
+} as const;
+
 // 관리자 메뉴
 export const ADMIN_MENU = [
   {

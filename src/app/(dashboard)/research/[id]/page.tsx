@@ -68,8 +68,10 @@ import {
   Users,
   Loader2,
   Star,
+  Award,
 } from "lucide-react";
 import Link from "next/link";
+import { FUNDING_ACKNOWLEDGMENT, FUNDING_BADGE_COLORS } from "@/lib/constants";
 import { WeeklyGoals } from "@/components/features/research/weekly-goals";
 import { ProjectTimeline } from "@/components/features/research/project-timeline";
 import { ResearchFlowchart } from "@/components/features/research/research-flowchart";
@@ -502,6 +504,19 @@ export default function ResearchDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* 사사표기 */}
+          {FUNDING_ACKNOWLEDGMENT[project.id] && (
+            <div className="mt-4 pt-4 border-t">
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">사사표기</p>
+                <Badge variant="outline" className={`text-xs font-medium border ${FUNDING_BADGE_COLORS[FUNDING_ACKNOWLEDGMENT[project.id]] || ""}`}>
+                  <Award className="h-3 w-3 mr-1" />
+                  {FUNDING_ACKNOWLEDGMENT[project.id]}
+                </Badge>
+              </div>
+            </div>
+          )}
 
           {/* 투고 상태 섹션 (진행률 100% 또는 투고 후에만 표시) */}
           {(project.overall_progress === 100 || project.submission_status !== "not_submitted") && (

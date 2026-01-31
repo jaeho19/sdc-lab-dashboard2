@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials, getPositionLabel, formatDate } from "@/lib/utils";
-import { Plus, Calendar, Target, ChevronRight } from "lucide-react";
+import { FUNDING_ACKNOWLEDGMENT, FUNDING_BADGE_COLORS } from "@/lib/constants";
+import { Plus, Calendar, Target, ChevronRight, Award } from "lucide-react";
 import Link from "next/link";
 
 // Disable caching to always fetch fresh data
@@ -277,6 +278,12 @@ export default async function ResearchPage() {
                               {project.target_journal}
                             </span>
                           </div>
+                        )}
+                        {FUNDING_ACKNOWLEDGMENT[project.id] && (
+                          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-4 font-medium border ${FUNDING_BADGE_COLORS[FUNDING_ACKNOWLEDGMENT[project.id]] || ""}`}>
+                            <Award className="h-2.5 w-2.5 mr-0.5" />
+                            {FUNDING_ACKNOWLEDGMENT[project.id]}
+                          </Badge>
                         )}
                       </div>
                     </div>
