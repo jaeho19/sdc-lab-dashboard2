@@ -1,16 +1,27 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-02-09T11:01:23.630Z",
+  "lastUpdated": "2026-02-09T13:34:47.592Z",
   "activeFeatures": [
+    "meeting-notes-3col-form",
     "research-meeting-notes",
     "admin-activity-notifications",
     "actions",
     "sdclab-dashboard",
     "research",
-    "[id]"
+    "[id]",
+    "react-query"
   ],
-  "primaryFeature": "research-meeting-notes",
+  "primaryFeature": "meeting-notes-3col-form",
   "features": {
+    "meeting-notes-3col-form": {
+      "phase": "check",
+      "matchRate": 98,
+      "startedAt": "2026-02-09T14:00:00.000Z",
+      "planPath": "docs/01-plan/features/meeting-notes-3col-form.plan.md",
+      "designPath": "docs/02-design/features/meeting-notes-3col-form.design.md",
+      "analysisPath": "docs/03-analysis/meeting-notes-3col-form.analysis.md",
+      "description": "미팅 기록 3단 컬럼 인라인 입력 폼 재설계"
+    },
     "admin-activity-notifications": {
       "phase": "check",
       "matchRate": 97,
@@ -38,7 +49,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-09T04:18:10.145Z",
-        "lastUpdated": "2026-02-09T06:33:15.332Z"
+        "lastUpdated": "2026-02-09T13:33:44.292Z"
       },
       "lastFile": "C:\\dev\\sdclab-dashboard\\src\\lib\\actions\\research.ts"
     },
@@ -51,7 +62,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-09T06:32:43.640Z",
-        "lastUpdated": "2026-02-09T11:00:58.630Z"
+        "lastUpdated": "2026-02-09T13:33:20.231Z"
       },
       "lastFile": "C:\\dev\\sdclab-dashboard\\src\\types\\database.types.ts"
     },
@@ -64,7 +75,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-09T06:33:59.150Z",
-        "lastUpdated": "2026-02-09T11:01:06.063Z"
+        "lastUpdated": "2026-02-09T13:34:47.592Z"
       },
       "lastFile": "C:\\dev\\sdclab-dashboard\\src\\components\\features\\research\\meeting-notes-section.tsx"
     },
@@ -80,6 +91,19 @@
         "lastUpdated": "2026-02-09T11:01:23.630Z"
       },
       "lastFile": "C:\\dev\\sdclab-dashboard\\src\\app\\(dashboard)\\research\\[id]\\page.tsx"
+    },
+    "react-query": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-09T11:26:03.297Z",
+        "lastUpdated": "2026-02-09T11:33:36.409Z"
+      },
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\lib\\react-query\\provider.tsx"
     }
   },
   "pipeline": {
@@ -90,7 +114,7 @@
   "session": {
     "startedAt": "2026-01-31T23:00:19.416Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-02-09T11:01:23.630Z"
+    "lastActivity": "2026-02-09T13:34:47.592Z"
   },
   "history": [
     {
@@ -288,6 +312,54 @@
     {
       "timestamp": "2026-02-09T11:01:23.630Z",
       "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-09T11:26:03.297Z",
+      "feature": "react-query",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-09T11:29:44.379Z",
+      "feature": "react-query",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-09T11:33:36.409Z",
+      "feature": "react-query",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-09T13:33:05.550Z",
+      "feature": "sdclab-dashboard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-09T13:33:20.231Z",
+      "feature": "sdclab-dashboard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-09T13:33:33.449Z",
+      "feature": "actions",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-09T13:33:44.292Z",
+      "feature": "actions",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-09T13:34:47.592Z",
+      "feature": "research",
       "phase": "do",
       "action": "updated"
     }
