@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { MilestoneStage } from "@/types/database.types";
+import { notifyAdmins } from "@/lib/actions/notifications";
 
 // Types
 interface CreateNoteData {
@@ -68,6 +69,22 @@ export async function createResearchNote(data: CreateNoteData) {
     return { error: "연구노트 생성에 실패했습니다." };
   }
 
+  // 관리자 알림
+  const { data: memberInfo } = await supabase
+    .from("members")
+    .select("name")
+    .eq("id", member.id)
+    .single();
+  const memberName = (memberInfo as { name: string } | null)?.name || "멤버";
+
+  await notifyAdmins({
+    actorId: member.id,
+    actorName: memberName,
+    title: "연구노트 작성",
+    message: `${memberName}님이 연구노트를 작성했습니다: "${data.title}"`,
+    link: `/research-notes`,
+  });
+
   revalidatePath(`/research/${data.projectId}`);
   return { data: noteData };
 }
@@ -96,11 +113,11 @@ export async function updateResearchNote(noteId: string, data: UpdateNoteData) {
   // 권한 확인 (작성자 또는 교수)
   const { data: currentMemberData } = await supabase
     .from("members")
-    .select("id, position")
+    .select("id, name, position")
     .eq("id", user.id)
     .single();
 
-  const currentMember = currentMemberData as { id: string; position: string } | null;
+  const currentMember = currentMemberData as { id: string; name: string; position: string } | null;
   const isAuthor = currentMember?.id === existingNote.author_id;
   const isAdmin = currentMember?.position === "professor";
 
@@ -126,6 +143,16 @@ export async function updateResearchNote(noteId: string, data: UpdateNoteData) {
     console.error("Error updating research note:", error);
     return { error: "연구노트 수정에 실패했습니다." };
   }
+
+  // 관리자 알림
+  const memberName = currentMember?.name || "멤버";
+  await notifyAdmins({
+    actorId: currentMember?.id || "",
+    actorName: memberName,
+    title: "연구노트 수정",
+    message: `${memberName}님이 연구노트를 수정했습니다: "${data.title}"`,
+    link: `/research-notes`,
+  });
 
   revalidatePath(`/research/${existingNote.project_id}`);
   return { success: true };

@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { notifyAdmins } from "@/lib/actions/notifications";
 
 export interface MentoringFormState {
   error?: string;
@@ -51,6 +52,22 @@ export async function createMentoringPost(
     return { error: "멘토링 기록 생성에 실패했습니다." };
   }
 
+  // 관리자 알림
+  const { data: actorMember } = await supabase
+    .from("members")
+    .select("name")
+    .eq("id", user.id)
+    .single();
+  const actorName = (actorMember as { name: string } | null)?.name || "멤버";
+
+  await notifyAdmins({
+    actorId: user.id,
+    actorName,
+    title: "멘토링 기록 등록",
+    message: `${actorName}님이 멘토링 기록을 등록했습니다 (${meetingDate})`,
+    link: `/mentoring/${post.id}`,
+  });
+
   revalidatePath("/mentoring");
   redirect(`/mentoring/${post.id}`);
 }
@@ -97,6 +114,22 @@ export async function updateMentoringPost(
     console.error("Update mentoring post error:", error);
     return { error: "멘토링 기록 수정에 실패했습니다." };
   }
+
+  // 관리자 알림
+  const { data: actorMember } = await supabase
+    .from("members")
+    .select("name")
+    .eq("id", user.id)
+    .single();
+  const actorName = (actorMember as { name: string } | null)?.name || "멤버";
+
+  await notifyAdmins({
+    actorId: user.id,
+    actorName,
+    title: "멘토링 기록 수정",
+    message: `${actorName}님이 멘토링 기록을 수정했습니다 (${meetingDate})`,
+    link: `/mentoring/${postId}`,
+  });
 
   revalidatePath("/mentoring");
   revalidatePath(`/mentoring/${postId}`);

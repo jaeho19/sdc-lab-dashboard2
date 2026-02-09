@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { CalendarCategory } from "@/types/database.types";
+import { notifyAdmins } from "@/lib/actions/notifications";
 
 export type CalendarFormState = {
   error?: string;
@@ -63,6 +64,24 @@ export async function createCalendarEvent(input: CalendarEventInput) {
     return { error: error.message };
   }
 
+  // 관리자 알림
+  if (memberId) {
+    const { data: actorMember } = await supabase
+      .from("members")
+      .select("name")
+      .eq("id", memberId)
+      .single();
+    const actorName = (actorMember as { name: string } | null)?.name || "멤버";
+
+    await notifyAdmins({
+      actorId: memberId,
+      actorName,
+      title: "캘린더 일정 추가",
+      message: `${actorName}님이 일정을 추가했습니다: "${input.title}"`,
+      link: `/calendar`,
+    });
+  }
+
   revalidatePath("/calendar");
   return { data };
 }
@@ -107,6 +126,23 @@ export async function updateCalendarEvent(
     console.error("Error updating event:", error);
     return { error: error.message };
   }
+
+  // 관리자 알림
+  const { data: actorMember } = await supabase
+    .from("members")
+    .select("id, name")
+    .eq("id", user.id)
+    .single();
+  const actorId = (actorMember as { id: string; name: string } | null)?.id || user.id;
+  const actorName = (actorMember as { id: string; name: string } | null)?.name || "멤버";
+
+  await notifyAdmins({
+    actorId,
+    actorName,
+    title: "캘린더 일정 수정",
+    message: `${actorName}님이 일정을 수정했습니다: "${input.title || ""}"`,
+    link: `/calendar`,
+  });
 
   revalidatePath("/calendar");
   return { data };

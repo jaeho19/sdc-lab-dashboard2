@@ -236,6 +236,45 @@ export async function createProjectUpdateNotification(
   return { success: true };
 }
 
+// 관리자(교수)에게 활동 알림 전송
+export async function notifyAdmins(params: {
+  actorId: string;
+  actorName: string;
+  title: string;
+  message: string;
+  link: string;
+}): Promise<void> {
+  try {
+    const supabase = await createClient();
+
+    const { data: professors } = await supabase
+      .from("members")
+      .select("id")
+      .eq("position", "professor");
+
+    if (!professors || professors.length === 0) return;
+
+    const targets = professors.filter(
+      (p: { id: string }) => p.id !== params.actorId
+    );
+
+    if (targets.length === 0) return;
+
+    const notifications = targets.map((p: { id: string }) => ({
+      member_id: p.id,
+      type: "project_update",
+      title: params.title,
+      message: params.message,
+      link: params.link,
+      is_read: false,
+    }));
+
+    await supabase.from("notifications").insert(notifications as never);
+  } catch (error) {
+    console.error("Admin notification error:", error);
+  }
+}
+
 // 마감일 체크 및 알림 생성 (D-7, D-3, D-1, D-Day)
 export async function checkAndCreateDeadlineNotifications(): Promise<{
   created: number;

@@ -4,7 +4,7 @@ import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { MILESTONE_STAGES } from "@/lib/utils";
-import { createProjectUpdateNotification } from "@/lib/actions/notifications";
+import { createProjectUpdateNotification, notifyAdmins } from "@/lib/actions/notifications";
 
 export type ProjectFormData = {
   title: string;
@@ -87,6 +87,22 @@ export async function createProject(
   if (memberError) {
     console.error("Project member creation error:", memberError);
   }
+
+  // 관리자 알림
+  const { data: actorMember } = await supabase
+    .from("members")
+    .select("name")
+    .eq("id", memberData.id)
+    .single();
+  const actorName = (actorMember as { name: string } | null)?.name || "멤버";
+
+  await notifyAdmins({
+    actorId: memberData.id,
+    actorName,
+    title: "연구 프로젝트 생성",
+    message: `${actorName}님이 새 연구 프로젝트를 생성했습니다: "${formData.title}"`,
+    link: `/research/${projectData.id}`,
+  });
 
   // 6단계 마일스톤 및 체크리스트 생성
   for (let i = 0; i < MILESTONE_STAGES.length; i++) {
@@ -208,6 +224,24 @@ export async function updateProject(
         }
       }
     }
+  }
+
+  // 관리자 알림 (프로젝트 변경 시 교수에게도 알림)
+  if (existing) {
+    const { data: actorMember } = await supabase
+      .from("members")
+      .select("name")
+      .eq("id", user.id)
+      .single();
+    const actorName = (actorMember as { name: string } | null)?.name || "멤버";
+
+    await notifyAdmins({
+      actorId: user.id,
+      actorName,
+      title: "연구 프로젝트 수정",
+      message: `${actorName}님이 프로젝트를 수정했습니다: "${existing.title}"`,
+      link: `/research/${id}`,
+    });
   }
 
   revalidatePath(`/research/${id}`);
