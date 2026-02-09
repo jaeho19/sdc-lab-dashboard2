@@ -98,6 +98,7 @@ export interface ResearchMeeting {
   meeting_date: string;
   discussion_content: string;
   next_steps: string | null;
+  previous_content: string | null;
   author_id: string;
   created_at: string;
   updated_at: string;
@@ -708,6 +709,7 @@ export interface Database {
           meeting_date: string;
           discussion_content: string;
           next_steps: string | null;
+          previous_content: string | null;
           author_id: string;
           created_at: string;
           updated_at: string;
@@ -718,6 +720,7 @@ export interface Database {
           meeting_date: string;
           discussion_content: string;
           next_steps?: string | null;
+          previous_content?: string | null;
           author_id: string;
           created_at?: string;
           updated_at?: string;
@@ -728,6 +731,7 @@ export interface Database {
           meeting_date?: string;
           discussion_content?: string;
           next_steps?: string | null;
+          previous_content?: string | null;
           author_id?: string;
           created_at?: string;
           updated_at?: string;

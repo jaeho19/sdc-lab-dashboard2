@@ -1113,7 +1113,8 @@ export async function addMeeting(
   projectId: string,
   meetingDate: string,
   discussionContent: string,
-  nextSteps?: string
+  nextSteps?: string,
+  previousContent?: string
 ): Promise<ActionResult> {
   const supabase = await createClient();
 
@@ -1136,6 +1137,7 @@ export async function addMeeting(
       meeting_date: meetingDate,
       discussion_content: discussionContent.trim(),
       next_steps: nextSteps?.trim() || null,
+      previous_content: previousContent?.trim() || null,
       author_id: user.id,
     } as never)
     .select()
@@ -1159,7 +1161,8 @@ export async function updateMeeting(
   projectId: string,
   meetingDate: string,
   discussionContent: string,
-  nextSteps?: string | null
+  nextSteps?: string | null,
+  previousContent?: string | null
 ): Promise<ActionResult> {
   const supabase = await createClient();
 
@@ -1181,6 +1184,7 @@ export async function updateMeeting(
       meeting_date: meetingDate,
       discussion_content: discussionContent.trim(),
       next_steps: nextSteps?.trim() || null,
+      previous_content: previousContent?.trim() || null,
     } as never)
     .eq("id", meetingId);
 
