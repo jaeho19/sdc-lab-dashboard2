@@ -26,6 +26,7 @@ import {
   Save,
   X,
   Upload,
+  Download,
   Eye,
   Code,
   Loader2,
@@ -33,12 +34,14 @@ import {
 
 interface ResearchFlowchartProps {
   projectId: string;
+  projectTitle?: string;
   flowchartMd: string | null;
   onRefresh: () => void;
 }
 
 export function ResearchFlowchart({
   projectId,
+  projectTitle,
   flowchartMd,
   onRefresh,
 }: ResearchFlowchartProps) {
@@ -59,6 +62,17 @@ export function ResearchFlowchart({
   const handleCancel = () => {
     setContent(flowchartMd || "");
     setIsEditing(false);
+  };
+
+  const handleDownload = () => {
+    if (!flowchartMd) return;
+    const blob = new Blob([flowchartMd], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${projectTitle || "연구"}_흐름도.md`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,14 +97,26 @@ export function ResearchFlowchart({
           </CardTitle>
           <div className="flex items-center gap-2">
             {!isEditing ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditing(true)}
-              >
-                <Edit2 className="h-4 w-4 mr-1" />
-                편집
-              </Button>
+              <>
+                {flowchartMd && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDownload}
+                  >
+                    <Download className="h-4 w-4 mr-1" />
+                    다운로드
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Edit2 className="h-4 w-4 mr-1" />
+                  편집
+                </Button>
+              </>
             ) : (
               <>
                 <div className="flex border rounded-md overflow-hidden mr-2">

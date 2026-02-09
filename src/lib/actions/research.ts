@@ -1103,3 +1103,120 @@ export async function getFavoriteProjects(): Promise<{
 
   return { data: orderedProjects };
 }
+
+// ============================================
+// 미팅 기록 관련 액션
+// ============================================
+
+// 미팅 기록 추가
+export async function addMeeting(
+  projectId: string,
+  meetingDate: string,
+  discussionContent: string,
+  nextSteps?: string
+): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "로그인이 필요합니다." };
+  }
+
+  if (!discussionContent.trim()) {
+    return { error: "회의 내용을 입력해주세요." };
+  }
+
+  const { data, error } = await supabase
+    .from("research_meetings")
+    .insert({
+      project_id: projectId,
+      meeting_date: meetingDate,
+      discussion_content: discussionContent.trim(),
+      next_steps: nextSteps?.trim() || null,
+      author_id: user.id,
+    } as never)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Meeting creation error:", error);
+    if (error.code === "42501") {
+      return { error: "권한이 없습니다. 프로젝트 멤버 또는 생성자만 미팅 기록을 추가할 수 있습니다." };
+    }
+    return { error: `미팅 기록 추가 중 오류가 발생했습니다: ${error.message}` };
+  }
+
+  revalidatePath(`/research/${projectId}`);
+  return { success: true, data };
+}
+
+// 미팅 기록 수정
+export async function updateMeeting(
+  meetingId: string,
+  projectId: string,
+  meetingDate: string,
+  discussionContent: string,
+  nextSteps?: string | null
+): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "로그인이 필요합니다." };
+  }
+
+  if (!discussionContent.trim()) {
+    return { error: "회의 내용을 입력해주세요." };
+  }
+
+  const { error } = await supabase
+    .from("research_meetings")
+    .update({
+      meeting_date: meetingDate,
+      discussion_content: discussionContent.trim(),
+      next_steps: nextSteps?.trim() || null,
+    } as never)
+    .eq("id", meetingId);
+
+  if (error) {
+    console.error("Meeting update error:", error);
+    return { error: "미팅 기록 수정 중 오류가 발생했습니다." };
+  }
+
+  revalidatePath(`/research/${projectId}`);
+  return { success: true };
+}
+
+// 미팅 기록 삭제
+export async function deleteMeeting(
+  meetingId: string,
+  projectId: string
+): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "로그인이 필요합니다." };
+  }
+
+  const { error } = await supabase
+    .from("research_meetings")
+    .delete()
+    .eq("id", meetingId);
+
+  if (error) {
+    return { error: "미팅 기록 삭제 중 오류가 발생했습니다." };
+  }
+
+  revalidatePath(`/research/${projectId}`);
+  return { success: true };
+}

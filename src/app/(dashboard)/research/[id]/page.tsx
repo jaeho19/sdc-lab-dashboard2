@@ -76,8 +76,20 @@ import { WeeklyGoals } from "@/components/features/research/weekly-goals";
 import { ProjectTimeline } from "@/components/features/research/project-timeline";
 import { ResearchFlowchart } from "@/components/features/research/research-flowchart";
 import { ResearchNotesSection } from "@/components/features/research/research-notes-section";
+import { MeetingNotesSection } from "@/components/features/research/meeting-notes-section";
 import { DeleteProjectButton } from "@/components/features/DeleteProjectButton";
 import type { MilestoneStage } from "@/types/database.types";
+
+interface ResearchMeeting {
+  id: string;
+  project_id: string;
+  meeting_date: string;
+  discussion_content: string;
+  next_steps: string | null;
+  author_id: string;
+  created_at: string;
+  updated_at: string;
+}
 
 interface Project {
   id: string;
@@ -141,6 +153,7 @@ export default function ResearchDetailPage() {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [authors, setAuthors] = useState<Author[]>([]);
   const [weeklyGoals, setWeeklyGoals] = useState<WeeklyGoal[]>([]);
+  const [meetings, setMeetings] = useState<ResearchMeeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [canDelete, setCanDelete] = useState(false);
@@ -232,6 +245,15 @@ export default function ResearchDetailPage() {
       .order("deadline", { ascending: true });
 
     setWeeklyGoals((goalsData || []) as WeeklyGoal[]);
+
+    // 미팅 기록
+    const { data: meetingsData } = await supabase
+      .from("research_meetings")
+      .select("*")
+      .eq("project_id", id)
+      .order("meeting_date", { ascending: false });
+
+    setMeetings((meetingsData || []) as ResearchMeeting[]);
     setLoading(false);
   }, [id, router]);
 
@@ -568,7 +590,14 @@ export default function ResearchDetailPage() {
         onRefresh={fetchData}
       />
 
-      {/* 프로젝트 타임라인 - 목표 바로 아래 배치 */}
+      {/* 미팅 기록 */}
+      <MeetingNotesSection
+        projectId={id}
+        meetings={meetings}
+        onRefresh={fetchData}
+      />
+
+      {/* 프로젝트 타임라인 */}
       <ProjectTimeline
         projectId={id}
         milestones={milestones.map((m) => ({
@@ -700,6 +729,7 @@ export default function ResearchDetailPage() {
       {/* 연구 흐름도 */}
       <ResearchFlowchart
         projectId={id}
+        projectTitle={project.title}
         flowchartMd={project.flowchart_md}
         onRefresh={fetchData}
       />

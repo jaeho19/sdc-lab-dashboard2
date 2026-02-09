@@ -690,6 +690,38 @@ export interface Database {
           updated_at?: string;
         };
       };
+      research_meetings: {
+        Row: {
+          id: string;
+          project_id: string;
+          meeting_date: string;
+          discussion_content: string;
+          next_steps: string | null;
+          author_id: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          meeting_date: string;
+          discussion_content: string;
+          next_steps?: string | null;
+          author_id: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          meeting_date?: string;
+          discussion_content?: string;
+          next_steps?: string | null;
+          author_id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       announcements: {
         Row: {
           id: string;
