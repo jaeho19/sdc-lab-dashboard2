@@ -92,6 +92,17 @@ export type SubmissionStatus =
   | "in_press"           // Editing/printing in progress
   | "published";         // Publication completed
 
+export interface ResearchMeeting {
+  id: string;
+  project_id: string;
+  meeting_date: string;
+  discussion_content: string;
+  next_steps: string | null;
+  author_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {

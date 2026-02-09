@@ -30,17 +30,7 @@ import {
   ClipboardList,
   History,
 } from "lucide-react";
-
-interface ResearchMeeting {
-  id: string;
-  project_id: string;
-  meeting_date: string;
-  discussion_content: string;
-  next_steps: string | null;
-  author_id: string;
-  created_at: string;
-  updated_at: string;
-}
+import type { ResearchMeeting } from "@/types/database.types";
 
 interface MeetingNotesProps {
   projectId: string;
@@ -82,10 +72,11 @@ export function MeetingNotesSection({
   const [editContent, setEditContent] = useState("");
   const [editNextSteps, setEditNextSteps] = useState("");
 
-  // Sort meetings by date descending
+  // Sort meetings by date descending, then by created_at descending for same-date meetings
   const sortedMeetings = [...meetings].sort(
     (a, b) =>
-      new Date(b.meeting_date).getTime() - new Date(a.meeting_date).getTime()
+      new Date(b.meeting_date).getTime() - new Date(a.meeting_date).getTime() ||
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
 
   // 3-column layout data

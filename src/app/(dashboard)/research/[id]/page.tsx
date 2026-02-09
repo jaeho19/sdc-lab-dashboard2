@@ -51,7 +51,7 @@ import {
   toggleFavoriteProject,
   checkFavoriteStatus,
 } from "@/lib/actions/research";
-import type { SubmissionStatus } from "@/types/database.types";
+import type { SubmissionStatus, ResearchMeeting } from "@/types/database.types";
 import {
   ArrowLeft,
   Edit,
@@ -79,17 +79,6 @@ import { ResearchNotesSection } from "@/components/features/research/research-no
 import { MeetingNotesSection } from "@/components/features/research/meeting-notes-section";
 import { DeleteProjectButton } from "@/components/features/DeleteProjectButton";
 import type { MilestoneStage } from "@/types/database.types";
-
-interface ResearchMeeting {
-  id: string;
-  project_id: string;
-  meeting_date: string;
-  discussion_content: string;
-  next_steps: string | null;
-  author_id: string;
-  created_at: string;
-  updated_at: string;
-}
 
 interface Project {
   id: string;
@@ -251,7 +240,8 @@ export default function ResearchDetailPage() {
       .from("research_meetings")
       .select("*")
       .eq("project_id", id)
-      .order("meeting_date", { ascending: false });
+      .order("meeting_date", { ascending: false })
+      .order("created_at", { ascending: false });
 
     setMeetings((meetingsData || []) as ResearchMeeting[]);
     setLoading(false);
