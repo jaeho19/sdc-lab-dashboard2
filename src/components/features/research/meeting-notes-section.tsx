@@ -28,6 +28,7 @@ import {
   MessageSquare,
   CalendarDays,
   ClipboardList,
+  History,
 } from "lucide-react";
 
 interface ResearchMeeting {
@@ -87,8 +88,10 @@ export function MeetingNotesSection({
       new Date(b.meeting_date).getTime() - new Date(a.meeting_date).getTime()
   );
 
-  const recentMeetings = sortedMeetings.slice(0, 2);
-  const olderMeetings = sortedMeetings.slice(2);
+  // 3-column layout data
+  const latestMeeting = sortedMeetings[0] || null; // 가장 최근 미팅
+  const previousMeeting = sortedMeetings[1] || null; // 두 번째 최근 미팅
+  const olderMeetings = sortedMeetings.slice(2); // 나머지
 
   const handleAdd = async () => {
     if (!newContent.trim()) return;
@@ -137,10 +140,29 @@ export function MeetingNotesSection({
     onRefresh();
   };
 
-  const renderMeetingCard = (
-    meeting: ResearchMeeting,
-    label?: string
-  ) => (
+  const renderMeetingActions = (meeting: ResearchMeeting) => (
+    <div className="flex gap-1">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7"
+        onClick={() => handleEdit(meeting)}
+      >
+        <Edit2 className="h-3.5 w-3.5" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
+        onClick={() => handleDelete(meeting.id)}
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </Button>
+    </div>
+  );
+
+  // 이전 미팅 기록 카드 (접기/펼치기용)
+  const renderOlderMeetingCard = (meeting: ResearchMeeting) => (
     <div
       key={meeting.id}
       className="border rounded-lg p-4 space-y-3"
@@ -151,28 +173,8 @@ export function MeetingNotesSection({
           <span className="font-medium text-sm">
             {formatMeetingDate(meeting.meeting_date)}
           </span>
-          {label && (
-            <span className="text-xs text-muted-foreground">({label})</span>
-          )}
         </div>
-        <div className="flex gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => handleEdit(meeting)}
-          >
-            <Edit2 className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
-            onClick={() => handleDelete(meeting.id)}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
-        </div>
+        {renderMeetingActions(meeting)}
       </div>
 
       <div className="space-y-1">
@@ -267,7 +269,7 @@ export function MeetingNotesSection({
           </Dialog>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-4">
         {sortedMeetings.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -278,15 +280,85 @@ export function MeetingNotesSection({
           </div>
         ) : (
           <>
-            {/* Recent meetings (up to 2) */}
-            {recentMeetings.map((meeting, index) =>
-              renderMeetingCard(
-                meeting,
-                index === 0 ? "최근 미팅" : "이전 미팅"
-              )
-            )}
+            {/* 3-Column Layout */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* 좌측: 저번 미팅 회의 내용 */}
+              <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
+                <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                  <History className="h-4 w-4" />
+                  저번 미팅 내용
+                </div>
+                {previousMeeting ? (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">
+                          {formatMeetingDate(previousMeeting.meeting_date)}
+                        </span>
+                      </div>
+                      {renderMeetingActions(previousMeeting)}
+                    </div>
+                    <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                      {previousMeeting.discussion_content}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground py-4 text-center">
+                    이전 미팅 기록이 없습니다.
+                  </p>
+                )}
+              </div>
 
-            {/* Older meetings (collapsible) */}
+              {/* 가운데: 오늘 미팅 회의 내용 */}
+              <div className="border-2 border-primary/30 rounded-lg p-4 space-y-3 bg-primary/5">
+                <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                  <MessageSquare className="h-4 w-4" />
+                  오늘 회의 내용
+                </div>
+                {latestMeeting ? (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">
+                          {formatMeetingDate(latestMeeting.meeting_date)}
+                        </span>
+                      </div>
+                      {renderMeetingActions(latestMeeting)}
+                    </div>
+                    <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                      {latestMeeting.discussion_content}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground py-4 text-center">
+                    미팅 기록이 없습니다.
+                  </p>
+                )}
+              </div>
+
+              {/* 우측: 다음번 미팅까지 해올 내용 */}
+              <div className="border rounded-lg p-4 space-y-3 bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800/30">
+                <div className="flex items-center gap-2 text-sm font-semibold text-orange-700 dark:text-orange-400">
+                  <ClipboardList className="h-4 w-4" />
+                  다음번 해올 내용
+                </div>
+                {latestMeeting?.next_steps ? (
+                  <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                    {latestMeeting.next_steps}
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground py-4 text-center">
+                    {latestMeeting
+                      ? "다음 미팅까지 할 일이 없습니다."
+                      : "미팅 기록이 없습니다."}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* 이전 미팅 기록 (접기/펼치기) */}
             {olderMeetings.length > 0 && (
               <>
                 <Button
@@ -303,10 +375,13 @@ export function MeetingNotesSection({
                   이전 미팅 기록 {showOlder ? "접기" : "더보기"} (
                   {olderMeetings.length}건)
                 </Button>
-                {showOlder &&
-                  olderMeetings.map((meeting) =>
-                    renderMeetingCard(meeting)
-                  )}
+                {showOlder && (
+                  <div className="space-y-3">
+                    {olderMeetings.map((meeting) =>
+                      renderOlderMeetingCard(meeting)
+                    )}
+                  </div>
+                )}
               </>
             )}
           </>
