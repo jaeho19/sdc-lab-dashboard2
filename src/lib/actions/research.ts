@@ -1151,6 +1151,22 @@ export async function addMeeting(
     return { error: `미팅 기록 추가 중 오류가 발생했습니다: ${error.message}` };
   }
 
+  // 관리자 알림
+  const { data: actorMember } = await supabase
+    .from("members")
+    .select("name")
+    .eq("id", user.id)
+    .single();
+  const actorName = (actorMember as { name: string } | null)?.name || "멤버";
+
+  await notifyAdmins({
+    actorId: user.id,
+    actorName,
+    title: "미팅 기록 추가",
+    message: `${actorName}님이 미팅 기록을 추가했습니다 (${meetingDate})`,
+    link: `/research/${projectId}`,
+  });
+
   revalidatePath(`/research/${projectId}`);
   return { success: true, data };
 }
@@ -1192,6 +1208,22 @@ export async function updateMeeting(
     console.error("Meeting update error:", error);
     return { error: "미팅 기록 수정 중 오류가 발생했습니다." };
   }
+
+  // 관리자 알림
+  const { data: actorMember } = await supabase
+    .from("members")
+    .select("name")
+    .eq("id", user.id)
+    .single();
+  const actorName = (actorMember as { name: string } | null)?.name || "멤버";
+
+  await notifyAdmins({
+    actorId: user.id,
+    actorName,
+    title: "미팅 기록 수정",
+    message: `${actorName}님이 미팅 기록을 수정했습니다 (${meetingDate})`,
+    link: `/research/${projectId}`,
+  });
 
   revalidatePath(`/research/${projectId}`);
   return { success: true };
