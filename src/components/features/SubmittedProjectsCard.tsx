@@ -59,7 +59,7 @@ export function SubmittedProjectsCard({
   const [archivingId, setArchivingId] = useState<string | null>(null);
   const [localProjects, setLocalProjects] = useState(projects);
   const [localArchivedProjects, setLocalArchivedProjects] = useState(archivedProjects);
-  const [isArchivedOpen, setIsArchivedOpen] = useState(false);
+  const [isArchivedOpen, setIsArchivedOpen] = useState(true);
 
   async function handleStatusChange(projectId: string, newStatus: string) {
     setUpdatingId(projectId);
