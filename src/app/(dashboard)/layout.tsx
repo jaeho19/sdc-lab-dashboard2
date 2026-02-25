@@ -25,7 +25,7 @@ export default async function DashboardRootLayout({
   const [{ data: memberData }, notificationCount] = await Promise.all([
     supabase
       .from("members")
-      .select("id, name, email, position, employment_type, avatar_url, status, enrollment_year, expected_graduation_year, admission_date, graduation_date, interests, is_completed, user_id, created_at, updated_at")
+      .select("*")
       .eq("id", user.id)
       .single(),
     getUnreadNotificationCount(user.id),
