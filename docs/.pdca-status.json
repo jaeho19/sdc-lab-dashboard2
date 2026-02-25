@@ -1,7 +1,8 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-02-09T13:34:47.592Z",
+  "lastUpdated": "2026-02-25T00:08:28.920Z",
   "activeFeatures": [
+    "mobile-performance-optimization",
     "meeting-notes-3col-form",
     "research-meeting-notes",
     "admin-activity-notifications",
@@ -9,10 +10,25 @@
     "sdclab-dashboard",
     "research",
     "[id]",
-    "react-query"
+    "react-query",
+    "features",
+    "dashboard",
+    "members",
+    "calendar",
+    "layout",
+    "(dashboard)",
+    "ui"
   ],
-  "primaryFeature": "meeting-notes-3col-form",
+  "primaryFeature": "mobile-performance-optimization",
   "features": {
+    "mobile-performance-optimization": {
+      "phase": "check",
+      "matchRate": 95,
+      "startedAt": "2026-02-25T00:00:00.000Z",
+      "planPath": "docs/01-plan/features/mobile-performance-optimization.plan.md",
+      "analysisPath": "docs/03-analysis/mobile-performance-optimization.analysis.md",
+      "description": "모바일 앱 반응속도 개선 (2차 심화 최적화)"
+    },
     "meeting-notes-3col-form": {
       "phase": "check",
       "matchRate": 98,
@@ -49,9 +65,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-09T04:18:10.145Z",
-        "lastUpdated": "2026-02-09T13:33:44.292Z"
+        "lastUpdated": "2026-02-25T00:07:17.902Z"
       },
-      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\lib\\actions\\research.ts"
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\lib\\actions\\notifications.ts"
     },
     "sdclab-dashboard": {
       "phase": "do",
@@ -62,9 +78,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-09T06:32:43.640Z",
-        "lastUpdated": "2026-02-09T13:33:20.231Z"
+        "lastUpdated": "2026-02-25T00:07:07.948Z"
       },
-      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\types\\database.types.ts"
+      "lastFile": "C:\\dev\\sdclab-dashboard\\next.config.js"
     },
     "research": {
       "phase": "do",
@@ -75,9 +91,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-09T06:33:59.150Z",
-        "lastUpdated": "2026-02-09T13:34:47.592Z"
+        "lastUpdated": "2026-02-25T00:06:58.040Z"
       },
-      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\components\\features\\research\\meeting-notes-section.tsx"
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\app\\(dashboard)\\research\\loading.tsx"
     },
     "[id]": {
       "phase": "do",
@@ -101,9 +117,100 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-09T11:26:03.297Z",
-        "lastUpdated": "2026-02-09T11:33:36.409Z"
+        "lastUpdated": "2026-02-24T23:45:41.829Z"
       },
       "lastFile": "C:\\dev\\sdclab-dashboard\\src\\lib\\react-query\\provider.tsx"
+    },
+    "features": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-14T02:05:23.085Z",
+        "lastUpdated": "2026-02-14T02:05:23.085Z"
+      },
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\components\\features\\SubmittedProjectsCard.tsx"
+    },
+    "dashboard": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-24T23:46:08.024Z",
+        "lastUpdated": "2026-02-25T00:07:43.277Z"
+      },
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\app\\(dashboard)\\dashboard\\page.tsx"
+    },
+    "members": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-24T23:46:18.427Z",
+        "lastUpdated": "2026-02-25T00:08:28.920Z"
+      },
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\app\\(dashboard)\\members\\page.tsx"
+    },
+    "calendar": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-24T23:46:23.190Z",
+        "lastUpdated": "2026-02-25T00:07:34.795Z"
+      },
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\app\\(dashboard)\\calendar\\page.tsx"
+    },
+    "layout": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-25T00:07:05.466Z",
+        "lastUpdated": "2026-02-25T00:07:05.466Z"
+      },
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\components\\layout\\dashboard-layout.tsx"
+    },
+    "(dashboard)": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-25T00:07:23.685Z",
+        "lastUpdated": "2026-02-25T00:07:23.685Z"
+      },
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\app\\(dashboard)\\layout.tsx"
+    },
+    "ui": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-25T00:08:25.204Z",
+        "lastUpdated": "2026-02-25T00:08:25.204Z"
+      },
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\components\\ui\\skeleton.tsx"
     }
   },
   "pipeline": {
@@ -114,7 +221,7 @@
   "session": {
     "startedAt": "2026-01-31T23:00:19.416Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-02-09T13:34:47.592Z"
+    "lastActivity": "2026-02-25T00:08:28.920Z"
   },
   "history": [
     {
@@ -360,6 +467,174 @@
     {
       "timestamp": "2026-02-09T13:34:47.592Z",
       "feature": "research",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-11T22:48:19.053Z",
+      "feature": "actions",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-11T22:48:24.977Z",
+      "feature": "actions",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-14T02:05:23.085Z",
+      "feature": "features",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T23:45:41.829Z",
+      "feature": "react-query",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T23:46:08.024Z",
+      "feature": "dashboard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T23:46:13.120Z",
+      "feature": "research",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T23:46:18.427Z",
+      "feature": "members",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T23:46:23.190Z",
+      "feature": "calendar",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T23:46:28.694Z",
+      "feature": "sdclab-dashboard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T23:46:36.566Z",
+      "feature": "research",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T23:57:37.126Z",
+      "feature": "members",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T23:57:42.231Z",
+      "feature": "calendar",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T00:06:37.146Z",
+      "feature": "dashboard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T00:06:45.687Z",
+      "feature": "members",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T00:06:50.917Z",
+      "feature": "calendar",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T00:06:58.040Z",
+      "feature": "research",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T00:07:04.408Z",
+      "feature": "sdclab-dashboard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T00:07:05.466Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T00:07:07.948Z",
+      "feature": "sdclab-dashboard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T00:07:17.902Z",
+      "feature": "actions",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T00:07:23.685Z",
+      "feature": "(dashboard)",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T00:07:27.222Z",
+      "feature": "members",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T00:07:34.795Z",
+      "feature": "calendar",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T00:07:38.526Z",
+      "feature": "dashboard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T00:07:43.277Z",
+      "feature": "dashboard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T00:07:57.713Z",
+      "feature": "members",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T00:08:25.205Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T00:08:28.920Z",
+      "feature": "members",
       "phase": "do",
       "action": "updated"
     }

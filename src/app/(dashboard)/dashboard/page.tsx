@@ -13,87 +13,60 @@ import type { AnnouncementPriority } from "@/types/database.types";
 export default async function DashboardPage() {
   const supabase = await createClient();
 
-  const { data: projects } = await supabase
-    .from("research_projects")
-    .select("*")
-    .order("updated_at", { ascending: false });
-
-  // 모든 캘린더 이벤트 조회 (캘린더 페이지와 동일)
-  const { data: upcomingEvents, error: eventsError } = await supabase
-    .from("calendar_events")
-    .select("*")
-    .order("start_date", { ascending: true });
-
-  if (eventsError) {
-    console.error("Calendar events fetch error:", eventsError);
-  }
-
-  // 멤버 정보를 별도로 조회
-  const memberIds = (upcomingEvents || [])
-    .map((e: { member_id: string | null }) => e.member_id)
-    .filter((id): id is string => id !== null);
-
-  const { data: eventMembers } = memberIds.length > 0
-    ? await supabase
-        .from("members")
-        .select("id, name, avatar_url")
-        .in("id", memberIds)
-    : { data: [] };
-
-  const memberMap = new Map(
-    (eventMembers || []).map((m: { id: string; name: string; avatar_url: string | null }) => [m.id, m])
-  );
-
-  // 모든 멤버의 목표 조회 (미완료 + 최근 완료된 목표 포함)
   const todayStr = new Date().toISOString().split("T")[0];
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split("T")[0];
+  const now = new Date().toISOString();
 
-  const { data: memberGoals } = await supabase
-    .from("weekly_goals")
-    .select(`
-      id,
-      content,
-      deadline,
-      linked_stage,
-      project_id,
-      is_completed,
-      research_projects!inner (
+  // 캘린더 이벤트 날짜 범위 제한: 3개월 전 ~ 12개월 후
+  const calRangeStart = new Date();
+  calRangeStart.setMonth(calRangeStart.getMonth() - 3);
+  const calRangeEnd = new Date();
+  calRangeEnd.setMonth(calRangeEnd.getMonth() + 12);
+
+  // 4개 쿼리를 병렬 실행 (순차 → 병렬로 ~50% 속도 개선)
+  const [projectsResult, eventsResult, goalsResult, announcementsResult] = await Promise.all([
+    supabase
+      .from("research_projects")
+      .select("id, title, status, overall_progress, updated_at, submission_status, target_journal, is_archived")
+      .order("updated_at", { ascending: false }),
+
+    supabase
+      .from("calendar_events")
+      .select("id, title, start_date, end_date, category, all_day, member_id")
+      .gte("start_date", calRangeStart.toISOString().split("T")[0])
+      .lte("start_date", calRangeEnd.toISOString().split("T")[0])
+      .order("start_date", { ascending: true }),
+
+    supabase
+      .from("weekly_goals")
+      .select(`
         id,
-        title,
-        project_members (
-          role,
-          member_id,
-          members (
-            id,
-            name,
-            avatar_url
+        content,
+        deadline,
+        linked_stage,
+        project_id,
+        is_completed,
+        research_projects!inner (
+          id,
+          title,
+          project_members (
+            role,
+            member_id,
+            members (
+              id,
+              name,
+              avatar_url
+            )
           )
         )
-      )
-    `)
-    .gte("deadline", thirtyDaysAgoStr)
-    .order("deadline", { ascending: true })
-    .limit(50);
+      `)
+      .gte("deadline", thirtyDaysAgoStr)
+      .order("deadline", { ascending: true })
+      .limit(50),
 
-  // 공지사항 조회 (만료되지 않은 것만)
-  const now = new Date().toISOString();
-  let announcements: Array<{
-    id: string;
-    title: string;
-    content: string;
-    priority: AnnouncementPriority;
-    is_pinned: boolean;
-    author_id: string | null;
-    expires_at: string | null;
-    created_at: string;
-    updated_at: string;
-    author: { id: string; name: string } | null;
-  }> = [];
-
-  try {
-    const { data: announcementsData, error: announcementsError } = await supabase
+    supabase
       .from("announcements")
       .select(`
         id,
@@ -113,16 +86,52 @@ export default async function DashboardPage() {
       .or(`expires_at.is.null,expires_at.gt.${now}`)
       .order("is_pinned", { ascending: false })
       .order("created_at", { ascending: false })
-      .limit(10);
+      .limit(10),
+  ]);
 
-    if (announcementsError) {
-      console.error("Announcements fetch error:", announcementsError);
-    } else {
-      announcements = (announcementsData || []) as typeof announcements;
-    }
-  } catch (e) {
-    console.error("Announcements query failed:", e);
+  const projects = projectsResult.data;
+  const upcomingEvents = eventsResult.data;
+  const memberGoals = goalsResult.data;
+
+  if (eventsResult.error) {
+    console.error("Calendar events fetch error:", eventsResult.error);
   }
+
+  type AnnouncementRow = {
+    id: string;
+    title: string;
+    content: string;
+    priority: AnnouncementPriority;
+    is_pinned: boolean;
+    author_id: string | null;
+    expires_at: string | null;
+    created_at: string;
+    updated_at: string;
+    author: { id: string; name: string } | null;
+  };
+
+  let announcements: AnnouncementRow[] = [];
+  if (announcementsResult.error) {
+    console.error("Announcements fetch error:", announcementsResult.error);
+  } else {
+    announcements = (announcementsResult.data || []) as AnnouncementRow[];
+  }
+
+  // 멤버 정보를 별도로 조회 (이벤트 결과에 의존하므로 후속 쿼리)
+  const memberIds = (upcomingEvents || [])
+    .map((e: { member_id: string | null }) => e.member_id)
+    .filter((id): id is string => id !== null);
+
+  const { data: eventMembers } = memberIds.length > 0
+    ? await supabase
+        .from("members")
+        .select("id, name, avatar_url")
+        .in("id", memberIds)
+    : { data: [] };
+
+  const memberMap = new Map(
+    (eventMembers || []).map((m: { id: string; name: string; avatar_url: string | null }) => [m.id, m])
+  );
 
   const projectList = (projects || []) as Array<{
     id: string;

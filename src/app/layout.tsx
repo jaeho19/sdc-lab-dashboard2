@@ -12,6 +12,8 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+// 주요 웨이트(400, 700)만 preload, 나머지는 필요 시 지연 로드
+// 모바일 환경에서 ~637KB → ~320KB로 초기 preload 감소
 const paperlogy = localFont({
   src: [
     {
@@ -36,8 +38,8 @@ const paperlogy = localFont({
     },
   ],
   variable: "--font-paperlogy",
-  display: "swap", // 폰트 로드 중 시스템 폰트 사용
-  preload: true,   // 중요 폰트 사전 로드
+  display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {

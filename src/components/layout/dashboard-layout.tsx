@@ -86,7 +86,7 @@ export function DashboardLayout({ member, notificationCount = 0, children }: Das
       {/* Main Content */}
       <main
         className={cn(
-          "transition-all duration-300",
+          "transition-[margin] duration-300",
           // Top padding for header (both mobile and desktop)
           "pt-14",
           // Desktop: left margin based on sidebar state

@@ -9,9 +9,8 @@ import { FUNDING_ACKNOWLEDGMENT, FUNDING_BADGE_COLORS } from "@/lib/constants";
 import { Plus, Calendar, Target, ChevronRight, Award } from "lucide-react";
 import Link from "next/link";
 
-// Disable caching to always fetch fresh data
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+// ISR: 60초마다 재검증 (캐시 활용으로 TTFB 감소)
+export const revalidate = 60;
 
 // 직책별 정렬 순서
 const positionOrder: Record<string, number> = {
@@ -41,7 +40,7 @@ const globalNameOrder: Record<string, number> = {
 export default async function ResearchPage() {
   const supabase = await createClient();
 
-  // 연구원 및 프로젝트 조회
+  // 연구원 및 프로젝트 조회 (필요한 필드만 선택)
   const { data: members } = await supabase
     .from("members")
     .select(`
@@ -52,7 +51,7 @@ export default async function ResearchPage() {
       avatar_url,
       project_members (
         role,
-        project:research_projects (
+        project:research_projects!inner (
           id,
           title,
           status,

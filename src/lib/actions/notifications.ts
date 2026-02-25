@@ -137,21 +137,22 @@ export async function deleteAllNotifications(): Promise<NotificationFormState> {
   return { success: true };
 }
 
-export async function getUnreadNotificationCount(): Promise<number> {
+export async function getUnreadNotificationCount(userId?: string): Promise<number> {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return 0;
+  let uid = userId;
+  if (!uid) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return 0;
+    uid = user.id;
   }
 
   const { count } = await supabase
     .from("notifications")
     .select("*", { count: "exact", head: true })
-    .eq("member_id", user.id)
+    .eq("member_id", uid)
     .eq("is_read", false);
 
   return count || 0;

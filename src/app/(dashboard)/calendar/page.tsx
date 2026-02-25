@@ -6,12 +6,23 @@ import { CALENDAR_CATEGORY_CONFIG } from "@/lib/constants";
 import { Plus } from "lucide-react";
 import type { CalendarCategory } from "@/types/database.types";
 
+// ISR: 60초마다 재검증 (캐시 활용으로 TTFB 감소)
+export const revalidate = 60;
+
 export default async function CalendarPage() {
   const supabase = await createClient();
 
+  // 날짜 범위 제한: 3개월 전 ~ 12개월 후 (payload 무한 증가 방지)
+  const rangeStart = new Date();
+  rangeStart.setMonth(rangeStart.getMonth() - 3);
+  const rangeEnd = new Date();
+  rangeEnd.setMonth(rangeEnd.getMonth() + 12);
+
   const { data: events } = await supabase
     .from("calendar_events")
-    .select("*")
+    .select("id, title, description, start_date, end_date, all_day, category, is_public")
+    .gte("start_date", rangeStart.toISOString().split("T")[0])
+    .lte("start_date", rangeEnd.toISOString().split("T")[0])
     .order("start_date", { ascending: true });
 
   const eventList = (events || []) as Array<{

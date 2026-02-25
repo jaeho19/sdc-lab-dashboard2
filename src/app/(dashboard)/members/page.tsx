@@ -5,7 +5,26 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials, getPositionLabel, filterFullTimeMembersForGantt } from "@/lib/utils";
 import Link from "next/link";
 import type { Database } from "@/types/database.types";
-import { FullTimeMembersGantt } from "@/components/members/full-time-members-gantt";
+import dynamic from "next/dynamic";
+
+const FullTimeMembersGantt = dynamic(
+  () => import("@/components/members/full-time-members-gantt").then(mod => ({ default: mod.FullTimeMembersGantt })),
+  {
+    loading: () => (
+      <Card>
+        <CardContent className="py-4">
+          <div className="animate-pulse">
+            <div className="h-5 w-48 mb-4 rounded bg-muted" />
+            <div className="h-[200px] w-full rounded bg-muted" />
+          </div>
+        </CardContent>
+      </Card>
+    ),
+  }
+);
+
+// ISR: 60초마다 재검증 (캐시 활용으로 TTFB 감소)
+export const revalidate = 60;
 
 type Member = Database["public"]["Tables"]["members"]["Row"];
 type MemberPosition = Database["public"]["Tables"]["members"]["Row"]["position"];
@@ -39,7 +58,7 @@ export default async function MembersPage() {
 
   const { data: membersData } = await supabase
     .from("members")
-    .select("*")
+    .select("id, name, email, position, employment_type, avatar_url, status, enrollment_year, expected_graduation_year, admission_date, graduation_date")
     .eq("status", "active")
     .order("position", { ascending: true });
 

@@ -21,11 +21,15 @@ export default async function DashboardRootLayout({
     redirect("/login");
   }
 
-  const { data: memberData } = await supabase
-    .from("members")
-    .select("*")
-    .eq("id", user.id)
-    .single();
+  // 멤버 조회 + 알림 개수를 병렬 실행 (순차 3 RTT → 병렬 1 RTT)
+  const [{ data: memberData }, notificationCount] = await Promise.all([
+    supabase
+      .from("members")
+      .select("id, name, email, position, employment_type, avatar_url, status, enrollment_year, expected_graduation_year, role")
+      .eq("id", user.id)
+      .single(),
+    getUnreadNotificationCount(user.id),
+  ]);
 
   const member = memberData as Member | null;
 
@@ -36,9 +40,6 @@ export default async function DashboardRootLayout({
   if (member.status === "pending") {
     redirect("/pending-approval");
   }
-
-  // 미읽은 알림 개수 가져오기
-  const notificationCount = await getUnreadNotificationCount();
 
   return (
     <DashboardLayout member={member} notificationCount={notificationCount}>
