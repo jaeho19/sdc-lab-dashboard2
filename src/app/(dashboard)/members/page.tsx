@@ -58,7 +58,7 @@ export default async function MembersPage() {
 
   const { data: membersData } = await supabase
     .from("members")
-    .select("id, name, email, position, employment_type, avatar_url, status, enrollment_year, expected_graduation_year, admission_date, graduation_date")
+    .select("id, name, email, position, employment_type, avatar_url, status, admission_date, graduation_date")
     .eq("status", "active")
     .order("position", { ascending: true });
 
@@ -149,11 +149,11 @@ export default async function MembersPage() {
             <Badge variant={getPositionBadgeVariant(member.position)}>
               {getPositionLabel(member.position)}
             </Badge>
-            {member.enrollment_year && (
+            {member.admission_date && (
               <p className="text-xs text-slate-400 mt-2 md:mt-3">
-                {member.enrollment_year}년 입학
-                {member.expected_graduation_year &&
-                  ` · ${member.expected_graduation_year}년 졸업예정`}
+                {new Date(member.admission_date).getFullYear()}년 입학
+                {member.graduation_date &&
+                  ` · ${new Date(member.graduation_date).getFullYear()}년 졸업예정`}
               </p>
             )}
           </div>
