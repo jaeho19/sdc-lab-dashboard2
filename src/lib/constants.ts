@@ -5,7 +5,7 @@ export const POSITION_CONFIG = {
     color: "bg-red-500",
     textColor: "text-red-500",
   },
-  post_doc: {
+  "post-doc": {
     label: "POST-DOC",
     color: "bg-position-post-doc",
     textColor: "text-position-post-doc",
@@ -29,8 +29,8 @@ export const POSITION_CONFIG = {
 
 // Employment Type 라벨
 export const EMPLOYMENT_TYPE_LABEL = {
-  full_time: "풀타임",
-  part_time: "파트타임",
+  "full-time": "풀타임",
+  "part-time": "파트타임",
 } as const;
 
 // Member Status 라벨

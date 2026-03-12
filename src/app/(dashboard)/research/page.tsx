@@ -130,6 +130,7 @@ export default async function ResearchPage() {
   // Position 뱃지 색상
   function getPositionBadgeClass(position: string) {
     const classes: Record<string, string> = {
+      "post-doc": "bg-amber-500 text-white",
       post_doc: "bg-amber-500 text-white",
       phd: "bg-blue-500 text-white",
       researcher: "bg-purple-500 text-white",

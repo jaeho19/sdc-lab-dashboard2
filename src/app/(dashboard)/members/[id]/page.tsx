@@ -273,9 +273,10 @@ export default async function MemberDetailPage({
   }));
 
   function getPositionBadgeVariant(position: string) {
-    const variants: Record<string, "professor" | "post_doc" | "phd" | "researcher" | "ms"> = {
+    const variants: Record<string, "professor" | "post-doc" | "phd" | "researcher" | "ms"> = {
       professor: "professor",
-      post_doc: "post_doc",
+      "post-doc": "post-doc",
+      post_doc: "post-doc",
       phd: "phd",
       researcher: "researcher",
       ms: "ms",

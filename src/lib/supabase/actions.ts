@@ -65,8 +65,6 @@ export async function signup(formData: FormData): Promise<AuthResult> {
   const name = formData.get("name") as string;
   const position = formData.get("position") as MemberPosition;
   const employmentType = formData.get("employmentType") as EmploymentType;
-  const enrollmentYear = formData.get("enrollmentYear") as string;
-  const expectedGraduationYear = formData.get("expectedGraduationYear") as string;
 
   // 유효성 검사
   if (!email || !password || !name || !position || !employmentType) {
@@ -113,10 +111,6 @@ export async function signup(formData: FormData): Promise<AuthResult> {
     email,
     position,
     employment_type: employmentType,
-    enrollment_year: enrollmentYear ? parseInt(enrollmentYear) : null,
-    expected_graduation_year: expectedGraduationYear
-      ? parseInt(expectedGraduationYear)
-      : null,
     status: "pending",
   };
   const { error: memberError } = await supabase

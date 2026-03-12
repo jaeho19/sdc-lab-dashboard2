@@ -8,7 +8,7 @@ export type Json =
 
 export type MemberPosition =
   | "professor"
-  | "post_doc"
+  | "post-doc"
   | "phd"
   | "researcher"
   | "ms";
@@ -22,7 +22,9 @@ export type ProjectCategory =
   | "submission"
   | "revision"
   | "individual"
-  | "grant";
+  | "grant"
+  | "publication"
+  | "other";
 
 export type ProjectStatus =
   | "preparing"
@@ -30,7 +32,10 @@ export type ProjectStatus =
   | "under_review"
   | "revision"
   | "accepted"
-  | "published";
+  | "published"
+  | "in_progress"
+  | "completed"
+  | "on_hold";
 
 // 8단계 마일스톤 (투고 후 출판까지)
 export type MilestoneStage =

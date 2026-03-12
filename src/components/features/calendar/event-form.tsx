@@ -98,8 +98,13 @@ export function EventForm({ event, members, onSuccess }: EventFormProps) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="meeting">미팅</SelectItem>
+            <SelectItem value="conference">학회</SelectItem>
+            <SelectItem value="lecture">강의 / 수업</SelectItem>
             <SelectItem value="deadline">마감</SelectItem>
+            <SelectItem value="proposal">제안서 발표</SelectItem>
             <SelectItem value="seminar">세미나</SelectItem>
+            <SelectItem value="vacation">휴가</SelectItem>
+            <SelectItem value="dinner">회식</SelectItem>
             <SelectItem value="holiday">휴일</SelectItem>
             <SelectItem value="personal">개인</SelectItem>
             <SelectItem value="other">기타</SelectItem>

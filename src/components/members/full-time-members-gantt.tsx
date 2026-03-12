@@ -381,7 +381,7 @@ export function FullTimeMembersGantt({
               <span className="text-slate-300">|</span>
               <span>석사 {members.filter(m => m.position === "ms").length}명</span>
               <span>박사 {members.filter(m => m.position === "phd").length}명</span>
-              <span>포닥 {members.filter(m => m.position === "post_doc").length}명</span>
+              <span>포닥 {members.filter(m => m.position === "post-doc" || m.position === "post_doc").length}명</span>
             </div>
             <span className="text-slate-400">
               {startYear}년 ~ {endYear}년

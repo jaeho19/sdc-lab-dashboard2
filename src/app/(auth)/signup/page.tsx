@@ -25,13 +25,13 @@ import { signup } from "@/lib/supabase/actions";
 const positions = [
   { value: "ms", label: "석사과정" },
   { value: "phd", label: "박사과정" },
-  { value: "post_doc", label: "박사후연구원" },
+  { value: "post-doc", label: "박사후연구원" },
   { value: "researcher", label: "연구원" },
 ];
 
 const employmentTypes = [
-  { value: "full_time", label: "풀타임" },
-  { value: "part_time", label: "파트타임" },
+  { value: "full-time", label: "풀타임" },
+  { value: "part-time", label: "파트타임" },
 ];
 
 const currentYear = new Date().getFullYear();
