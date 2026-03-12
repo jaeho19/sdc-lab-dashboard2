@@ -5,6 +5,21 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// 마크다운 구문 제거 (미리보기용)
+export function stripMarkdown(text: string): string {
+  return text
+    .replace(/^#{1,6}\s+/gm, "")       // 헤딩
+    .replace(/\|[-:]+\|/g, "")          // 테이블 구분선
+    .replace(/\|/g, " ")               // 테이블 파이프
+    .replace(/\*\*(.*?)\*\*/g, "$1")    // 볼드
+    .replace(/\*(.*?)\*/g, "$1")        // 이탤릭
+    .replace(/^-{3,}/gm, "")           // 수평선
+    .replace(/^[-*]\s+/gm, "• ")       // 리스트
+    .replace(/\n{2,}/g, " ")           // 다중 줄바꿈
+    .replace(/\s{2,}/g, " ")           // 다중 공백
+    .trim();
+}
+
 // 이름에서 이니셜 추출
 export function getInitials(name: string): string {
   if (!name) return "?";

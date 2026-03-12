@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Megaphone, Pin, AlertTriangle, AlertCircle } from "lucide-react";
-import { formatRelativeTime, cn } from "@/lib/utils";
+import { formatRelativeTime, cn, stripMarkdown } from "@/lib/utils";
 import Link from "next/link";
 import type { AnnouncementPriority } from "@/types/database.types";
 
@@ -147,7 +147,7 @@ export function AnnouncementsSection({
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground line-clamp-2">
-                        {announcement.content}
+                        {stripMarkdown(announcement.content)}
                       </p>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         {announcement.author && (

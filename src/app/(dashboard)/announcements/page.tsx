@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Megaphone, Pin, AlertTriangle, AlertCircle, Plus } from "lucide-react";
-import { formatRelativeTime, formatDate } from "@/lib/utils";
+import { formatRelativeTime, formatDate, stripMarkdown } from "@/lib/utils";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import type { AnnouncementPriority, MemberPosition } from "@/types/database.types";
@@ -150,7 +150,7 @@ export default async function AnnouncementsPage() {
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground line-clamp-3">
-                          {announcement.content}
+                          {stripMarkdown(announcement.content)}
                         </p>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           {announcement.author && (

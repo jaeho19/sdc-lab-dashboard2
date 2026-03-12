@@ -8,6 +8,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { AnnouncementPriority } from "@/types/database.types";
 import { DeleteAnnouncementButton } from "@/components/features/announcements/delete-announcement-button";
+import { MarkdownSimple } from "@/components/ui/markdown-simple";
 
 // Disable caching to always fetch fresh data
 export const dynamic = "force-dynamic";
@@ -173,11 +174,10 @@ export default async function AnnouncementDetailPage({
         </CardHeader>
         <CardContent>
           {/* 내용 */}
-          <div className="prose prose-slate dark:prose-invert max-w-none">
-            <p className="whitespace-pre-wrap text-base leading-relaxed">
-              {typedAnnouncement.content}
-            </p>
-          </div>
+          <MarkdownSimple
+            content={typedAnnouncement.content}
+            className="prose-base prose-table:border-collapse prose-th:border prose-th:border-border prose-th:px-3 prose-th:py-2 prose-th:bg-muted prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2"
+          />
 
           {/* 만료일 정보 */}
           {typedAnnouncement.expires_at && (
