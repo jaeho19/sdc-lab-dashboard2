@@ -21,6 +21,7 @@ import {
   ChevronDown,
   ChevronRight,
   Star,
+  Network,
   LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -113,6 +114,7 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Members", href: "/members", icon: Users },
   { name: "Research", href: "/research", icon: BookOpen },
+  { name: "Research Map", href: "/research-map", icon: Network },
   { name: "Calendar", href: "/calendar", icon: Calendar },
   { name: "Mentoring", href: "/mentoring", icon: MessageSquare },
   { name: "AI Peer Review", href: "/peer-review", icon: Bot },
