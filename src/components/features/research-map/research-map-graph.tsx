@@ -204,6 +204,7 @@ export function ResearchMapGraph() {
 
     // Nodes
     const nodeG = g.append("g");
+    let dragMoved = false;
     const nodeEls = nodeG
       .selectAll<SVGGElement, SimNode>("g")
       .data(nodes)
@@ -215,11 +216,13 @@ export function ResearchMapGraph() {
         d3
           .drag<SVGGElement, SimNode>()
           .on("start", (e, d) => {
+            dragMoved = false;
             if (!e.active) sim.alphaTarget(0.3).restart();
             d.fx = d.x;
             d.fy = d.y;
           })
           .on("drag", (e, d) => {
+            dragMoved = true;
             d.fx = e.x;
             d.fy = e.y;
           })
@@ -227,6 +230,14 @@ export function ResearchMapGraph() {
             if (!e.active) sim.alphaTarget(0);
             d.fx = null;
             d.fy = null;
+            // Click detection: fire select if no drag movement occurred
+            if (!dragMoved) {
+              e.sourceEvent?.stopPropagation();
+              tooltip.style("opacity", 0);
+              setShowPrompt(false);
+              setSelectedNode({ ...d });
+              highlightNode(d, nodeEls, linkEls, nodes, links);
+            }
           })
       );
 
@@ -306,18 +317,18 @@ export function ResearchMapGraph() {
       })
       .on("mouseout", () => tooltip.style("opacity", 0));
 
-    // Node click
-    nodeEls.on("click", (e, d) => {
-      e.stopPropagation();
-      setShowPrompt(false);
-      setSelectedNode(d);
-      highlightNode(d, nodeEls, linkEls, nodes, links);
-    });
-
-    svg.on("click", () => {
-      setSelectedNode(null);
-      clearHighlight(nodeEls, linkEls);
-    });
+    // Background click to clear selection (rect instead of svg.on("click") to avoid zoom conflicts)
+    g.insert("rect", ":first-child")
+      .attr("width", W * 10)
+      .attr("height", H * 10)
+      .attr("x", -W * 5)
+      .attr("y", -H * 5)
+      .attr("fill", "transparent")
+      .style("cursor", "default")
+      .on("click", () => {
+        setSelectedNode(null);
+        clearHighlight(nodeEls, linkEls);
+      });
 
     // Tick
     sim.on("tick", () => {
@@ -642,12 +653,11 @@ export function ResearchMapGraph() {
       </div>
 
       {/* ── Detail Panel (Sheet for mobile, side panel for desktop) ── */}
-      {/* Desktop: side panel */}
+      {/* Desktop: side panel — use translate instead of width to avoid content clipping */}
       <div
-        className={`absolute right-0 top-0 bottom-0 z-20 hidden border-l bg-background transition-all duration-300 md:block ${
-          selectedNode ? "w-[400px]" : "w-0"
+        className={`absolute right-0 top-0 bottom-0 z-20 hidden w-[400px] border-l bg-background transition-transform duration-300 ease-in-out md:block ${
+          selectedNode ? "translate-x-0" : "translate-x-full"
         }`}
-        style={{ overflow: "hidden" }}
       >
         {selectedNode && (
           <DetailPanel
