@@ -13,6 +13,7 @@ import {
   type MapNode,
   type MapLink,
   type NodeType,
+  type StudentProfile,
 } from "./research-map-data";
 
 // ─── Types for D3 simulation ───
@@ -652,16 +653,11 @@ export function ResearchMapGraph() {
             <div>
               <h3 className="text-base font-bold" style={{ color: "#a0c0ff" }}>{selectedNode.label}</h3>
               <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-widest" style={{ color: NODE_COLORS[selectedNode.type] }}>{NODE_LABELS[selectedNode.type]}</p>
-              <div className="mt-3 text-xs leading-relaxed [&_strong]:font-semibold [&_ul]:pl-4 [&_li]:my-0.5" style={{ color: "#8898b8" }} dangerouslySetInnerHTML={{ __html: selectedNode.body || `<p>${selectedNode.desc}</p>` }} />
-              {selectedNode.actions && selectedNode.actions.length > 0 && (
-                <div className="mt-3 space-y-1.5">
-                  {selectedNode.actions.map((a, i) => (
-                    <div key={i} className="rounded-md p-2" style={{ background: "rgba(15,20,45,0.5)", border: "1px solid rgba(40,50,80,0.25)" }}>
-                      <div className="text-xs font-semibold" style={{ color: "#ffb74d" }}>{a.title}</div>
-                      <div className="text-[11px]" style={{ color: "#5a6a8a" }}>{a.desc}</div>
-                    </div>
-                  ))}
-                </div>
+              {/* Student profile summary in sidebar */}
+              {selectedNode.student ? (
+                <StudentSidebarPreview student={selectedNode.student} />
+              ) : (
+                <div className="mt-3 text-xs leading-relaxed [&_strong]:font-semibold [&_ul]:pl-4 [&_li]:my-0.5" style={{ color: "#8898b8" }} dangerouslySetInnerHTML={{ __html: selectedNode.body || `<p>${selectedNode.desc}</p>` }} />
               )}
             </div>
           ) : (
@@ -843,33 +839,33 @@ function DetailPanel({
         </div>
       </div>
 
-      {/* Overview */}
-      <section className="mb-4">
-        <h3 className="mb-1.5 pb-1 text-[10px] font-bold uppercase tracking-wider" style={{ color: "#3a4a6a", borderBottom: "1px solid rgba(30,40,60,0.4)" }}>
-          Overview
-        </h3>
-        <div
-          className="text-[13px] leading-relaxed [&_strong]:font-semibold [&_em]:not-italic [&_ul]:pl-4 [&_li]:my-0.5"
-          style={{ color: "#8898b8" }}
-          dangerouslySetInnerHTML={{ __html: node.body || `<p>${node.desc}</p>` }}
-        />
-      </section>
+      {/* Student-specific sections */}
+      {node.student ? (
+        <StudentDetailSections student={node.student} body={node.body} desc={node.desc} actions={node.actions} />
+      ) : (
+        <>
+          {/* Overview */}
+          <section className="mb-4">
+            <SectionHeader>Overview</SectionHeader>
+            <div
+              className="text-[13px] leading-relaxed [&_strong]:font-semibold [&_em]:not-italic [&_ul]:pl-4 [&_li]:my-0.5"
+              style={{ color: "#8898b8" }}
+              dangerouslySetInnerHTML={{ __html: node.body || `<p>${node.desc}</p>` }}
+            />
+          </section>
 
-      {/* Action Items */}
-      {node.actions && node.actions.length > 0 && (
-        <section className="mb-4">
-          <h3 className="mb-1.5 pb-1 text-[10px] font-bold uppercase tracking-wider" style={{ color: "#3a4a6a", borderBottom: "1px solid rgba(30,40,60,0.4)" }}>
-            Action Items
-          </h3>
-          <div className="space-y-1.5">
-            {node.actions.map((a, i) => (
-              <div key={i} className="rounded-md p-2.5" style={{ background: "rgba(15,20,45,0.5)", border: "1px solid rgba(40,50,80,0.25)" }}>
-                <div className="text-sm font-semibold" style={{ color: "#ffb74d" }}>{a.title}</div>
-                <div className="text-xs" style={{ color: "#5a6a8a" }}>{a.desc}</div>
+          {/* Action Items */}
+          {node.actions && node.actions.length > 0 && (
+            <section className="mb-4">
+              <SectionHeader>Action Items</SectionHeader>
+              <div className="space-y-1.5">
+                {node.actions.map((a, i) => (
+                  <ActionCard key={i} title={a.title} desc={a.desc} />
+                ))}
               </div>
-            ))}
-          </div>
-        </section>
+            </section>
+          )}
+        </>
       )}
 
       {/* Connections */}
@@ -902,5 +898,155 @@ function DetailPanel({
         ))}
       </section>
     </div>
+  );
+}
+
+// ─── Shared UI Helpers ───
+function SectionHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="mb-1.5 pb-1 text-[10px] font-bold uppercase tracking-wider" style={{ color: "#3a4a6a", borderBottom: "1px solid rgba(30,40,60,0.4)" }}>
+      {children}
+    </h3>
+  );
+}
+
+function ActionCard({ title, desc }: { title: string; desc: string }) {
+  return (
+    <div className="rounded-md p-2.5" style={{ background: "rgba(15,20,45,0.5)", border: "1px solid rgba(40,50,80,0.25)" }}>
+      <div className="text-sm font-semibold" style={{ color: "#ffb74d" }}>{title}</div>
+      <div className="text-xs" style={{ color: "#5a6a8a" }}>{desc}</div>
+    </div>
+  );
+}
+
+// ─── Student Sidebar Preview (left panel) ───
+function StudentSidebarPreview({ student }: { student: StudentProfile }) {
+  return (
+    <div className="mt-3 space-y-3">
+      <div>
+        <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "#5bc0eb20", color: "#5bc0eb", border: "1px solid #5bc0eb40" }}>
+          {student.degree}
+        </span>
+        <p className="mt-1.5 text-xs leading-relaxed" style={{ color: "#8898b8" }}>{student.topic}</p>
+      </div>
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#4a5a7a" }}>현재 진행</p>
+        <p className="mt-1 text-[11px] leading-relaxed" style={{ color: "#7a8ab0" }}>{student.status}</p>
+      </div>
+      {student.timeline && student.timeline.length > 0 && (
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#4a5a7a" }}>향후 일정</p>
+          <div className="mt-1 space-y-1">
+            {student.timeline.slice(0, 3).map((t, i) => (
+              <div key={i} className="flex gap-2 text-[11px]">
+                <span className="shrink-0 font-semibold" style={{ color: "#7eb8ff", minWidth: 72 }}>{t.date}</span>
+                <span style={{ color: "#6a7a9a" }}>{t.event}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {student.methods && student.methods.length > 0 && (
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#4a5a7a" }}>방법론</p>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {student.methods.map((m, i) => (
+              <span key={i} className="rounded px-1.5 py-0.5 text-[10px]" style={{ background: "rgba(20,25,60,0.6)", color: "#6a7a9a", border: "1px solid rgba(40,50,80,0.4)" }}>
+                {m}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Student Detail Sections (right panel) ───
+function StudentDetailSections({ student, body, desc, actions }: { student: StudentProfile; body: string; desc: string; actions?: { title: string; desc: string }[] }) {
+  return (
+    <>
+      <section className="mb-4">
+        <SectionHeader>연구 개요 (Research Overview)</SectionHeader>
+        <div className="mb-2 flex items-center gap-2">
+          <span className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold" style={{ background: "#5bc0eb20", color: "#5bc0eb", border: "1px solid #5bc0eb40" }}>
+            {student.degree}
+          </span>
+        </div>
+        <p className="mb-2 text-[13px] font-medium" style={{ color: "#a0b8d8" }}>{student.topic}</p>
+        <div
+          className="text-[13px] leading-relaxed [&_strong]:font-semibold [&_em]:not-italic [&_ul]:pl-4 [&_li]:my-0.5"
+          style={{ color: "#8898b8" }}
+          dangerouslySetInnerHTML={{ __html: body || `<p>${desc}</p>` }}
+        />
+      </section>
+
+      <section className="mb-4">
+        <SectionHeader>현재 진행 상황 (Current Status)</SectionHeader>
+        <div className="rounded-md p-3" style={{ background: "rgba(15,20,45,0.5)", border: "1px solid rgba(40,60,100,0.25)" }}>
+          <p className="text-[13px] leading-relaxed" style={{ color: "#8898b8" }}>{student.status}</p>
+        </div>
+      </section>
+
+      {student.publications && student.publications.length > 0 && (
+        <section className="mb-4">
+          <SectionHeader>투고 현황 (Publications)</SectionHeader>
+          <div className="space-y-1.5">
+            {student.publications.map((p, i) => (
+              <div key={i} className="flex items-start gap-2 rounded-md p-2.5" style={{ background: "rgba(15,20,45,0.5)", border: "1px solid rgba(40,50,80,0.25)" }}>
+                <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full" style={{ background: p.progress.includes("투고") || p.progress.includes("작성") ? "#5bc0eb" : p.progress === "목표 저널" ? "#5a6a8a" : "#7ec884" }} />
+                <div className="flex-1">
+                  <div className="text-[13px] font-semibold" style={{ color: "#a0b8d8" }}>{p.journal}</div>
+                  <div className="flex items-center gap-2 text-[11px]" style={{ color: "#5a6a8a" }}>
+                    {p.impactFactor && <span>IF {p.impactFactor}</span>}
+                    <span>{p.progress}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {student.timeline && student.timeline.length > 0 && (
+        <section className="mb-4">
+          <SectionHeader>향후 일정 (Timeline)</SectionHeader>
+          <div className="relative ml-2 space-y-0" style={{ borderLeft: "2px solid rgba(40,60,100,0.3)" }}>
+            {student.timeline.map((t, i) => (
+              <div key={i} className="relative pb-3 pl-4">
+                <div className="absolute -left-[5px] top-1.5 h-2 w-2 rounded-full" style={{ background: "#7eb8ff", border: "2px solid #0c1030" }} />
+                <div className="text-[11px] font-semibold" style={{ color: "#7eb8ff" }}>{t.date}</div>
+                <div className="text-[13px]" style={{ color: "#a0b8d8" }}>{t.event}</div>
+                {t.detail && <div className="text-[11px]" style={{ color: "#5a6a8a" }}>{t.detail}</div>}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {student.methods && student.methods.length > 0 && (
+        <section className="mb-4">
+          <SectionHeader>연구 방법론 (Methods & Tools)</SectionHeader>
+          <div className="flex flex-wrap gap-1.5">
+            {student.methods.map((m, i) => (
+              <span key={i} className="rounded-full px-2.5 py-1 text-[11px] font-medium" style={{ background: "rgba(126,100,224,0.1)", color: "#c084e0", border: "1px solid rgba(126,100,224,0.3)" }}>
+                {m}
+              </span>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {actions && actions.length > 0 && (
+        <section className="mb-4">
+          <SectionHeader>Action Items</SectionHeader>
+          <div className="space-y-1.5">
+            {actions.map((a, i) => (
+              <ActionCard key={i} title={a.title} desc={a.desc} />
+            ))}
+          </div>
+        </section>
+      )}
+    </>
   );
 }

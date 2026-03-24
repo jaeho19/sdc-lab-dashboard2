@@ -15,6 +15,21 @@
 // ─── 노드 타입 ───
 export type NodeType = "student" | "theme" | "method" | "tech" | "project" | "conference" | "axis";
 
+export interface StudentProfile {
+  /** 학위 과정 */
+  degree: string;
+  /** 연구 주제 한 줄 */
+  topic: string;
+  /** 현재 진행 상황 */
+  status: string;
+  /** 투고 현황 */
+  publications?: { journal: string; impactFactor?: string; progress: string }[];
+  /** 향후 일정 타임라인 */
+  timeline?: { date: string; event: string; detail?: string }[];
+  /** 사용 방법론/기술 */
+  methods?: string[];
+}
+
 export interface MapNode {
   id: string;
   label: string;
@@ -28,6 +43,8 @@ export interface MapNode {
   body: string;
   /** 액션 아이템 */
   actions?: { title: string; desc: string }[];
+  /** 학생 전용 프로필 */
+  student?: StudentProfile;
 }
 
 export interface MapLink {
@@ -88,6 +105,20 @@ export const NODES: MapNode[] = [
       { title: "CELA 2027 (~9월)", desc: "녹지 형평성" },
       { title: "AAG 2027 (~10월)", desc: "공간분석 세션" },
     ],
+    student: {
+      degree: "박사과정",
+      topic: "MAH-2SFCA 기반 녹지 접근성 형평성 분석",
+      status: "서울시 427동, 66,834개 녹지 대상 12개 시나리오 비교 완료. SCS 논문 원고 90%+ 작성 중",
+      publications: [
+        { journal: "Sustainable Cities and Society (SCS)", impactFactor: "~13", progress: "원고 90%+ 작성 중" },
+      ],
+      timeline: [
+        { date: "2026 상반기", event: "SCS 논문 투고", detail: "녹지 형평성 분석 결과" },
+        { date: "2026.09", event: "CELA 2027 초록 제출", detail: "녹지 형평성 발표" },
+        { date: "2026.10", event: "AAG 2027 초록 제출", detail: "공간분석 세션" },
+      ],
+      methods: ["G2SFCA", "Gini/Theil 불평등 지수", "LISA 공간자기상관", "다중교통수단 분석"],
+    },
   },
   {
     id: "이다연", label: "이다연", type: "student", size: 22, axes: ["urban"],
@@ -99,6 +130,20 @@ export const NODES: MapNode[] = [
       { title: "AAG 2027", desc: "VLM+Spatial AI" },
       { title: "김가인 페어링", desc: "CV 확장" },
     ],
+    student: {
+      degree: "석사과정",
+      topic: "VLM-as-Diagnostician: 비전언어모델 기반 보행환경 진단",
+      status: "성수동 8,263 GSV 이미지 분석 완료. LDA 7토픽 추출, SHAP 해석까지 완료. CEUS 투고 준비 중",
+      publications: [
+        { journal: "Computers, Environment and Urban Systems (CEUS)", impactFactor: "~7", progress: "투고 준비 중" },
+      ],
+      timeline: [
+        { date: "2026 상반기", event: "CEUS 논문 투고", detail: "VLM 보행환경 진단 결과" },
+        { date: "2026.10", event: "AAG 2027 초록 제출", detail: "VLM+Spatial AI 세션" },
+        { date: "2026 하반기", event: "김가인 페어링 연구", detail: "CV 기술 공유 확장" },
+      ],
+      methods: ["GPT-4o VLM", "DeepLabV3+", "LDA 토픽모델링", "SHAP 해석", "Google Street View"],
+    },
   },
   {
     id: "김은솔", label: "김은솔", type: "student", size: 22, axes: ["rural"],
@@ -110,6 +155,22 @@ export const NODES: MapNode[] = [
       { title: "ACSP 2026", desc: "Track 3/5: 수용성 이중성" },
       { title: "AAG 2027", desc: "위성+농업 취약성" },
     ],
+    student: {
+      degree: "박사과정",
+      topic: "영농형 태양광 수용성의 이중성: 위성탐사·설문·시뮬레이션 3편 연구",
+      status: "3편 논문 동시 진행 중. P1(위성+농업취약성), P2(수용성 이중구조), P3(조기경보 시스템)",
+      publications: [
+        { journal: "Land Use Policy (LUP)", impactFactor: "7.1", progress: "P1 진행 중" },
+        { journal: "Energy Research & Social Science (ERSS)", impactFactor: "6.9", progress: "P2 진행 중" },
+        { journal: "Applied Energy (AE)", impactFactor: "10.1", progress: "P3 진행 중" },
+      ],
+      timeline: [
+        { date: "2026.10", event: "ACSP 2026 발표", detail: "Track 3/5: 수용성 이중성 (Pittsburgh)" },
+        { date: "2026.10", event: "AAG 2027 초록 제출", detail: "위성+농업 취약성" },
+        { date: "2026-2027", event: "3편 순차 투고", detail: "LUP → ERSS → AE" },
+      ],
+      methods: ["Sentinel-2 위성영상", "NDVI 시계열", "LPA+SEM", "FLUS 시뮬레이션", "EWI 조기경보", "설문조사 450명"],
+    },
   },
   {
     id: "이은진", label: "이은진", type: "student", size: 22, axes: ["rural"],
@@ -120,6 +181,18 @@ export const NODES: MapNode[] = [
       { title: "ACSP 2026", desc: "Track 1 AI in Planning — 최적합" },
       { title: "AAG 2027", desc: "Spatial AI" },
     ],
+    student: {
+      degree: "석사과정",
+      topic: "LLM 디지털 페르소나를 활용한 농촌 정책수용성 사전탐색",
+      status: "이천시 대상 160건 시뮬레이션 완료. 불일치 5유형 분류 및 비영어권·비도시 맥락 최초 적용",
+      publications: [],
+      timeline: [
+        { date: "2026.10", event: "ACSP 2026 발표", detail: "Track 1 AI in Planning (Pittsburgh)" },
+        { date: "2026.10", event: "AAG 2027 초록 제출", detail: "Spatial AI 세션" },
+        { date: "2026 하반기", event: "학위논문 작성", detail: "LLM 페르소나 정책수용성" },
+      ],
+      methods: ["GPT-4o LLM", "디지털 페르소나", "시나리오 시뮬레이션", "이중 검증", "이천시 사례연구"],
+    },
   },
   {
     id: "최희진", label: "최희진", type: "student", size: 22, axes: ["rural"],
@@ -129,6 +202,18 @@ export const NODES: MapNode[] = [
     <li><strong>Health(4):</strong> 소통투명, 참여포용, 갈등대응규범, 외부지원</li>
     <li>2×2 매트릭스, n≥200, DeVellis/COSMIN</li></ul>`,
     actions: [{ title: "ACSP 2026", desc: "Track 2 Community Dev" }],
+    student: {
+      degree: "석사과정",
+      topic: "공동체 갈등진단 지표(CCDI) 개발: Rodrik 모형의 마을 적용",
+      status: "Risk 5개·Health 4개 하위지표 설계 완료. 200명+ 설문 설계 중 (DeVellis/COSMIN 기준)",
+      publications: [],
+      timeline: [
+        { date: "2026.10", event: "ACSP 2026 발표", detail: "Track 2 Community Dev (Pittsburgh)" },
+        { date: "2026 하반기", event: "설문 시행", detail: "n≥200, EFA/CFA 타당도 검증" },
+        { date: "2027 상반기", event: "학위논문 완성", detail: "CCDI 지표 최종 검증" },
+      ],
+      methods: ["Rodrik 갈등모형", "설문조사 설계", "EFA/CFA", "DeVellis 척도개발", "2×2 매트릭스"],
+    },
   },
   {
     id: "배성훈", label: "배성훈", type: "student", size: 22, axes: ["rural"],
@@ -140,6 +225,20 @@ export const NODES: MapNode[] = [
       { title: "ACSP 2026", desc: "Track 10 Quantitative Methods" },
       { title: "AAG 2027", desc: "도농복합 분석" },
     ],
+    student: {
+      degree: "석사과정",
+      topic: "여주시 도농복합 공간유형 분류와 정주생활만족도 분석",
+      status: "122 법정리 × 43지표 PCA·군집분석 완료. 2,645명 위계선형모형(HLM) 분석 중. 러번(rurban) 국내 첫 적용",
+      publications: [
+        { journal: "Applied Geography", progress: "목표 저널" },
+      ],
+      timeline: [
+        { date: "2026.10", event: "ACSP 2026 발표", detail: "Track 10 Quantitative Methods (Pittsburgh)" },
+        { date: "2026.10", event: "AAG 2027 초록 제출", detail: "도농복합 분석" },
+        { date: "2027 상반기", event: "Applied Geography 투고", detail: "도농복합 유형+만족도" },
+      ],
+      methods: ["PCA", "군집분석", "HLM 위계선형모형", "2차 설문데이터 분석 (2,645명)"],
+    },
   },
   {
     id: "김가인", label: "김가인", type: "student", size: 22, axes: ["urban"],
@@ -150,6 +249,18 @@ export const NODES: MapNode[] = [
       { title: "CELA 2027 (~9월)", desc: "녹지 쾌적성" },
       { title: "이다연 페어링", desc: "CV 공유" },
     ],
+    student: {
+      degree: "석사과정",
+      topic: "DPT 3D 깊이추정 기반 녹지 인식 거리 vs 기존 GVI 비교",
+      status: "송파구/종로구 GSV 수집 완료. DPT+MaskFormer+DETR 분석 진행 중. 100명+ 설문 설계 중",
+      publications: [],
+      timeline: [
+        { date: "2026.09", event: "CELA 2027 초록 제출", detail: "녹지 쾌적성 발표" },
+        { date: "2026 하반기", event: "설문 시행", detail: "100명+ 녹지 인식 검증" },
+        { date: "2026 하반기", event: "이다연 페어링 연구", detail: "CV 기술 공유" },
+      ],
+      methods: ["DPT 깊이추정", "MaskFormer (150범주)", "DETR (90범주)", "GVI", "설문조사", "Google Street View"],
+    },
   },
   {
     id: "김주연", label: "김주연", type: "student", size: 22, axes: ["urban"],
@@ -160,6 +271,18 @@ export const NODES: MapNode[] = [
       { title: "산림청 선정 대기", desc: "선정 시 학위논문 착수" },
       { title: "CELA 2027", desc: "K-TES 발표" },
     ],
+    student: {
+      degree: "석사과정",
+      topic: "신진연구+산림청 과제 보조 → K-TES 또는 비공원녹지 학위논문",
+      status: "신진연구(G2SFCA+LISA)·산림청(K-TES, 3-30-300) 과제 보조 수행 중. 산림청 과제 선정 결과 대기 중",
+      publications: [],
+      timeline: [
+        { date: "2026 상반기", event: "산림청 과제 선정 대기", detail: "선정 시 K-TES 학위논문 착수" },
+        { date: "2026.09", event: "CELA 2027 초록 제출", detail: "K-TES 발표" },
+        { date: "2026-2027", event: "학위논문 주제 확정", detail: "K-TES 국내 적용 or 비공원녹지 평가" },
+      ],
+      methods: ["Multi-modal G2SFCA", "LISA", "K-TES 지표", "3-30-300 전국 지도화", "ArcGIS"],
+    },
   },
 
   // ────────────── 프로젝트 ──────────────
