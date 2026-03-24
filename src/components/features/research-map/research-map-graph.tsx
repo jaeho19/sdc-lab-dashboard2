@@ -3,8 +3,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import * as d3 from "d3";
 import { useTheme } from "next-themes";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { X } from "lucide-react";
 import {
@@ -32,13 +30,30 @@ interface SimLink extends Omit<MapLink, "source" | "target"> {
 
 type ViewMode = "all" | "urban" | "rural" | "bridge" | "conf";
 
+const VIEW_OPTIONS: { mode: ViewMode; label: string }[] = [
+  { mode: "all", label: "All Connections" },
+  { mode: "urban", label: "Urban Context (도시)" },
+  { mode: "rural", label: "Rural Context (농촌)" },
+  { mode: "conf", label: "Conference Matching" },
+  { mode: "bridge", label: "Shared Methods" },
+];
+
 const VIEW_LABELS: Record<ViewMode, string> = {
   all: "All",
   urban: "Urban",
   rural: "Rural",
-  bridge: "Bridge",
+  bridge: "Shared",
   conf: "Conference",
 };
+
+const NODE_TYPE_BADGES: { type: NodeType; label: string }[] = [
+  { type: "student", label: "학생" },
+  { type: "theme", label: "연구주제" },
+  { type: "project", label: "프로젝트" },
+  { type: "conference", label: "학회" },
+  { type: "method", label: "방법론" },
+  { type: "axis", label: "연구축" },
+];
 
 // ─── Helper: get id from node or string ───
 function nodeId(n: SimNode | string): string {
@@ -187,10 +202,10 @@ export function ResearchMapGraph() {
         d.type === "kk" ? "rm-link rm-link-kk" : "rm-link"
       )
       .attr("stroke", (d) => {
-        if (d.type === "kk") return isDark ? "#ffffff" : "#6b7280";
+        if (d.type === "kk") return "#ffffff";
         if (d.type === "collab") return NODE_COLORS.student;
         const tn = nodes.find((x) => x.id === nodeId(d.target));
-        return tn ? NODE_COLORS[tn.type] : isDark ? "#1a2040" : "#d1d5db";
+        return tn ? NODE_COLORS[tn.type] : "#1a2040";
       })
       .attr("stroke-width", (d) =>
         d.type === "kk" ? 1 : d.type === "collab" ? 2 : 1.2
@@ -244,14 +259,13 @@ export function ResearchMapGraph() {
     nodeEls
       .append("circle")
       .attr("r", (d) => d.size)
-      .attr("fill", (d) =>
-        d.type === "axis"
-          ? NODE_COLORS[d.type] + "18"
-          : NODE_COLORS[d.type] + "90"
-      )
+      .attr("fill", (d) => {
+        if (d.type === "axis") return NODE_COLORS[d.type] + "30";
+        return NODE_COLORS[d.type] + "cc";
+      })
       .attr("stroke", (d) => NODE_COLORS[d.type])
-      .attr("stroke-width", (d) => (d.type === "axis" ? 1.5 : 1))
-      .attr("stroke-opacity", (d) => (d.type === "axis" ? 0.4 : 0.5));
+      .attr("stroke-width", (d) => (d.type === "axis" ? 2 : 1.5))
+      .attr("stroke-opacity", (d) => (d.type === "axis" ? 0.5 : 0.7));
 
     nodeEls
       .append("text")
@@ -260,10 +274,11 @@ export function ResearchMapGraph() {
       .attr("font-size", (d) =>
         d.type === "student" ? "11px" : d.type === "axis" ? "12px" : "9.5px"
       )
-      .attr("fill", isDark ? "#6878a0" : "#6b7280")
+      .attr("fill", "#8898b8")
       .attr("font-weight", 500)
       .attr("font-family", "'Inter', 'Pretendard', sans-serif")
       .style("pointer-events", "none")
+      .style("text-shadow", "0 0 8px #06081a, 0 0 16px #06081a")
       .text((d) => d.label);
 
     // Tooltip
@@ -273,14 +288,8 @@ export function ResearchMapGraph() {
       .attr("class", "rm-tooltip")
       .style("position", "absolute")
       .style("padding", "10px 14px")
-      .style(
-        "background",
-        isDark ? "rgba(8,10,26,0.97)" : "rgba(255,255,255,0.97)"
-      )
-      .style(
-        "border",
-        `1px solid ${isDark ? "rgba(60,80,140,0.3)" : "rgba(0,0,0,0.1)"}`
-      )
+      .style("background", "rgba(8,10,26,0.97)")
+      .style("border", "1px solid rgba(60,80,140,0.3)")
       .style("border-radius", "8px")
       .style("font-size", "0.74rem")
       .style("pointer-events", "none")
@@ -288,13 +297,9 @@ export function ResearchMapGraph() {
       .style("transition", "opacity 0.1s")
       .style("z-index", "100")
       .style("max-width", "300px")
-      .style("color", isDark ? "#8898b8" : "#374151")
-      .style(
-        "box-shadow",
-        isDark
-          ? "0 8px 32px rgba(0,0,0,0.6)"
-          : "0 8px 32px rgba(0,0,0,0.1)"
-      );
+      .style("color", "#8898b8")
+      .style("box-shadow", "0 8px 32px rgba(0,0,0,0.6)")
+      .style("backdrop-filter", "blur(8px)");
 
     nodeEls
       .on("mouseover", (e, d) => {
@@ -302,7 +307,7 @@ export function ResearchMapGraph() {
         tooltip
           .style("opacity", 1)
           .html(
-            `<b style="color:${isDark ? "#d0d8f0" : "#111827"}">${d.label}</b>
+            `<b style="color:#d0d8f0">${d.label}</b>
              <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;margin-top:1px;color:${NODE_COLORS[d.type]}">${NODE_LABELS[d.type]}</div>
              <div style="margin-top:3px">${d.desc || ""}</div>`
           )
@@ -512,167 +517,142 @@ export function ResearchMapGraph() {
 
   // ─── Legend items ───
   const legendItems: { type: NodeType; label: string }[] = [
-    { type: "student", label: "학생" },
-    { type: "theme", label: "주제 키워드" },
-    { type: "method", label: "방법론 키워드" },
-    { type: "tech", label: "기술 키워드" },
-    { type: "project", label: "프로젝트" },
-    { type: "conference", label: "학회" },
-    { type: "axis", label: "연구축" },
+    { type: "student", label: "학생 (Student)" },
+    { type: "theme", label: "연구주제 (Research Topic)" },
+    { type: "project", label: "프로젝트 (Project)" },
+    { type: "conference", label: "학회 (Conference)" },
+    { type: "method", label: "방법론 (Method)" },
+    { type: "axis", label: "연구축 (Research Axis)" },
   ];
 
+  const clearSelection = useCallback(() => {
+    setSelectedNode(null);
+    const svgEl = svgRef.current;
+    if (svgEl && (svgEl as any).__rm) {
+      clearHighlight(
+        (svgEl as any).__rm.nodeEls,
+        (svgEl as any).__rm.linkEls
+      );
+    }
+  }, []);
+
   return (
-    <Card className="relative overflow-hidden" style={{ height: "calc(100vh - 160px)", minHeight: 500 }}>
-      {/* ── Left Controls ── */}
+    <div className="relative flex overflow-hidden rounded-lg" style={{ height: "calc(100vh - 160px)", minHeight: 500, background: "#0a0e2a" }}>
+      {/* ── Left Sidebar ── */}
       <div
-        className="absolute left-0 top-0 bottom-0 z-10 flex flex-col border-r"
-        style={{ width: 200 }}
+        className="relative z-10 flex shrink-0 flex-col overflow-y-auto"
+        style={{ width: 300, borderRight: "1px solid rgba(60,80,140,0.2)", background: "linear-gradient(180deg, #0c1030 0%, #080c22 100%)" }}
       >
-        <div className="border-b p-3">
-          <h2 className="text-sm font-bold text-primary">SDC Lab</h2>
-          <p className="text-[10px] text-muted-foreground">
-            Research Network &middot; 2026
-          </p>
+        {/* Title */}
+        <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid rgba(60,80,140,0.15)" }}>
+          <h2 className="text-lg font-bold" style={{ color: "#a0c0ff" }}>SDC Lab Research Map</h2>
+          <p className="mt-0.5 text-xs" style={{ color: "#3a4a6a" }}>Spatial Data Community Lab | 2026</p>
         </div>
 
-        {/* View buttons */}
-        <div className="border-b p-2">
-          <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-            View
-          </p>
+        {/* View Mode */}
+        <div style={{ padding: "14px 20px", borderBottom: "1px solid rgba(60,80,140,0.15)" }}>
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-[1.5px]" style={{ color: "#4a5a7a" }}>View Mode</p>
           <div className="flex flex-col gap-1">
-            {(
-              Object.entries(VIEW_LABELS) as [ViewMode, string][]
-            ).map(([mode, label]) => (
-              <Button
+            {VIEW_OPTIONS.map(({ mode, label }) => (
+              <button
                 key={mode}
-                variant={viewMode === mode ? "default" : "outline"}
-                size="sm"
-                className="h-7 justify-start text-xs"
                 onClick={() => setViewMode(mode)}
+                className="w-full rounded-md px-3 py-2 text-left text-[13px] font-medium transition-all"
+                style={{
+                  background: viewMode === mode ? "rgba(40,60,120,0.4)" : "rgba(20,25,60,0.4)",
+                  border: `1px solid ${viewMode === mode ? "rgba(80,120,200,0.4)" : "rgba(40,50,90,0.3)"}`,
+                  color: viewMode === mode ? "#7eb8ff" : "#5a6a90",
+                  boxShadow: viewMode === mode ? "0 0 12px rgba(80,120,200,0.1)" : "none",
+                }}
               >
                 {label}
-              </Button>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Node Types */}
+        <div style={{ padding: "14px 20px", borderBottom: "1px solid rgba(60,80,140,0.15)" }}>
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-[1.5px]" style={{ color: "#4a5a7a" }}>Node Types</p>
+          <div className="flex flex-wrap gap-1.5">
+            {NODE_TYPE_BADGES.map(({ type, label }) => (
+              <span
+                key={type}
+                className="rounded-full px-3 py-1 text-xs font-medium"
+                style={{
+                  color: NODE_COLORS[type],
+                  border: `1.5px solid ${NODE_COLORS[type]}60`,
+                  background: `${NODE_COLORS[type]}10`,
+                }}
+              >
+                {label}
+              </span>
             ))}
           </div>
         </div>
 
         {/* Legend */}
-        <div className="border-b p-2">
-          <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-            Legend
-          </p>
-          <div className="flex flex-col gap-0.5">
+        <div style={{ padding: "14px 20px", borderBottom: "1px solid rgba(60,80,140,0.15)" }}>
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-[1.5px]" style={{ color: "#4a5a7a" }}>Legend</p>
+          <div className="flex flex-col gap-1.5">
             {legendItems.map((item) => (
-              <div
-                key={item.type}
-                className="flex items-center gap-1.5 text-xs text-muted-foreground"
-              >
-                <div
-                  className="h-2 w-2 shrink-0 rounded-full"
-                  style={{ background: NODE_COLORS[item.type] }}
-                />
+              <div key={item.type} className="flex items-center gap-2 text-[13px]" style={{ color: "#8898b8" }}>
+                <div className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: NODE_COLORS[item.type] }} />
                 {item.label}
               </div>
             ))}
-            <div className="mt-1 border-t pt-1 text-[10px] text-muted-foreground/50">
-              ── 학생↔키워드 &nbsp; ⋯ 키워드↔키워드
-            </div>
           </div>
         </div>
 
-        {/* Controls */}
-        <div className="flex-1 p-2">
-          <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-            Controls
-          </p>
-          <div className="space-y-0.5 text-[11px] text-muted-foreground leading-relaxed">
+        {/* Click Prompt / Detail Preview */}
+        <div className="flex-1" style={{ padding: "16px 20px" }}>
+          {selectedNode ? (
             <div>
-              <kbd className="rounded border bg-muted px-1 py-0.5 text-[10px]">
-                Click
-              </kbd>{" "}
-              상세보기
+              <h3 className="text-base font-bold" style={{ color: "#a0c0ff" }}>{selectedNode.label}</h3>
+              <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-widest" style={{ color: NODE_COLORS[selectedNode.type] }}>{NODE_LABELS[selectedNode.type]}</p>
+              <div className="mt-3 text-xs leading-relaxed [&_strong]:font-semibold [&_ul]:pl-4 [&_li]:my-0.5" style={{ color: "#8898b8" }} dangerouslySetInnerHTML={{ __html: selectedNode.body || `<p>${selectedNode.desc}</p>` }} />
+              {selectedNode.actions && selectedNode.actions.length > 0 && (
+                <div className="mt-3 space-y-1.5">
+                  {selectedNode.actions.map((a, i) => (
+                    <div key={i} className="rounded-md p-2" style={{ background: "rgba(15,20,45,0.5)", border: "1px solid rgba(40,50,80,0.25)" }}>
+                      <div className="text-xs font-semibold" style={{ color: "#ffb74d" }}>{a.title}</div>
+                      <div className="text-[11px]" style={{ color: "#5a6a8a" }}>{a.desc}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
+          ) : (
             <div>
-              <kbd className="rounded border bg-muted px-1 py-0.5 text-[10px]">
-                Drag
-              </kbd>{" "}
-              이동
+              <h3 className="text-base font-bold" style={{ color: "#a0c0ff" }}>노드를 클릭하세요</h3>
+              <p className="mt-0.5 text-[10px] uppercase tracking-widest" style={{ color: "#3a4a6a" }}>Click a node to see details</p>
+              <p className="mt-3 text-xs leading-relaxed" style={{ color: "#5a6a8a" }}>
+                그래프의 노드를 클릭하면 해당 항목의 상세 정보가 여기에 표시됩니다.
+              </p>
             </div>
-            <div>
-              <kbd className="rounded border bg-muted px-1 py-0.5 text-[10px]">
-                Scroll
-              </kbd>{" "}
-              확대/축소
-            </div>
-            <div>
-              <kbd className="rounded border bg-muted px-1 py-0.5 text-[10px]">
-                Esc
-              </kbd>{" "}
-              해제
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
       {/* ── Graph Area ── */}
-      <div
-        ref={containerRef}
-        className="absolute top-0 bottom-0 right-0"
-        style={{ left: 200 }}
-      >
+      <div ref={containerRef} className="relative flex-1" style={{ background: "radial-gradient(ellipse at center, #0a0e28 0%, #060818 70%)" }}>
+        {/* Grid background */}
+        <div className="pointer-events-none absolute inset-0" style={{ backgroundImage: "radial-gradient(rgba(60,80,140,0.06) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
         <svg ref={svgRef} className="h-full w-full" />
-
-        {/* Prompt overlay */}
-        {showPrompt && (
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <div className="rounded-xl border bg-background/50 p-5 text-center backdrop-blur-sm">
-              <h2 className="text-sm font-semibold text-muted-foreground">
-                노드를 클릭하세요
-              </h2>
-              <p className="mt-1 text-xs text-muted-foreground/60">
-                키워드 간 숨겨진 연결을 탐색할 수 있습니다
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Bottom bar */}
-        <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-4 rounded-full border bg-background/70 px-4 py-1.5 text-xs text-muted-foreground backdrop-blur-sm">
-          <div>
-            Nodes <span className="font-semibold">{NODES.length}</span>
-          </div>
-          <div>
-            Edges <span className="font-semibold">{LINKS.length}</span>
-          </div>
-          <div>
-            View{" "}
-            <span className="font-semibold">{VIEW_LABELS[viewMode]}</span>
-          </div>
-        </div>
       </div>
 
-      {/* ── Detail Panel (Sheet for mobile, side panel for desktop) ── */}
-      {/* Desktop: side panel — use translate instead of width to avoid content clipping */}
+      {/* ── Detail Panel — Desktop slide-in ── */}
       <div
-        className={`absolute right-0 top-0 bottom-0 z-20 hidden w-[400px] border-l bg-background transition-transform duration-300 ease-in-out md:block ${
+        className={`absolute right-0 top-0 bottom-0 z-20 hidden w-[400px] transition-transform duration-300 ease-in-out md:block ${
           selectedNode ? "translate-x-0" : "translate-x-full"
         }`}
+        style={{ borderLeft: "1px solid rgba(60,80,140,0.15)", background: "linear-gradient(180deg, #0c1030 0%, #080c22 100%)" }}
       >
         {selectedNode && (
           <DetailPanel
             node={selectedNode}
             connections={connectionsByType}
-            onClose={() => {
-              setSelectedNode(null);
-              const svgEl = svgRef.current;
-              if (svgEl && (svgEl as any).__rm) {
-                clearHighlight(
-                  (svgEl as any).__rm.nodeEls,
-                  (svgEl as any).__rm.linkEls
-                );
-              }
-            }}
+            onClose={clearSelection}
             onNodeClick={handleDetailNodeClick}
             isDark={isDark}
           />
@@ -680,27 +660,13 @@ export function ResearchMapGraph() {
       </div>
 
       {/* Mobile: Sheet */}
-      <Sheet
-        open={!!selectedNode}
-        onOpenChange={(open) => {
-          if (!open) {
-            setSelectedNode(null);
-            const svgEl = svgRef.current;
-            if (svgEl && (svgEl as any).__rm) {
-              clearHighlight(
-                (svgEl as any).__rm.nodeEls,
-                (svgEl as any).__rm.linkEls
-              );
-            }
-          }
-        }}
-      >
-        <SheetContent side="bottom" className="h-[70vh] md:hidden">
+      <Sheet open={!!selectedNode} onOpenChange={(open) => { if (!open) clearSelection(); }}>
+        <SheetContent side="bottom" className="h-[70vh] md:hidden" style={{ background: "#0c1030", borderColor: "rgba(60,80,140,0.2)" }}>
           {selectedNode && (
             <DetailPanel
               node={selectedNode}
               connections={connectionsByType}
-              onClose={() => setSelectedNode(null)}
+              onClose={clearSelection}
               onNodeClick={handleDetailNodeClick}
               isDark={isDark}
             />
@@ -732,16 +698,16 @@ export function ResearchMapGraph() {
           opacity: 0.02;
         }
         .rm-node.rm-sel circle {
-          stroke: ${isDark ? "#fff" : "#111"} !important;
+          stroke: #fff !important;
           stroke-width: 2.5;
           filter: drop-shadow(0 0 14px currentColor);
         }
         .rm-node.rm-sel text {
-          fill: ${isDark ? "#e0e8ff" : "#111827"} !important;
+          fill: #e0e8ff !important;
           font-weight: 700;
         }
       `}</style>
-    </Card>
+    </div>
   );
 }
 
@@ -805,17 +771,20 @@ function DetailPanel({
   );
 
   return (
-    <div className="h-full overflow-y-auto p-5">
+    <div className="h-full overflow-y-auto p-5" style={{ color: "#c8d0e8" }}>
       {/* Close button */}
       <button
         onClick={onClose}
-        className="absolute right-3 top-3 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+        className="absolute right-3 top-3 rounded-md p-1 transition"
+        style={{ color: "#3a4a6a" }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = "#8aa0d0")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = "#3a4a6a")}
       >
         <X className="h-4 w-4" />
       </button>
 
       {/* Header */}
-      <div className="mb-4 flex items-center gap-3 border-b pb-3">
+      <div className="mb-4 flex items-center gap-3 pb-3" style={{ borderBottom: "1px solid rgba(40,50,80,0.25)" }}>
         <div
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg"
           style={{
@@ -825,11 +794,8 @@ function DetailPanel({
           }}
         />
         <div>
-          <h2 className="text-lg font-bold">{node.label}</h2>
-          <p
-            className="text-[10px] font-semibold uppercase tracking-widest"
-            style={{ color: NODE_COLORS[node.type] }}
-          >
+          <h2 className="text-lg font-bold" style={{ color: "#d0d8f0" }}>{node.label}</h2>
+          <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: NODE_COLORS[node.type] }}>
             {NODE_LABELS[node.type]}
           </p>
         </div>
@@ -837,30 +803,27 @@ function DetailPanel({
 
       {/* Overview */}
       <section className="mb-4">
-        <h3 className="mb-1.5 border-b pb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        <h3 className="mb-1.5 pb-1 text-[10px] font-bold uppercase tracking-wider" style={{ color: "#3a4a6a", borderBottom: "1px solid rgba(30,40,60,0.4)" }}>
           Overview
         </h3>
         <div
-          className="prose-sm text-sm leading-relaxed text-muted-foreground [&_strong]:text-primary [&_em]:text-purple-400 [&_em]:not-italic [&_ul]:pl-4 [&_li]:my-0.5"
-          dangerouslySetInnerHTML={{
-            __html: node.body || `<p>${node.desc}</p>`,
-          }}
+          className="text-[13px] leading-relaxed [&_strong]:font-semibold [&_em]:not-italic [&_ul]:pl-4 [&_li]:my-0.5"
+          style={{ color: "#8898b8" }}
+          dangerouslySetInnerHTML={{ __html: node.body || `<p>${node.desc}</p>` }}
         />
       </section>
 
       {/* Action Items */}
       {node.actions && node.actions.length > 0 && (
         <section className="mb-4">
-          <h3 className="mb-1.5 border-b pb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          <h3 className="mb-1.5 pb-1 text-[10px] font-bold uppercase tracking-wider" style={{ color: "#3a4a6a", borderBottom: "1px solid rgba(30,40,60,0.4)" }}>
             Action Items
           </h3>
           <div className="space-y-1.5">
             {node.actions.map((a, i) => (
-              <div key={i} className="rounded-md border bg-muted/30 p-2.5">
-                <div className="text-sm font-semibold text-orange-400">
-                  {a.title}
-                </div>
-                <div className="text-xs text-muted-foreground">{a.desc}</div>
+              <div key={i} className="rounded-md p-2.5" style={{ background: "rgba(15,20,45,0.5)", border: "1px solid rgba(40,50,80,0.25)" }}>
+                <div className="text-sm font-semibold" style={{ color: "#ffb74d" }}>{a.title}</div>
+                <div className="text-xs" style={{ color: "#5a6a8a" }}>{a.desc}</div>
               </div>
             ))}
           </div>
@@ -869,27 +832,25 @@ function DetailPanel({
 
       {/* Connections */}
       <section>
-        <h3 className="mb-1.5 border-b pb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        <h3 className="mb-1.5 pb-1 text-[10px] font-bold uppercase tracking-wider" style={{ color: "#3a4a6a", borderBottom: "1px solid rgba(30,40,60,0.4)" }}>
           Connections ({totalConnections})
         </h3>
         {Object.entries(connections).map(([type, items]) => (
           <div key={type} className="mb-2">
-            <p className="mb-1 text-[10px] font-bold text-muted-foreground">
-              {type} ({items.length})
-            </p>
+            <p className="mb-1 text-[10px] font-bold" style={{ color: "#3a4a6a" }}>{type} ({items.length})</p>
             <ul className="space-y-0.5">
               {items.map((n) => (
                 <li
                   key={n.id}
-                  className="flex cursor-pointer items-center gap-2 rounded-md border border-transparent px-2.5 py-1.5 text-sm transition hover:border-border hover:bg-muted/50"
+                  className="flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition"
+                  style={{ border: "1px solid transparent" }}
                   onClick={() => onNodeClick(n.id)}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(25,35,70,0.5)"; e.currentTarget.style.borderColor = "rgba(60,80,140,0.3)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "transparent"; }}
                 >
-                  <div
-                    className="h-1.5 w-1.5 shrink-0 rounded-full"
-                    style={{ background: NODE_COLORS[n.type] }}
-                  />
-                  <span>{n.label}</span>
-                  <span className="ml-auto max-w-[140px] truncate text-right text-[11px] text-muted-foreground/60">
+                  <div className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: NODE_COLORS[n.type] }} />
+                  <span style={{ color: "#8898b8" }}>{n.label}</span>
+                  <span className="ml-auto max-w-[140px] truncate text-right text-[11px]" style={{ color: "#3a4a6a" }}>
                     {(n.desc || "").substring(0, 35)}
                   </span>
                 </li>
