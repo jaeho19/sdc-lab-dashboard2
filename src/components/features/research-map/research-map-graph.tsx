@@ -100,6 +100,7 @@ export function ResearchMapGraph() {
   const [selectedNode, setSelectedNode] = useState<SimNode | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("all");
   const [showPrompt, setShowPrompt] = useState(true);
+  const [activeNodeType, setActiveNodeType] = useState<NodeType | null>(null);
 
   // ─── D3 initialization ───
   useEffect(() => {
@@ -276,7 +277,7 @@ export function ResearchMapGraph() {
       )
       .attr("fill", "#8898b8")
       .attr("font-weight", 500)
-      .attr("font-family", "'Inter', 'Pretendard', sans-serif")
+      .attr("font-family", "var(--font-paperlogy), 'Pretendard', sans-serif")
       .style("pointer-events", "none")
       .style("text-shadow", "0 0 8px #06081a, 0 0 16px #06081a")
       .text((d) => d.label);
@@ -383,6 +384,7 @@ export function ResearchMapGraph() {
     const { nodeEls, linkEls, nodes, links } = (svgEl as any).__rm;
 
     setSelectedNode(null);
+    setActiveNodeType(null);
     clearHighlight(nodeEls, linkEls);
 
     if (viewMode === "all") {
@@ -483,6 +485,36 @@ export function ResearchMapGraph() {
     }
   }, [viewMode]);
 
+  // ─── Node type filter effect ───
+  useEffect(() => {
+    const svgEl = svgRef.current;
+    if (!svgEl || !(svgEl as any).__rm) return;
+    const { nodeEls, linkEls } = (svgEl as any).__rm;
+
+    if (!activeNodeType) {
+      // Reset — re-apply current view mode by not touching classes here
+      // (view mode effect handles it)
+      return;
+    }
+
+    setSelectedNode(null);
+    // Highlight nodes of this type + their direct connections
+    const vis = new Set<string>();
+    const nodes: SimNode[] = (svgEl as any).__rm.nodes;
+    const links: SimLink[] = (svgEl as any).__rm.links;
+    for (const n of nodes) {
+      if (n.type === activeNodeType) vis.add(n.id);
+    }
+    for (const l of links) {
+      const s = nodeId(l.source);
+      const t = nodeId(l.target);
+      if (vis.has(s)) vis.add(t);
+      if (vis.has(t)) vis.add(s);
+    }
+    nodeEls.classed("rm-dim", (n: SimNode) => !vis.has(n.id));
+    linkEls.classed("rm-dim", (l: SimLink) => !vis.has(nodeId(l.source)) || !vis.has(nodeId(l.target)));
+  }, [activeNodeType]);
+
   // ─── Click node from detail panel ───
   const handleDetailNodeClick = useCallback(
     (id: string) => {
@@ -537,7 +569,7 @@ export function ResearchMapGraph() {
   }, []);
 
   return (
-    <div className="relative flex overflow-hidden rounded-lg" style={{ height: "calc(100vh - 160px)", minHeight: 500, background: "#0a0e2a" }}>
+    <div className="relative flex overflow-hidden rounded-lg" style={{ height: "calc(100vh - 160px)", minHeight: 500, background: "#0a0e2a", fontFamily: "var(--font-paperlogy), 'Pretendard', 'Apple SD Gothic Neo', sans-serif" }}>
       {/* ── Left Sidebar ── */}
       <div
         className="relative z-10 flex shrink-0 flex-col overflow-y-auto"
@@ -571,23 +603,33 @@ export function ResearchMapGraph() {
           </div>
         </div>
 
-        {/* Node Types */}
+        {/* Node Types — clickable filter */}
         <div style={{ padding: "14px 20px", borderBottom: "1px solid rgba(60,80,140,0.15)" }}>
           <p className="mb-2 text-[11px] font-bold uppercase tracking-[1.5px]" style={{ color: "#4a5a7a" }}>Node Types</p>
           <div className="flex flex-wrap gap-1.5">
-            {NODE_TYPE_BADGES.map(({ type, label }) => (
-              <span
-                key={type}
-                className="rounded-full px-3 py-1 text-xs font-medium"
-                style={{
-                  color: NODE_COLORS[type],
-                  border: `1.5px solid ${NODE_COLORS[type]}60`,
-                  background: `${NODE_COLORS[type]}10`,
-                }}
-              >
-                {label}
-              </span>
-            ))}
+            {NODE_TYPE_BADGES.map(({ type, label }) => {
+              const isActive = activeNodeType === type;
+              return (
+                <button
+                  key={type}
+                  onClick={() => {
+                    const next = isActive ? null : type;
+                    setActiveNodeType(next);
+                    if (next) setViewMode("all");
+                  }}
+                  className="rounded-full px-3 py-1 text-xs font-medium transition-all"
+                  style={{
+                    cursor: "pointer",
+                    color: isActive ? "#0a0e2a" : NODE_COLORS[type],
+                    border: `1.5px solid ${isActive ? NODE_COLORS[type] : NODE_COLORS[type] + "60"}`,
+                    background: isActive ? NODE_COLORS[type] : `${NODE_COLORS[type]}10`,
+                    boxShadow: isActive ? `0 0 10px ${NODE_COLORS[type]}40` : "none",
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
