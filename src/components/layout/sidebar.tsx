@@ -22,6 +22,7 @@ import {
   ChevronRight,
   Star,
   Network,
+  FileText,
   LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -116,6 +117,7 @@ const navigation = [
   { name: "Research", href: "/research", icon: BookOpen },
   { name: "Research Map", href: "/research-map", icon: Network },
   { name: "Calendar", href: "/calendar", icon: Calendar },
+  { name: "Reports", href: "/reports", icon: FileText },
   { name: "Mentoring", href: "/mentoring", icon: MessageSquare },
   { name: "AI Peer Review", href: "/peer-review", icon: Bot },
 ];

@@ -1,7 +1,8 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-01T09:37:41.674Z",
+  "lastUpdated": "2026-03-26T12:38:52.469Z",
   "activeFeatures": [
+    "report-auto-generation",
     "mobile-performance-optimization",
     "meeting-notes-3col-form",
     "research-meeting-notes",
@@ -17,10 +18,26 @@
     "calendar",
     "layout",
     "(dashboard)",
-    "ui"
+    "ui",
+    "announcements",
+    "signup",
+    "supabase",
+    "research-map",
+    "reports",
+    "edit",
+    "progress"
   ],
-  "primaryFeature": "mobile-performance-optimization",
+  "primaryFeature": "report-auto-generation",
   "features": {
+    "report-auto-generation": {
+      "phase": "check",
+      "matchRate": 92,
+      "startedAt": "2026-03-26T11:00:00.000Z",
+      "planPath": "docs/01-plan/features/report-auto-generation.plan.md",
+      "designPath": "docs/02-design/features/report-auto-generation.design.md",
+      "analysisPath": "docs/03-analysis/report-auto-generation.analysis.md",
+      "description": "월간/주간보고 출력 자동화 (자동 생성, 발표 모드, 인쇄, 개인 월간보고)"
+    },
     "mobile-performance-optimization": {
       "phase": "check",
       "matchRate": 93,
@@ -65,9 +82,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-09T04:18:10.145Z",
-        "lastUpdated": "2026-02-25T00:07:17.902Z"
+        "lastUpdated": "2026-03-26T12:31:23.962Z"
       },
-      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\lib\\actions\\notifications.ts"
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\lib\\actions\\reports.ts"
     },
     "sdclab-dashboard": {
       "phase": "do",
@@ -78,9 +95,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-09T06:32:43.640Z",
-        "lastUpdated": "2026-02-25T00:07:07.948Z"
+        "lastUpdated": "2026-03-26T12:32:05.085Z"
       },
-      "lastFile": "C:\\dev\\sdclab-dashboard\\next.config.js"
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\types\\database.types.ts"
     },
     "research": {
       "phase": "do",
@@ -91,9 +108,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-09T06:33:59.150Z",
-        "lastUpdated": "2026-02-25T00:06:58.040Z"
+        "lastUpdated": "2026-03-12T10:20:05.748Z"
       },
-      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\app\\(dashboard)\\research\\loading.tsx"
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\app\\(dashboard)\\research\\page.tsx"
     },
     "[id]": {
       "phase": "do",
@@ -104,9 +121,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-09T06:34:24.244Z",
-        "lastUpdated": "2026-02-09T11:01:23.630Z"
+        "lastUpdated": "2026-03-26T12:33:12.582Z"
       },
-      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\app\\(dashboard)\\research\\[id]\\page.tsx"
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\app\\(dashboard)\\reports\\[id]\\page.tsx"
     },
     "react-query": {
       "phase": "do",
@@ -143,9 +160,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T23:46:08.024Z",
-        "lastUpdated": "2026-02-25T00:07:43.277Z"
+        "lastUpdated": "2026-03-04T01:26:54.062Z"
       },
-      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\app\\(dashboard)\\dashboard\\page.tsx"
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\components\\features\\dashboard\\announcements-section.tsx"
     },
     "members": {
       "phase": "do",
@@ -156,9 +173,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T23:46:18.427Z",
-        "lastUpdated": "2026-03-01T09:37:41.673Z"
+        "lastUpdated": "2026-03-12T10:20:19.506Z"
       },
-      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\app\\(dashboard)\\members\\page.tsx"
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\components\\members\\full-time-members-gantt.tsx"
     },
     "calendar": {
       "phase": "do",
@@ -169,9 +186,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T23:46:23.190Z",
-        "lastUpdated": "2026-02-25T00:07:34.795Z"
+        "lastUpdated": "2026-03-12T10:20:29.765Z"
       },
-      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\app\\(dashboard)\\calendar\\page.tsx"
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\components\\features\\calendar\\event-form.tsx"
     },
     "layout": {
       "phase": "do",
@@ -182,9 +199,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-25T00:07:05.466Z",
-        "lastUpdated": "2026-02-25T00:07:05.466Z"
+        "lastUpdated": "2026-03-26T12:32:22.707Z"
       },
-      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\components\\layout\\dashboard-layout.tsx"
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\components\\layout\\sidebar.tsx"
     },
     "(dashboard)": {
       "phase": "do",
@@ -211,6 +228,97 @@
         "lastUpdated": "2026-02-25T00:08:25.204Z"
       },
       "lastFile": "C:\\dev\\sdclab-dashboard\\src\\components\\ui\\skeleton.tsx"
+    },
+    "announcements": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-04T01:26:40.616Z",
+        "lastUpdated": "2026-03-04T01:26:45.648Z"
+      },
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\app\\(dashboard)\\announcements\\page.tsx"
+    },
+    "signup": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-12T10:18:09.609Z",
+        "lastUpdated": "2026-03-12T10:18:09.609Z"
+      },
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\app\\(auth)\\signup\\page.tsx"
+    },
+    "supabase": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-12T10:18:17.448Z",
+        "lastUpdated": "2026-03-12T10:18:25.158Z"
+      },
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\lib\\supabase\\actions.ts"
+    },
+    "research-map": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-24T11:18:49.800Z",
+        "lastUpdated": "2026-03-24T21:59:14.603Z"
+      },
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\components\\features\\research-map\\research-map-graph.tsx"
+    },
+    "reports": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-26T12:30:38.095Z",
+        "lastUpdated": "2026-03-26T12:38:39.623Z"
+      },
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\app\\(dashboard)\\reports\\page.tsx"
+    },
+    "edit": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-26T12:33:22.847Z",
+        "lastUpdated": "2026-03-26T12:33:22.847Z"
+      },
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\app\\(dashboard)\\reports\\[id]\\edit\\page.tsx"
+    },
+    "progress": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-26T12:33:32.323Z",
+        "lastUpdated": "2026-03-26T12:38:52.469Z"
+      },
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\app\\(dashboard)\\reports\\progress\\page.tsx"
     }
   },
   "pipeline": {
@@ -221,7 +329,7 @@
   "session": {
     "startedAt": "2026-01-31T23:00:19.416Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-01T09:37:41.674Z"
+    "lastActivity": "2026-03-26T12:38:52.469Z"
   },
   "history": [
     {
@@ -659,6 +767,516 @@
     {
       "timestamp": "2026-03-01T09:37:41.673Z",
       "feature": "members",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-04T01:26:11.867Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-04T01:26:18.496Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-04T01:26:35.461Z",
+      "feature": "sdclab-dashboard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-04T01:26:40.616Z",
+      "feature": "announcements",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-04T01:26:45.648Z",
+      "feature": "announcements",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-04T01:26:49.899Z",
+      "feature": "dashboard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-04T01:26:54.062Z",
+      "feature": "dashboard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T10:18:09.609Z",
+      "feature": "signup",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T10:18:17.448Z",
+      "feature": "supabase",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T10:18:25.158Z",
+      "feature": "supabase",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T10:18:31.894Z",
+      "feature": "sdclab-dashboard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T10:18:39.405Z",
+      "feature": "sdclab-dashboard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T10:18:45.471Z",
+      "feature": "sdclab-dashboard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T10:20:05.748Z",
+      "feature": "research",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T10:20:16.942Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T10:20:19.506Z",
+      "feature": "members",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T10:20:29.765Z",
+      "feature": "calendar",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T10:20:43.866Z",
+      "feature": "sdclab-dashboard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T11:18:49.800Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T11:20:50.842Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T11:21:18.545Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T11:21:26.487Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T11:22:22.663Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T11:27:24.059Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T11:38:04.089Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T11:38:13.541Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T11:38:26.662Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T11:50:59.562Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T11:51:09.827Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T11:51:19.343Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T11:52:15.034Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T11:52:29.687Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T11:52:39.273Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T11:52:50.013Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T11:52:57.289Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T11:53:33.343Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T21:50:45.894Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T21:51:09.133Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T21:51:48.575Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T21:52:06.845Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T21:52:14.255Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T21:52:22.238Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T21:54:30.183Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T21:54:46.443Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T21:55:05.104Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T21:55:24.654Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T21:55:40.564Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T21:55:57.506Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T21:56:14.723Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T21:56:31.720Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T21:56:49.064Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T21:56:57.806Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T21:57:44.576Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T21:58:05.092Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T21:59:14.603Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:28:10.200Z",
+      "feature": "sdclab-dashboard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:28:34.490Z",
+      "feature": "actions",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:30:31.582Z",
+      "feature": "sdclab-dashboard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:30:32.437Z",
+      "feature": "actions",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:30:38.095Z",
+      "feature": "reports",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:30:50.476Z",
+      "feature": "actions",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:31:11.123Z",
+      "feature": "actions",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:31:21.185Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:31:23.962Z",
+      "feature": "actions",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:31:38.898Z",
+      "feature": "reports",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:32:05.085Z",
+      "feature": "sdclab-dashboard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:32:18.573Z",
+      "feature": "reports",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:32:22.707Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:32:47.760Z",
+      "feature": "reports",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:32:48.578Z",
+      "feature": "reports",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:33:01.115Z",
+      "feature": "reports",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:33:11.585Z",
+      "feature": "reports",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:33:12.582Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:33:22.847Z",
+      "feature": "edit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:33:32.323Z",
+      "feature": "progress",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:34:02.180Z",
+      "feature": "reports",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:34:22.918Z",
+      "feature": "reports",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:35:14.422Z",
+      "feature": "reports",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:35:48.776Z",
+      "feature": "reports",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:36:24.339Z",
+      "feature": "reports",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:37:00.574Z",
+      "feature": "reports",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:37:30.576Z",
+      "feature": "reports",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:37:59.931Z",
+      "feature": "reports",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:38:39.623Z",
+      "feature": "reports",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-26T12:38:52.469Z",
+      "feature": "progress",
       "phase": "do",
       "action": "updated"
     }

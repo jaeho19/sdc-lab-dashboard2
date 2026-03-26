@@ -464,3 +464,54 @@
     padding: 0px 2px;
   }
 }
+
+/* ── Print Styles ── */
+@media print {
+  [data-sidebar],
+  nav,
+  header:not(.print-header),
+  .no-print {
+    display: none !important;
+  }
+
+  .print-layout {
+    display: block !important;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 15mm 20mm;
+  }
+
+  .print-table tr {
+    page-break-inside: avoid;
+  }
+
+  .print-section {
+    page-break-inside: avoid;
+  }
+
+  .print-header {
+    display: flex !important;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .print-footer {
+    display: block !important;
+    text-align: right;
+    margin-top: 20px;
+    font-size: 10pt;
+  }
+}
+
+/* 화면에서는 인쇄 전용 요소 숨김 */
+@media screen {
+  .print-only {
+    display: none !important;
+  }
+}

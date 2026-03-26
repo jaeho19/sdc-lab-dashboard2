@@ -594,3 +594,176 @@ export interface Database {
     };
   };
 }
+
+// ── Report Auto-Generation Types ──
+
+export type ProgressLogType =
+  | "task"
+  | "meeting"
+  | "report"
+  | "consulting"
+  | "fieldwork"
+  | "other";
+
+export type ProgressLogStatus =
+  | "completed"
+  | "in_progress"
+  | "planned";
+
+export type ReportPeriodType =
+  | "weekly"
+  | "monthly"
+  | "quarterly"
+  | "custom";
+
+export type ReportScope =
+  | "project"
+  | "personal";
+
+export type ReportStatus =
+  | "draft"
+  | "submitted"
+  | "approved";
+
+export interface Project {
+  id: string;
+  code: string;
+  name: string;
+  short_name: string | null;
+  description: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SubProject {
+  id: string;
+  project_id: string;
+  code: string;
+  name: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProgressLog {
+  id: string;
+  project_id: string;
+  sub_project_id: string | null;
+  title: string;
+  description: string | null;
+  log_date: string;
+  log_type: ProgressLogType;
+  status: ProgressLogStatus;
+  assignee_id: string | null;
+  assignee_name: string | null;
+  hours_spent: number | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReportTemplateSectionAutoFill {
+  status?: ProgressLogStatus[];
+  period?: "current" | "next";
+  log_type?: ProgressLogType[];
+}
+
+export interface ReportTemplateSectionColumn {
+  key: string;
+  label: string;
+}
+
+export interface ReportTemplateSection {
+  id: string;
+  type: "progress_matrix" | "list" | "text";
+  title: string;
+  columns?: ReportTemplateSectionColumn[];
+  auto_fill?: ReportTemplateSectionAutoFill;
+}
+
+export interface ReportTemplateHeaderConfig {
+  logo_url?: string;
+  org_name?: string;
+  show_author?: boolean;
+  show_date?: boolean;
+}
+
+export interface ReportTemplate {
+  id: string;
+  name: string;
+  description: string | null;
+  period_type: ReportPeriodType;
+  scope: ReportScope;
+  project_id: string | null;
+  sections: ReportTemplateSection[];
+  header_config: ReportTemplateHeaderConfig;
+  is_active: boolean;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReportContentLogEntry {
+  log_id: string;
+  text: string;
+}
+
+export interface ReportContentMatrixCell {
+  [columnKey: string]: ReportContentLogEntry[];
+}
+
+export interface ReportContentMatrix {
+  [subProjectId: string]: ReportContentMatrixCell;
+}
+
+export interface ReportContentList {
+  items: ReportContentLogEntry[];
+}
+
+export interface ReportContentText {
+  text: string;
+}
+
+export type ReportSectionContent =
+  | ReportContentMatrix
+  | ReportContentList
+  | ReportContentText;
+
+export interface ReportContent {
+  [sectionId: string]: ReportSectionContent;
+}
+
+export interface Report {
+  id: string;
+  template_id: string;
+  project_id: string | null;
+  title: string;
+  period_start: string;
+  period_end: string;
+  assignee_id: string | null;
+  content: ReportContent;
+  status: ReportStatus;
+  submitted_at: string | null;
+  approved_by: string | null;
+  approved_at: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Joined view types
+export interface ProgressLogWithDetails extends ProgressLog {
+  sub_project?: SubProject | null;
+  assignee?: { id: string; name: string } | null;
+}
+
+export interface ReportWithDetails extends Report {
+  template?: ReportTemplate;
+  project?: Project | null;
+  assignee?: { id: string; name: string } | null;
+  created_by_member?: { id: string; name: string } | null;
+}
