@@ -45,6 +45,9 @@ const paperlogy = localFont({
 export const metadata: Metadata = {
   title: "SDC Lab Dashboard",
   description: "서울시립대학교 SDC Lab 연구실 관리 대시보드",
+    verification: {
+          google: "dS1jVXOd0wo_B7FSkhNBWahCmAj8X1voud-Ga_jDnB0",
+        },
 };
 
 export default function RootLayout({
