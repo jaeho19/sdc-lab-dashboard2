@@ -117,18 +117,16 @@ export function ApprovalsList({ members }: ApprovalsListProps) {
                     {getEmploymentTypeLabel(member.employment_type)}
                   </span>
                 </div>
-                {member.enrollment_year && (
+                {member.admission_date && (
                   <div>
-                    <span className="text-muted-foreground">입학년도: </span>
-                    <span className="font-medium">{member.enrollment_year}년</span>
+                    <span className="text-muted-foreground">입학일: </span>
+                    <span className="font-medium">{member.admission_date}</span>
                   </div>
                 )}
-                {member.expected_graduation_year && (
+                {member.graduation_date && (
                   <div>
                     <span className="text-muted-foreground">졸업예정: </span>
-                    <span className="font-medium">
-                      {member.expected_graduation_year}년
-                    </span>
+                    <span className="font-medium">{member.graduation_date}</span>
                   </div>
                 )}
               </div>

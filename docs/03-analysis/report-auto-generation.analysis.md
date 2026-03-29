@@ -3,119 +3,119 @@
 ## Overview
 - **Feature**: 월간/주간보고 출력 자동화
 - **Design Document**: `docs/02-design/features/report-auto-generation.design.md`
-- **Analysis Date**: 2026-03-26
-- **Overall Match Rate**: 92%
+- **Analysis Date**: 2026-03-29 (3rd analysis)
+- **Previous Analysis**: 2026-03-29 (90%), 2026-03-26 (92%)
+- **Overall Match Rate**: 91%
 
 ## Category Scores
 
-| Category | Score | Status |
-|----------|:-----:|:------:|
-| Database Schema | 98% | ✅ MATCH |
-| TypeScript Types | 97% | ✅ MATCH |
-| Server Actions | 95% | ✅ MATCH |
-| Components | 92% | ✅ MATCH |
-| Page Integration | 93% | ✅ MATCH |
-| Sidebar Integration | 100% | ✅ MATCH |
-| Print CSS | 95% | ✅ MATCH |
-| Seed Data | 65% | ⚠️ PARTIAL |
-| **Overall** | **92%** | **✅ PASS** |
+| Category | Score | Status | Change |
+|----------|:-----:|:------:|:------:|
+| Database Schema | 95% | PASS | -3% (RLS column inconsistency noted) |
+| TypeScript Types | 100% | PASS | +3% |
+| Server Actions | 100% | PASS | +5% |
+| UI Components | 85% | PARTIAL | -3% (personal scope variant missing) |
+| Page Routes | 100% | PASS | +7% |
+| Print CSS | 95% | PASS | -1% |
+| Sidebar Integration | 95% | PASS | -5% |
+| Seed Data | 75% | PARTIAL | new category |
 
 ---
 
-## ~~Critical Finding: RLS Policy Column Mismatch~~ (RESOLVED - False Positive)
+## Detailed Results
 
-초기 분석에서 `members.id = auth.uid()`가 오류라고 판단했으나, 실제 검증 결과 **정상**:
-- `members` 테이블에 `user_id` 컬럼 없음
-- `members.id`가 곧 `auth.users.id` (동일 UUID, JOIN으로 확인)
-- 기존 announcements, calendar_events, research_projects 등 모든 테이블이 동일 패턴 사용
-- Design 문서의 `members.user_id` 표기가 부정확했으며, 구현이 올바름
+### 1. Database Schema (95%) -- PASS
 
----
+All 5 migration files exist and match design:
+- `00020_create_projects_table.sql` -- MATCH
+- `00021_create_sub_projects_table.sql` -- MATCH
+- `00022_create_progress_logs_table.sql` -- MATCH
+- `00023_create_report_templates_table.sql` -- MATCH
+- `00024_create_reports_table.sql` -- MATCH
 
-## Section-by-Section Analysis
+**Deviation**: RLS admin policies use `members.id = auth.uid()` vs design's `members.user_id = auth.uid()`. Functionally correct since `members.id` references `auth.users(id)` directly.
 
-### Section 1: Database Schema (98%)
+### 2. TypeScript Types (100%) -- PASS
 
-All 5 tables created with correct columns, types, ENUMs, RLS policies, and indexes.
+All types in `src/types/database.ts` lines 598-769:
+- 5 enums (ProgressLogType, ProgressLogStatus, ReportPeriodType, ReportScope, ReportStatus)
+- 15 interfaces (Project, SubProject, ProgressLog, ReportTemplate, Report, etc.)
+- 3 union/content types (ReportSectionContent, ReportContent, etc.)
+- 2 joined view types (ProgressLogWithDetails, ReportWithDetails)
 
-- ✅ `projects` — structure, RLS, indexes correct
-- ✅ `sub_projects` — structure, RLS, indexes correct
-- ✅ `progress_logs` — structure, 2 ENUMs, RLS, 5 indexes correct
-- ✅ `report_templates` — structure, 2 ENUMs, RLS correct
-- ✅ `reports` — structure, 1 ENUM, RLS, 5 indexes correct
-- ✅ RLS policies — `members.id = auth.uid()` 패턴은 기존 프로젝트와 일치 (정상)
+### 3. Server Actions (100%) -- PASS
 
-### Section 2: TypeScript Types (97%)
+All 13 functions in `src/lib/actions/reports.ts`:
+- getProjects, getSubProjects
+- getProgressLogs, getPersonalProgressLogs, addProgressLog, updateProgressLog, deleteProgressLog
+- getReportTemplates, getReports, getReport, createReport, updateReport, deleteReport
 
-All types implemented in `src/types/database.ts`:
-- ✅ 5 union types (ProgressLogType, ProgressLogStatus, ReportPeriodType, ReportScope, ReportStatus)
-- ✅ 7 entity interfaces
-- ✅ 6 content interfaces
-- ✅ 2 joined view types
-- ⚠️ `Database.public.Tables` not extended (minor — using manual types)
+### 4. UI Components (85%) -- PARTIAL
 
-### Section 3: Server Actions (95%)
+All 10 component files exist in `src/components/features/reports/`:
 
-All 13 functions implemented in `src/lib/actions/reports.ts`:
-- ✅ getProjects(), getSubProjects()
-- ✅ getProgressLogs(), getPersonalProgressLogs()
-- ✅ addProgressLog(), updateProgressLog(), deleteProgressLog()
-- ✅ getReportTemplates(), getReports(), getReport()
-- ✅ createReport(), updateReport(), deleteReport()
-- ⚠️ Minor: import path uses `@/types/database` instead of `@/types/database.types`
+| Component | Status | Notes |
+|-----------|:------:|-------|
+| auto-generate-dialog.tsx | PARTIAL | Missing personal scope variant |
+| presentation-mode.tsx | MATCH | splitIntoSlides, keyboard, fullscreen |
+| print-layout.tsx | MATCH | format/sections props |
+| print-dialog.tsx | MATCH | format, orientation, includeSections |
+| progress-preview-tree.tsx | MATCH | Props match exactly |
+| report-detail-view.tsx | MATCH | Matrix/list/text rendering |
+| report-edit-form.tsx | PARTIAL | Missing onSave callback, loose types |
+| report-list.tsx | MATCH | Filters, status badges |
+| progress-log-form.tsx | MATCH | All fields present |
+| progress-log-list.tsx | MATCH | Project filter, date range |
 
-### Section 4: Components (92%)
+### 5. Page Routes (100%) -- PASS
 
-All 10 component files created:
-- ✅ `auto-generate-dialog.tsx` (571 lines)
-- ✅ `progress-preview-tree.tsx` (156 lines)
-- ✅ `presentation-mode.tsx` (310 lines)
-- ✅ `print-dialog.tsx` (196 lines)
-- ✅ `print-layout.tsx` (291 lines)
-- ✅ `report-list.tsx`, `report-detail-view.tsx`, `report-edit-form.tsx`
-- ✅ `progress-log-list.tsx`, `progress-log-form.tsx`
-- ⚠️ Missing: "미리보기" button in AutoGenerateDialog footer
-- ⚠️ Missing: personal scope variant in AutoGenerateDialog
+- `/reports` (page.tsx + loading.tsx)
+- `/reports/[id]` (detail view)
+- `/reports/[id]/edit` (edit form)
+- `/reports/progress` (progress log management)
 
-### Section 5: Pages (93%)
+### 6. Print CSS (95%) -- PASS
 
-- ✅ `/reports` — list page
-- ✅ `/reports/[id]` — detail page
-- ✅ `/reports/[id]/edit` — edit page
-- ✅ `/reports/progress` — progress log management
-- ✅ `/reports/loading.tsx` — skeleton loader
-- ⚠️ Uses `force-dynamic` instead of `revalidate = 60`
-
-### Sidebar (100%)
-
-- ✅ `FileText` icon imported
-- ✅ Reports nav item added between Calendar and Mentoring
-
-### Print CSS (95%)
-
-- ✅ @media print rules in globals.css
-- ✅ `.print-layout`, `.print-table`, `.print-section` classes
-- ⚠️ Missing: `@page :first { margin-top: 10mm }` rule
+All rules in `src/app/globals.css` lines 469-517. Missing: `@page :first { margin-top: 10mm; }`.
 
 ---
 
 ## Gaps Summary
 
-### ~~HIGH Priority~~ (RESOLVED)
-1. ~~RLS policy column fix~~ — 실제 검증 결과 `members.id = auth.uid()`가 올바른 패턴임 (오탐)
+### Missing Features
 
-### MEDIUM Priority
-2. **Personal scope dialog variant** — AutoGenerateDialog needs assignee-based flow for personal monthly reports
+| Item | Severity | Description |
+|------|:--------:|-------------|
+| Personal scope dialog variant | MEDIUM | `auto-generate-dialog.tsx` has no handling for `scope === "personal"` |
+| "미리보기" button | LOW | DialogFooter missing Preview button |
+| `@page :first` CSS rule | LOW | Missing first-page margin |
+| 홍성군 project seed | LOW | Second test project not seeded |
+| 6th sub-project seed | LOW | "기타 사업 지원" not seeded |
 
-### LOW Priority
-3. Missing "미리보기" button in AutoGenerateDialog
-4. Missing `@page :first` CSS rule
-5. Component prop types use `Record<string, unknown>` instead of strongly-typed interfaces
+### Changed Features
+
+| Item | Severity | Description |
+|------|:--------:|-------------|
+| Component prop types | LOW | Uses `Record<string, unknown>` instead of typed interfaces |
+| RLS admin policy column | LOW | `members.id` vs `members.user_id` (functionally equivalent) |
+| Page caching | LOW | `force-dynamic` instead of `revalidate = 60` (improvement) |
+| Sidebar label | LOW | "Reports" vs "보고서" (project convention) |
 
 ---
 
-## Recommended Actions
+## Recommendations
 
-1. ~~Create `00026_fix_rls_policies.sql`~~ — 불필요 (RLS 정상 확인)
-2. Add personal scope handling to `auto-generate-dialog.tsx`
-3. Update design document to reflect implementation decisions (button layout, table vs card, force-dynamic)
+### To reach 95%+
+1. **Implement personal scope variant** in AutoGenerateDialog (MEDIUM priority)
+2. **Upgrade component prop types** to use existing typed interfaces from `database.ts`
+
+### Low Priority
+3. Add "미리보기" button to AutoGenerateDialog footer
+4. Add `@page :first { margin-top: 10mm; }` CSS rule
+5. Complete seed data (홍성군 project, missing sub-projects)
+
+---
+
+## Conclusion
+
+Overall match rate: **91%** (above 90% threshold). The implementation is fundamentally complete. The single most impactful gap is the missing personal scope variant in AutoGenerateDialog.

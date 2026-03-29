@@ -13,7 +13,7 @@
  */
 
 // ─── 노드 타입 ───
-export type NodeType = "student" | "theme" | "method" | "tech" | "project" | "conference" | "axis";
+export type NodeType = "student" | "theme" | "method" | "tech" | "project" | "conference" | "axis" | "paper";
 
 export interface StudentProfile {
   /** 학위 과정 */
@@ -63,6 +63,7 @@ export const NODE_COLORS: Record<NodeType, string> = {
   project: "#f0a050",
   conference: "#e05858",
   axis: "#e8e070",
+  paper: "#f5a623",
 };
 
 export const NODE_LABELS: Record<NodeType, string> = {
@@ -73,6 +74,7 @@ export const NODE_LABELS: Record<NodeType, string> = {
   project: "프로젝트",
   conference: "학회",
   axis: "연구축",
+  paper: "논문",
 };
 
 // ═══════════════════════════════════════════════

@@ -373,8 +373,6 @@ export default async function MemberDetailPage({
                   <p className="font-medium">
                     {member.admission_date
                       ? formatYearMonth(member.admission_date)
-                      : member.enrollment_year
-                      ? `${member.enrollment_year}년`
                       : "-"}
                   </p>
                 </div>
@@ -388,8 +386,6 @@ export default async function MemberDetailPage({
                   <p className="font-medium">
                     {member.graduation_date
                       ? formatYearMonth(member.graduation_date)
-                      : member.expected_graduation_year
-                      ? `${member.expected_graduation_year}년`
                       : "-"}
                   </p>
                 </div>

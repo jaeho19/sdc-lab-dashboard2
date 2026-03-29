@@ -427,8 +427,6 @@ export function filterFullTimeMembersForGantt<T extends {
   employment_type: string;
   admission_date: string | null;
   graduation_date: string | null;
-  enrollment_year: number | null;
-  expected_graduation_year: number | null;
   status: string;
 }>(members: T[]): GanttMemberData[] {
   const today = new Date();
@@ -436,25 +434,19 @@ export function filterFullTimeMembersForGantt<T extends {
   return members
     .filter(m => m.employment_type === "full-time" && m.position !== "professor")
     .map(m => {
-      // 시작일: admission_date 우선, 없으면 enrollment_year 사용
+      // 시작일: admission_date 사용
       let startDate: Date;
       if (m.admission_date) {
         startDate = new Date(m.admission_date);
-      } else if (m.enrollment_year) {
-        // enrollment_year만 있는 경우 3월 1일로 가정
-        startDate = new Date(m.enrollment_year, 2, 1);
       } else {
         // 날짜 정보 없으면 현재 날짜
         startDate = new Date();
       }
 
-      // 종료일: graduation_date 우선, 없으면 expected_graduation_year 사용
+      // 종료일: graduation_date 사용
       let endDate: Date;
       if (m.graduation_date) {
         endDate = new Date(m.graduation_date);
-      } else if (m.expected_graduation_year) {
-        // expected_graduation_year만 있는 경우 2월 28일로 가정
-        endDate = new Date(m.expected_graduation_year, 1, 28);
       } else {
         // 날짜 정보 없으면 시작일 + 2년
         endDate = new Date(startDate);

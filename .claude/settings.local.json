@@ -116,7 +116,15 @@
       "Bash(npm config list:*)",
       "Bash(git -C C:devsdclab-dashboard status)",
       "Skill(bkit:pdca)",
-      "Bash(git status:*)"
+      "Bash(git status:*)",
+      "WebFetch(domain:www.nrf.re.kr)",
+      "mcp__hyperbrowser__scrape_webpage",
+      "mcp__supabase__list_projects",
+      "mcp__supabase__execute_sql",
+      "mcp__hyperbrowser__browser_use_agent",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__apply_migration",
+      "mcp__supabase__generate_typescript_types"
     ]
   }
 }

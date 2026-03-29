@@ -15,6 +15,7 @@ import {
   type NodeType,
   type StudentProfile,
 } from "./research-map-data";
+import { usePapers } from "@/hooks/use-papers";
 
 // ─── Types for D3 simulation ───
 interface SimNode extends MapNode {
@@ -39,21 +40,26 @@ const VIEW_OPTIONS: { mode: ViewMode; label: string }[] = [
   { mode: "bridge", label: "Shared Methods" },
 ];
 
-const VIEW_LABELS: Record<ViewMode, string> = {
-  all: "All",
-  urban: "Urban",
-  rural: "Rural",
-  bridge: "Shared",
-  conf: "Conference",
-};
-
 const NODE_TYPE_BADGES: { type: NodeType; label: string }[] = [
   { type: "student", label: "학생" },
   { type: "theme", label: "연구주제" },
   { type: "project", label: "프로젝트" },
   { type: "conference", label: "학회" },
   { type: "method", label: "방법론" },
+  { type: "tech", label: "기술/도구" },
   { type: "axis", label: "연구축" },
+  { type: "paper", label: "논문" },
+];
+
+const LEGEND_ITEMS: { type: NodeType; label: string }[] = [
+  { type: "student", label: "학생 (Student)" },
+  { type: "theme", label: "연구주제 (Research Topic)" },
+  { type: "project", label: "프로젝트 (Project)" },
+  { type: "conference", label: "학회 (Conference)" },
+  { type: "method", label: "방법론 (Method)" },
+  { type: "tech", label: "기술/도구 (Tech/Tools)" },
+  { type: "axis", label: "연구축 (Research Axis)" },
+  { type: "paper", label: "논문 (Paper)" },
 ];
 
 // ─── Helper: get id from node or string ───
@@ -88,6 +94,178 @@ function getConnections(
     .filter(Boolean) as (SimNode & { linkType: string })[];
 }
 
+// ─── Helper: compute view-mode visible node set ───
+function computeViewModeVisible(
+  viewMode: ViewMode,
+  nodes: SimNode[],
+  links: SimLink[]
+): Set<string> {
+  if (viewMode === "all") return new Set(nodes.map((n) => n.id));
+
+  if (viewMode === "urban" || viewMode === "rural") {
+    // Axis node + students in this axis
+    const seeds = new Set<string>([viewMode]);
+    for (const n of nodes) {
+      if (n.axes?.includes(viewMode)) seeds.add(n.id);
+    }
+    // Expand 1-hop from seeds (don't cascade)
+    const vis = new Set(seeds);
+    for (const l of links) {
+      const s = nodeId(l.source);
+      const t = nodeId(l.target);
+      if (seeds.has(s)) vis.add(t);
+      if (seeds.has(t)) vis.add(s);
+    }
+    return vis;
+  }
+
+  if (viewMode === "conf") {
+    // Conference nodes + all direct connections
+    const seeds = new Set<string>();
+    for (const n of nodes) {
+      if (n.type === "conference") seeds.add(n.id);
+    }
+    const vis = new Set(seeds);
+    for (const l of links) {
+      const s = nodeId(l.source);
+      const t = nodeId(l.target);
+      if (seeds.has(s)) vis.add(t);
+      if (seeds.has(t)) vis.add(s);
+    }
+    return vis;
+  }
+
+  if (viewMode === "bridge") {
+    // Method + tech nodes + students connected to them
+    const seeds = new Set<string>();
+    for (const n of nodes) {
+      if (n.type === "method" || n.type === "tech") seeds.add(n.id);
+    }
+    const vis = new Set(seeds);
+    for (const l of links) {
+      const s = nodeId(l.source);
+      const t = nodeId(l.target);
+      if (seeds.has(s)) {
+        const tn = nodes.find((x) => x.id === t);
+        if (tn && tn.type === "student") vis.add(t);
+      }
+      if (seeds.has(t)) {
+        const sn = nodes.find((x) => x.id === s);
+        if (sn && sn.type === "student") vis.add(s);
+      }
+    }
+    return vis;
+  }
+
+  return new Set(nodes.map((n) => n.id));
+}
+
+// ─── Helper: original link properties ───
+function origLinkOpacity(d: SimLink): number {
+  return d.type === "kk" ? 0.06 : d.type === "collab" ? 0.4 : 0.15;
+}
+function origLinkWidth(d: SimLink): number {
+  return d.type === "kk" ? 1 : d.type === "collab" ? 2 : 1.2;
+}
+
+// ─── Unified visual state ───
+function applyVisualState(
+  nodeEls: d3.Selection<SVGGElement, SimNode, SVGGElement, unknown>,
+  linkEls: d3.Selection<SVGLineElement, SimLink, SVGGElement, unknown>,
+  nodes: SimNode[],
+  links: SimLink[],
+  viewMode: ViewMode,
+  disabledTypes: Set<NodeType>,
+  selectedNodeId: string | null,
+  duration: number = 300
+) {
+  // Layer 1: View Mode
+  const viewVisible = computeViewModeVisible(viewMode, nodes, links);
+
+  // Layer 2: Node Type filter (remove disabled types from visible set)
+  const typeVisible = new Set<string>();
+  for (const id of viewVisible) {
+    const n = nodes.find((x) => x.id === id);
+    if (n && !disabledTypes.has(n.type)) typeVisible.add(id);
+  }
+
+  // Layer 3: Node selection (1-hop from selected, within typeVisible)
+  const effectiveSelectedId =
+    selectedNodeId && typeVisible.has(selectedNodeId) ? selectedNodeId : null;
+
+  let finalNodeVisible: Set<string>;
+  if (effectiveSelectedId) {
+    const neighborhood = new Set<string>([effectiveSelectedId]);
+    for (const l of links) {
+      const s = nodeId(l.source);
+      const t = nodeId(l.target);
+      if (s === effectiveSelectedId && typeVisible.has(t)) neighborhood.add(t);
+      if (t === effectiveSelectedId && typeVisible.has(s)) neighborhood.add(s);
+    }
+    finalNodeVisible = neighborhood;
+  } else {
+    finalNodeVisible = typeVisible;
+  }
+
+  const hasDimming =
+    viewMode !== "all" || disabledTypes.size > 0 || effectiveSelectedId !== null;
+
+  // ── Apply to nodes ──
+  nodeEls.each(function (d: SimNode) {
+    const isVisible = finalNodeVisible.has(d.id);
+    const g = d3.select(this);
+    g.classed("rm-sel", d.id === effectiveSelectedId);
+    g.select("circle")
+      .transition()
+      .duration(duration)
+      .attr("opacity", isVisible ? 1 : 0.08);
+    g.select("text")
+      .transition()
+      .duration(duration)
+      .attr("opacity", isVisible ? 1 : 0.05);
+  });
+
+  // ── Apply to links ──
+  linkEls.each(function (d: SimLink) {
+    const sId = nodeId(d.source);
+    const tId = nodeId(d.target);
+    const bothVisible = finalNodeVisible.has(sId) && finalNodeVisible.has(tId);
+    const connectsSelected =
+      effectiveSelectedId !== null &&
+      (sId === effectiveSelectedId || tId === effectiveSelectedId);
+
+    const origOp = origLinkOpacity(d);
+    const origW = origLinkWidth(d);
+
+    let targetOpacity: number;
+    let targetWidth: number;
+
+    if (!bothVisible) {
+      targetOpacity = 0.04;
+      targetWidth = origW;
+    } else if (effectiveSelectedId && connectsSelected) {
+      targetOpacity = Math.max(origOp * 3, 0.35);
+      targetWidth = origW + 0.5;
+    } else if (hasDimming && !effectiveSelectedId) {
+      targetOpacity = origOp;
+      targetWidth = origW + 0.5;
+    } else {
+      targetOpacity = origOp;
+      targetWidth = origW;
+    }
+
+    d3.select(this)
+      .transition()
+      .duration(duration)
+      .attr("stroke-opacity", targetOpacity)
+      .attr("stroke-width", targetWidth);
+  });
+}
+
+// ════════════════════════════════════════════════════════
+// ─── Main Component ───
+// ════════════════════════════════════════════════════════
+
 export function ResearchMapGraph() {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -101,7 +279,15 @@ export function ResearchMapGraph() {
   const [selectedNode, setSelectedNode] = useState<SimNode | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("all");
   const [showPrompt, setShowPrompt] = useState(true);
-  const [activeNodeType, setActiveNodeType] = useState<NodeType | null>(null);
+  const [disabledTypes, setDisabledTypes] = useState<Set<NodeType>>(new Set());
+  const [showPapers, setShowPapers] = useState(false);
+
+  // DB paper nodes
+  const { data: paperMapData } = usePapers({ enabled: true });
+
+  // Ref for D3 callbacks to read latest selection without stale closures
+  const selectedNodeRef = useRef<string | null>(null);
+  selectedNodeRef.current = selectedNode?.id ?? null;
 
   // ─── D3 initialization ───
   useEffect(() => {
@@ -109,14 +295,12 @@ export function ResearchMapGraph() {
     const container = containerRef.current;
     if (!svgEl || !container) return;
 
-    // Clear previous
     d3.select(svgEl).selectAll("*").remove();
 
     const W = container.clientWidth;
     const H = container.clientHeight;
 
     const svg = d3.select(svgEl).attr("width", W).attr("height", H);
-
     const g = svg.append("g");
 
     // Zoom
@@ -128,10 +312,8 @@ export function ResearchMapGraph() {
 
     // Glow filters
     const defs = svg.append("defs");
-    for (const [key, color] of Object.entries(NODE_COLORS)) {
-      const filter = defs
-        .append("filter")
-        .attr("id", `glow-${key}`);
+    for (const [key] of Object.entries(NODE_COLORS)) {
+      const filter = defs.append("filter").attr("id", `glow-${key}`);
       filter
         .append("feGaussianBlur")
         .attr("stdDeviation", 3)
@@ -141,9 +323,26 @@ export function ResearchMapGraph() {
       merge.append("feMergeNode").attr("in", "SourceGraphic");
     }
 
-    // Clone data for D3 mutation
+    // Clone data for D3 mutation — merge static + DB paper nodes
     const nodes: SimNode[] = NODES.map((n) => ({ ...n }));
     const links: SimLink[] = LINKS.map((l) => ({ ...l }));
+
+    if (showPapers && paperMapData) {
+      const existingIds = new Set(nodes.map((n) => n.id));
+      for (const pn of paperMapData.nodes) {
+        if (!existingIds.has(pn.id)) {
+          nodes.push({ ...pn, axes: undefined, actions: undefined, student: undefined });
+        }
+      }
+      for (const pl of paperMapData.links) {
+        const srcExists = nodes.some((n) => n.id === pl.source);
+        const tgtExists = nodes.some((n) => n.id === pl.target);
+        if (srcExists && tgtExists) {
+          links.push({ ...pl });
+        }
+      }
+    }
+
     nodesRef.current = nodes;
     linksRef.current = links;
 
@@ -158,13 +357,10 @@ export function ResearchMapGraph() {
           .distance((d) => {
             if (d.type === "kk") return 60;
             if (d.type === "collab") return 70;
-            const s = nodes.find(
-              (x) => x.id === nodeId(d.source)
-            );
-            const t = nodes.find(
-              (x) => x.id === nodeId(d.target)
-            );
+            const s = nodes.find((x) => x.id === nodeId(d.source));
+            const t = nodes.find((x) => x.id === nodeId(d.target));
             if (!s || !t) return 100;
+            if (s.type === "paper" || t.type === "paper") return 50;
             if (s.type === "axis" || t.type === "axis") return 200;
             if (s.type === "student" !== (t.type === "student")) return 100;
             return 130;
@@ -174,6 +370,7 @@ export function ResearchMapGraph() {
         "charge",
         d3.forceManyBody<SimNode>().strength((d) => {
           if (d.type === "axis") return -900;
+          if (d.type === "paper") return -150;
           if (
             d.type === "student" ||
             d.type === "project" ||
@@ -209,12 +406,8 @@ export function ResearchMapGraph() {
         const tn = nodes.find((x) => x.id === nodeId(d.target));
         return tn ? NODE_COLORS[tn.type] : "#1a2040";
       })
-      .attr("stroke-width", (d) =>
-        d.type === "kk" ? 1 : d.type === "collab" ? 2 : 1.2
-      )
-      .attr("stroke-opacity", (d) =>
-        d.type === "kk" ? 0.06 : d.type === "collab" ? 0.4 : 0.15
-      )
+      .attr("stroke-width", (d) => origLinkWidth(d))
+      .attr("stroke-opacity", (d) => origLinkOpacity(d))
       .attr("stroke-dasharray", (d) =>
         d.type === "kk" ? "2,4" : d.type === "collab" ? "5,3" : null
       );
@@ -247,13 +440,16 @@ export function ResearchMapGraph() {
             if (!e.active) sim.alphaTarget(0);
             d.fx = null;
             d.fy = null;
-            // Click detection: fire select if no drag movement occurred
             if (!dragMoved) {
               e.sourceEvent?.stopPropagation();
               tooltip.style("opacity", 0);
               setShowPrompt(false);
-              setSelectedNode({ ...d });
-              highlightNode(d, nodeEls, linkEls, nodes, links);
+              // Toggle: re-clicking same node clears selection
+              if (selectedNodeRef.current === d.id) {
+                setSelectedNode(null);
+              } else {
+                setSelectedNode({ ...d });
+              }
             }
           })
       );
@@ -263,11 +459,13 @@ export function ResearchMapGraph() {
       .attr("r", (d) => d.size)
       .attr("fill", (d) => {
         if (d.type === "axis") return NODE_COLORS[d.type] + "30";
+        if (d.type === "paper") return NODE_COLORS[d.type] + "88";
         return NODE_COLORS[d.type] + "cc";
       })
       .attr("stroke", (d) => NODE_COLORS[d.type])
       .attr("stroke-width", (d) => (d.type === "axis" ? 2 : 1.5))
-      .attr("stroke-opacity", (d) => (d.type === "axis" ? 0.5 : 0.7));
+      .attr("stroke-opacity", (d) => (d.type === "axis" ? 0.5 : d.type === "paper" ? 0.5 : 0.7))
+      .attr("stroke-dasharray", (d) => (d.type === "paper" ? "3,2" : null));
 
     nodeEls
       .append("text")
@@ -324,7 +522,7 @@ export function ResearchMapGraph() {
       })
       .on("mouseout", () => tooltip.style("opacity", 0));
 
-    // Background click to clear selection (rect instead of svg.on("click") to avoid zoom conflicts)
+    // Background click to clear selection
     g.insert("rect", ":first-child")
       .attr("width", W * 10)
       .attr("height", H * 10)
@@ -334,7 +532,6 @@ export function ResearchMapGraph() {
       .style("cursor", "default")
       .on("click", () => {
         setSelectedNode(null);
-        clearHighlight(nodeEls, linkEls);
       });
 
     // Tick
@@ -358,14 +555,13 @@ export function ResearchMapGraph() {
         );
     }, 400);
 
-    // Store refs for view mode changes
+    // Store refs for effects to use
     (svgEl as any).__rm = { nodeEls, linkEls, nodes, links };
 
     // Keyboard
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setSelectedNode(null);
-        clearHighlight(nodeEls, linkEls);
       }
     };
     document.addEventListener("keydown", handleKey);
@@ -376,171 +572,69 @@ export function ResearchMapGraph() {
       document.removeEventListener("keydown", handleKey);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDark]);
+  }, [isDark, showPapers, paperMapData]);
 
-  // ─── View mode effect ───
+  // ─── Unified visual state effect ───
   useEffect(() => {
     const svgEl = svgRef.current;
     if (!svgEl || !(svgEl as any).__rm) return;
     const { nodeEls, linkEls, nodes, links } = (svgEl as any).__rm;
 
+    // If selected node's type got disabled, clear selection
+    if (selectedNode && disabledTypes.has(selectedNode.type)) {
+      setSelectedNode(null);
+      return;
+    }
+
+    applyVisualState(
+      nodeEls,
+      linkEls,
+      nodes,
+      links,
+      viewMode,
+      disabledTypes,
+      selectedNode?.id ?? null
+    );
+  }, [viewMode, disabledTypes, selectedNode]);
+
+  // ─── View mode change handler ───
+  const handleViewModeChange = useCallback((mode: ViewMode) => {
     setSelectedNode(null);
-    setActiveNodeType(null);
-    clearHighlight(nodeEls, linkEls);
+    setViewMode(mode);
+  }, []);
 
-    if (viewMode === "all") {
-      nodeEls.classed("rm-dim", false);
-      linkEls.classed("rm-dim", false);
-      return;
-    }
-
-    if (viewMode === "urban" || viewMode === "rural") {
-      const vis = new Set<string>([viewMode]);
-      for (const n of nodes) {
-        if (n.axes?.includes(viewMode)) vis.add(n.id);
+  // ─── Toggle node type (multi-select) ───
+  const handleToggleNodeType = useCallback((type: NodeType) => {
+    setDisabledTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(type)) {
+        next.delete(type);
+      } else {
+        next.add(type);
       }
-      for (const l of links) {
-        const s = nodeId(l.source);
-        const t = nodeId(l.target);
-        if (vis.has(s)) vis.add(t);
-        if (vis.has(t)) vis.add(s);
-      }
-      nodeEls.classed("rm-dim", (n: SimNode) => !vis.has(n.id));
-      linkEls.classed("rm-dim", (l: SimLink) => {
-        return !vis.has(nodeId(l.source)) || !vis.has(nodeId(l.target));
-      });
-      return;
-    }
-
-    if (viewMode === "bridge") {
-      const urbanStudents = new Set(
-        nodes
-          .filter(
-            (n: SimNode) =>
-              n.type === "student" && n.axes?.includes("urban")
-          )
-          .map((n: SimNode) => n.id)
-      );
-      const ruralStudents = new Set(
-        nodes
-          .filter(
-            (n: SimNode) =>
-              n.type === "student" && n.axes?.includes("rural")
-          )
-          .map((n: SimNode) => n.id)
-      );
-      const bridgeKw = new Set<string>();
-      for (const kw of nodes.filter((n: SimNode) =>
-        ["theme", "method", "tech"].includes(n.type)
-      )) {
-        const connIds = getConnections(kw.id, links, nodes).map(
-          (x) => x.id
-        );
-        if (
-          connIds.some((id) => urbanStudents.has(id)) &&
-          connIds.some((id) => ruralStudents.has(id))
-        ) {
-          bridgeKw.add(kw.id);
-        }
-      }
-      const vis = new Set(bridgeKw);
-      for (const l of links) {
-        const s = nodeId(l.source);
-        const t = nodeId(l.target);
-        if (bridgeKw.has(s)) {
-          vis.add(s);
-          vis.add(t);
-        }
-        if (bridgeKw.has(t)) {
-          vis.add(t);
-          vis.add(s);
-        }
-      }
-      nodeEls.classed("rm-dim", (n: SimNode) => !vis.has(n.id));
-      linkEls.classed("rm-dim", (l: SimLink) => {
-        return !vis.has(nodeId(l.source)) || !vis.has(nodeId(l.target));
-      });
-      return;
-    }
-
-    if (viewMode === "conf") {
-      const vis = new Set<string>();
-      for (const n of nodes) {
-        if (n.type === "conference" || n.type === "student") vis.add(n.id);
-      }
-      for (const kw of nodes.filter((n: SimNode) =>
-        ["theme", "method", "tech"].includes(n.type)
-      )) {
-        const c = getConnections(kw.id, links, nodes);
-        if (
-          c.some((x) => x.type === "conference") &&
-          c.some((x) => x.type === "student")
-        ) {
-          vis.add(kw.id);
-        }
-      }
-      nodeEls.classed("rm-dim", (n: SimNode) => !vis.has(n.id));
-      linkEls.classed("rm-dim", (l: SimLink) => {
-        return !vis.has(nodeId(l.source)) || !vis.has(nodeId(l.target));
-      });
-    }
-  }, [viewMode]);
-
-  // ─── Node type filter effect ───
-  useEffect(() => {
-    const svgEl = svgRef.current;
-    if (!svgEl || !(svgEl as any).__rm) return;
-    const { nodeEls, linkEls } = (svgEl as any).__rm;
-
-    if (!activeNodeType) {
-      // Reset — re-apply current view mode by not touching classes here
-      // (view mode effect handles it)
-      return;
-    }
-
-    setSelectedNode(null);
-    // Highlight nodes of this type + their direct connections
-    const vis = new Set<string>();
-    const nodes: SimNode[] = (svgEl as any).__rm.nodes;
-    const links: SimLink[] = (svgEl as any).__rm.links;
-    for (const n of nodes) {
-      if (n.type === activeNodeType) vis.add(n.id);
-    }
-    for (const l of links) {
-      const s = nodeId(l.source);
-      const t = nodeId(l.target);
-      if (vis.has(s)) vis.add(t);
-      if (vis.has(t)) vis.add(s);
-    }
-    nodeEls.classed("rm-dim", (n: SimNode) => !vis.has(n.id));
-    linkEls.classed("rm-dim", (l: SimLink) => !vis.has(nodeId(l.source)) || !vis.has(nodeId(l.target)));
-  }, [activeNodeType]);
+      return next;
+    });
+  }, []);
 
   // ─── Click node from detail panel ───
-  const handleDetailNodeClick = useCallback(
-    (id: string) => {
-      const svgEl = svgRef.current;
-      if (!svgEl || !(svgEl as any).__rm) return;
-      const { nodeEls, linkEls, nodes, links } = (svgEl as any).__rm;
-      const node = nodes.find((n: SimNode) => n.id === id);
-      if (!node) return;
-      setSelectedNode(node);
-      highlightNode(node, nodeEls, linkEls, nodes, links);
-    },
-    []
-  );
+  const handleDetailNodeClick = useCallback((id: string) => {
+    const svgEl = svgRef.current;
+    if (!svgEl || !(svgEl as any).__rm) return;
+    const { nodes } = (svgEl as any).__rm;
+    const node = nodes.find((n: SimNode) => n.id === id);
+    if (!node) return;
+    setSelectedNode({ ...node });
+  }, []);
 
   // ─── Selected node connections ───
   const connections = selectedNode
-    ? getConnections(
-        selectedNode.id,
-        linksRef.current,
-        nodesRef.current
-      )
+    ? getConnections(selectedNode.id, linksRef.current, nodesRef.current)
     : [];
 
-  const connectionsByType: Record<string, (SimNode & { linkType: string })[]> =
-    {};
+  const connectionsByType: Record<
+    string,
+    (SimNode & { linkType: string })[]
+  > = {};
   for (const conn of connections) {
     let key = NODE_LABELS[conn.type] || conn.type;
     if (conn.linkType === "kk") key = "관련 키워드";
@@ -548,54 +642,80 @@ export function ResearchMapGraph() {
     connectionsByType[key].push(conn);
   }
 
-  // ─── Legend items ───
-  const legendItems: { type: NodeType; label: string }[] = [
-    { type: "student", label: "학생 (Student)" },
-    { type: "theme", label: "연구주제 (Research Topic)" },
-    { type: "project", label: "프로젝트 (Project)" },
-    { type: "conference", label: "학회 (Conference)" },
-    { type: "method", label: "방법론 (Method)" },
-    { type: "axis", label: "연구축 (Research Axis)" },
-  ];
-
   const clearSelection = useCallback(() => {
     setSelectedNode(null);
-    const svgEl = svgRef.current;
-    if (svgEl && (svgEl as any).__rm) {
-      clearHighlight(
-        (svgEl as any).__rm.nodeEls,
-        (svgEl as any).__rm.linkEls
-      );
-    }
   }, []);
 
   return (
-    <div className="relative flex overflow-hidden rounded-lg" style={{ height: "calc(100vh - 160px)", minHeight: 500, background: "#0a0e2a", fontFamily: "var(--font-paperlogy), 'Pretendard', 'Apple SD Gothic Neo', sans-serif" }}>
+    <div
+      className="relative flex overflow-hidden rounded-lg"
+      style={{
+        height: "calc(100vh - 160px)",
+        minHeight: 500,
+        background: "#0a0e2a",
+        fontFamily:
+          "var(--font-paperlogy), 'Pretendard', 'Apple SD Gothic Neo', sans-serif",
+      }}
+    >
       {/* ── Left Sidebar ── */}
       <div
         className="relative z-10 flex shrink-0 flex-col overflow-y-auto"
-        style={{ width: 300, borderRight: "1px solid rgba(60,80,140,0.2)", background: "linear-gradient(180deg, #0c1030 0%, #080c22 100%)" }}
+        style={{
+          width: 300,
+          borderRight: "1px solid rgba(60,80,140,0.2)",
+          background:
+            "linear-gradient(180deg, #0c1030 0%, #080c22 100%)",
+        }}
       >
         {/* Title */}
-        <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid rgba(60,80,140,0.15)" }}>
-          <h2 className="text-lg font-bold" style={{ color: "#a0c0ff" }}>SDC Lab Research Map</h2>
-          <p className="mt-0.5 text-xs" style={{ color: "#3a4a6a" }}>Spatial Data Community Lab | 2026</p>
+        <div
+          style={{
+            padding: "20px 20px 16px",
+            borderBottom: "1px solid rgba(60,80,140,0.15)",
+          }}
+        >
+          <h2 className="text-lg font-bold" style={{ color: "#a0c0ff" }}>
+            SDC Lab Research Map
+          </h2>
+          <p className="mt-0.5 text-xs" style={{ color: "#3a4a6a" }}>
+            Spatial Data Community Lab | 2026
+          </p>
         </div>
 
         {/* View Mode */}
-        <div style={{ padding: "14px 20px", borderBottom: "1px solid rgba(60,80,140,0.15)" }}>
-          <p className="mb-2 text-[11px] font-bold uppercase tracking-[1.5px]" style={{ color: "#4a5a7a" }}>View Mode</p>
+        <div
+          style={{
+            padding: "14px 20px",
+            borderBottom: "1px solid rgba(60,80,140,0.15)",
+          }}
+        >
+          <p
+            className="mb-2 text-[11px] font-bold uppercase tracking-[1.5px]"
+            style={{ color: "#4a5a7a" }}
+          >
+            View Mode
+          </p>
           <div className="flex flex-col gap-1">
             {VIEW_OPTIONS.map(({ mode, label }) => (
               <button
                 key={mode}
-                onClick={() => setViewMode(mode)}
+                onClick={() => handleViewModeChange(mode)}
                 className="w-full rounded-md px-3 py-2 text-left text-[13px] font-medium transition-all"
                 style={{
-                  background: viewMode === mode ? "rgba(40,60,120,0.4)" : "rgba(20,25,60,0.4)",
-                  border: `1px solid ${viewMode === mode ? "rgba(80,120,200,0.4)" : "rgba(40,50,90,0.3)"}`,
+                  background:
+                    viewMode === mode
+                      ? "rgba(40,60,120,0.4)"
+                      : "rgba(20,25,60,0.4)",
+                  border: `1px solid ${
+                    viewMode === mode
+                      ? "rgba(80,120,200,0.4)"
+                      : "rgba(40,50,90,0.3)"
+                  }`,
                   color: viewMode === mode ? "#7eb8ff" : "#5a6a90",
-                  boxShadow: viewMode === mode ? "0 0 12px rgba(80,120,200,0.1)" : "none",
+                  boxShadow:
+                    viewMode === mode
+                      ? "0 0 12px rgba(80,120,200,0.1)"
+                      : "none",
                 }}
               >
                 {label}
@@ -604,27 +724,40 @@ export function ResearchMapGraph() {
           </div>
         </div>
 
-        {/* Node Types — clickable filter */}
-        <div style={{ padding: "14px 20px", borderBottom: "1px solid rgba(60,80,140,0.15)" }}>
-          <p className="mb-2 text-[11px] font-bold uppercase tracking-[1.5px]" style={{ color: "#4a5a7a" }}>Node Types</p>
+        {/* Node Types — multi-toggle filter */}
+        <div
+          style={{
+            padding: "14px 20px",
+            borderBottom: "1px solid rgba(60,80,140,0.15)",
+          }}
+        >
+          <p
+            className="mb-2 text-[11px] font-bold uppercase tracking-[1.5px]"
+            style={{ color: "#4a5a7a" }}
+          >
+            Node Types
+          </p>
           <div className="flex flex-wrap gap-1.5">
             {NODE_TYPE_BADGES.map(({ type, label }) => {
-              const isActive = activeNodeType === type;
+              const isEnabled = !disabledTypes.has(type);
               return (
                 <button
                   key={type}
-                  onClick={() => {
-                    const next = isActive ? null : type;
-                    setActiveNodeType(next);
-                    if (next) setViewMode("all");
-                  }}
+                  onClick={() => handleToggleNodeType(type)}
                   className="rounded-full px-3 py-1 text-xs font-medium transition-all"
                   style={{
                     cursor: "pointer",
-                    color: isActive ? "#0a0e2a" : NODE_COLORS[type],
-                    border: `1.5px solid ${isActive ? NODE_COLORS[type] : NODE_COLORS[type] + "60"}`,
-                    background: isActive ? NODE_COLORS[type] : `${NODE_COLORS[type]}10`,
-                    boxShadow: isActive ? `0 0 10px ${NODE_COLORS[type]}40` : "none",
+                    color: isEnabled ? NODE_COLORS[type] : NODE_COLORS[type] + "40",
+                    border: `1.5px solid ${
+                      isEnabled ? NODE_COLORS[type] + "80" : "rgba(40,50,80,0.3)"
+                    }`,
+                    background: isEnabled
+                      ? `${NODE_COLORS[type]}15`
+                      : "rgba(15,20,40,0.5)",
+                    boxShadow: isEnabled
+                      ? `0 0 8px ${NODE_COLORS[type]}15`
+                      : "none",
+                    opacity: isEnabled ? 1 : 0.5,
                   }}
                 >
                   {label}
@@ -634,16 +767,67 @@ export function ResearchMapGraph() {
           </div>
         </div>
 
-        {/* Legend */}
-        <div style={{ padding: "14px 20px", borderBottom: "1px solid rgba(60,80,140,0.15)" }}>
-          <p className="mb-2 text-[11px] font-bold uppercase tracking-[1.5px]" style={{ color: "#4a5a7a" }}>Legend</p>
+        {/* Paper Toggle */}
+        <div style={{ padding: "10px 20px", borderBottom: "1px solid rgba(60,80,140,0.15)" }}>
+          <button
+            onClick={() => setShowPapers((prev) => !prev)}
+            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium transition-all"
+            style={{
+              background: showPapers ? "rgba(245,166,35,0.15)" : "rgba(20,25,60,0.4)",
+              border: `1px solid ${showPapers ? "rgba(245,166,35,0.4)" : "rgba(40,50,90,0.3)"}`,
+              color: showPapers ? "#f5a623" : "#5a6a90",
+            }}
+          >
+            <span style={{ fontSize: "14px" }}>📄</span>
+            Papers {showPapers ? "ON" : "OFF"}
+            {paperMapData && (
+              <span className="ml-auto text-[11px]" style={{ color: showPapers ? "#f5a623" : "#3a4a6a" }}>
+                {paperMapData.nodes.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Legend — interactive, synced with Node Types */}
+        <div
+          style={{
+            padding: "14px 20px",
+            borderBottom: "1px solid rgba(60,80,140,0.15)",
+          }}
+        >
+          <p
+            className="mb-2 text-[11px] font-bold uppercase tracking-[1.5px]"
+            style={{ color: "#4a5a7a" }}
+          >
+            Legend
+          </p>
           <div className="flex flex-col gap-1.5">
-            {legendItems.map((item) => (
-              <div key={item.type} className="flex items-center gap-2 text-[13px]" style={{ color: "#8898b8" }}>
-                <div className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: NODE_COLORS[item.type] }} />
-                {item.label}
-              </div>
-            ))}
+            {LEGEND_ITEMS.map((item) => {
+              const isEnabled = !disabledTypes.has(item.type);
+              return (
+                <button
+                  key={item.type}
+                  onClick={() => handleToggleNodeType(item.type)}
+                  className="flex items-center gap-2 rounded-md px-1.5 py-0.5 text-left text-[13px] transition-all"
+                  style={{
+                    color: isEnabled ? "#8898b8" : "#3a4a6a",
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    opacity: isEnabled ? 1 : 0.5,
+                  }}
+                >
+                  <div
+                    className="h-2.5 w-2.5 shrink-0 rounded-full transition-opacity"
+                    style={{
+                      background: NODE_COLORS[item.type],
+                      opacity: isEnabled ? 1 : 0.25,
+                    }}
+                  />
+                  {item.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -651,21 +835,51 @@ export function ResearchMapGraph() {
         <div className="flex-1" style={{ padding: "16px 20px" }}>
           {selectedNode ? (
             <div>
-              <h3 className="text-base font-bold" style={{ color: "#a0c0ff" }}>{selectedNode.label}</h3>
-              <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-widest" style={{ color: NODE_COLORS[selectedNode.type] }}>{NODE_LABELS[selectedNode.type]}</p>
-              {/* Student profile summary in sidebar */}
+              <h3
+                className="text-base font-bold"
+                style={{ color: "#a0c0ff" }}
+              >
+                {selectedNode.label}
+              </h3>
+              <p
+                className="mt-0.5 text-[10px] font-semibold uppercase tracking-widest"
+                style={{ color: NODE_COLORS[selectedNode.type] }}
+              >
+                {NODE_LABELS[selectedNode.type]}
+              </p>
               {selectedNode.student ? (
                 <StudentSidebarPreview student={selectedNode.student} />
               ) : (
-                <div className="mt-3 text-xs leading-relaxed [&_strong]:font-semibold [&_ul]:pl-4 [&_li]:my-0.5" style={{ color: "#8898b8" }} dangerouslySetInnerHTML={{ __html: selectedNode.body || `<p>${selectedNode.desc}</p>` }} />
+                <div
+                  className="mt-3 text-xs leading-relaxed [&_strong]:font-semibold [&_ul]:pl-4 [&_li]:my-0.5"
+                  style={{ color: "#8898b8" }}
+                  dangerouslySetInnerHTML={{
+                    __html:
+                      selectedNode.body || `<p>${selectedNode.desc}</p>`,
+                  }}
+                />
               )}
             </div>
           ) : (
             <div>
-              <h3 className="text-base font-bold" style={{ color: "#a0c0ff" }}>노드를 클릭하세요</h3>
-              <p className="mt-0.5 text-[10px] uppercase tracking-widest" style={{ color: "#3a4a6a" }}>Click a node to see details</p>
-              <p className="mt-3 text-xs leading-relaxed" style={{ color: "#5a6a8a" }}>
-                그래프의 노드를 클릭하면 해당 항목의 상세 정보가 여기에 표시됩니다.
+              <h3
+                className="text-base font-bold"
+                style={{ color: "#a0c0ff" }}
+              >
+                노드를 클릭하세요
+              </h3>
+              <p
+                className="mt-0.5 text-[10px] uppercase tracking-widest"
+                style={{ color: "#3a4a6a" }}
+              >
+                Click a node to see details
+              </p>
+              <p
+                className="mt-3 text-xs leading-relaxed"
+                style={{ color: "#5a6a8a" }}
+              >
+                그래프의 노드를 클릭하면 해당 항목의 상세 정보가 여기에
+                표시됩니다.
               </p>
             </div>
           )}
@@ -673,9 +887,22 @@ export function ResearchMapGraph() {
       </div>
 
       {/* ── Graph Area ── */}
-      <div ref={containerRef} className="relative flex-1" style={{ background: "radial-gradient(ellipse at center, #0a0e28 0%, #060818 70%)" }}>
-        {/* Grid background */}
-        <div className="pointer-events-none absolute inset-0" style={{ backgroundImage: "radial-gradient(rgba(60,80,140,0.06) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+      <div
+        ref={containerRef}
+        className="relative flex-1"
+        style={{
+          background:
+            "radial-gradient(ellipse at center, #0a0e28 0%, #060818 70%)",
+        }}
+      >
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              "radial-gradient(rgba(60,80,140,0.06) 1px, transparent 1px)",
+            backgroundSize: "32px 32px",
+          }}
+        />
         <svg ref={svgRef} className="h-full w-full" />
       </div>
 
@@ -684,7 +911,11 @@ export function ResearchMapGraph() {
         className={`absolute right-0 top-0 bottom-0 z-20 hidden w-[400px] transition-transform duration-300 ease-in-out md:block ${
           selectedNode ? "translate-x-0" : "translate-x-full"
         }`}
-        style={{ borderLeft: "1px solid rgba(60,80,140,0.15)", background: "linear-gradient(180deg, #0c1030 0%, #080c22 100%)" }}
+        style={{
+          borderLeft: "1px solid rgba(60,80,140,0.15)",
+          background:
+            "linear-gradient(180deg, #0c1030 0%, #080c22 100%)",
+        }}
       >
         {selectedNode && (
           <DetailPanel
@@ -698,8 +929,20 @@ export function ResearchMapGraph() {
       </div>
 
       {/* Mobile: Sheet */}
-      <Sheet open={!!selectedNode} onOpenChange={(open) => { if (!open) clearSelection(); }}>
-        <SheetContent side="bottom" className="h-[70vh] md:hidden" style={{ background: "#0c1030", borderColor: "rgba(60,80,140,0.2)" }}>
+      <Sheet
+        open={!!selectedNode}
+        onOpenChange={(open) => {
+          if (!open) clearSelection();
+        }}
+      >
+        <SheetContent
+          side="bottom"
+          className="h-[70vh] md:hidden"
+          style={{
+            background: "#0c1030",
+            borderColor: "rgba(60,80,140,0.2)",
+          }}
+        >
           {selectedNode && (
             <DetailPanel
               node={selectedNode}
@@ -717,23 +960,14 @@ export function ResearchMapGraph() {
         .rm-link {
           transition: stroke-opacity 0.2s, stroke-width 0.2s;
         }
-        .rm-link.rm-dim {
-          stroke-opacity: 0.02 !important;
-        }
-        .rm-link.rm-hi {
-          stroke-opacity: 0.8 !important;
-        }
         .rm-node circle {
-          transition: 0.2s;
+          transition: opacity 0.2s;
+        }
+        .rm-node text {
+          transition: opacity 0.2s;
         }
         .rm-node:hover circle {
           filter: brightness(1.2) drop-shadow(0 0 6px currentColor);
-        }
-        .rm-node.rm-dim circle {
-          opacity: 0.05;
-        }
-        .rm-node.rm-dim text {
-          opacity: 0.02;
         }
         .rm-node.rm-sel circle {
           stroke: #fff !important;
@@ -747,46 +981,6 @@ export function ResearchMapGraph() {
       `}</style>
     </div>
   );
-}
-
-// ─── Highlight helpers ───
-function highlightNode(
-  d: SimNode,
-  nodeEls: d3.Selection<SVGGElement, SimNode, SVGGElement, unknown>,
-  linkEls: d3.Selection<SVGLineElement, SimLink, SVGGElement, unknown>,
-  nodes: SimNode[],
-  links: SimLink[]
-) {
-  const connected = new Set<string>([d.id]);
-  for (const l of links) {
-    const s = nodeId(l.source);
-    const t = nodeId(l.target);
-    if (s === d.id) connected.add(t);
-    if (t === d.id) connected.add(s);
-  }
-  nodeEls
-    .classed("rm-dim", (n) => !connected.has(n.id))
-    .classed("rm-sel", (n) => n.id === d.id);
-  linkEls
-    .classed("rm-dim", (l) => {
-      return (
-        !connected.has(nodeId(l.source)) ||
-        !connected.has(nodeId(l.target))
-      );
-    })
-    .classed("rm-hi", (l) => {
-      return (
-        nodeId(l.source) === d.id || nodeId(l.target) === d.id
-      );
-    });
-}
-
-function clearHighlight(
-  nodeEls: d3.Selection<SVGGElement, SimNode, SVGGElement, unknown>,
-  linkEls: d3.Selection<SVGLineElement, SimLink, SVGGElement, unknown>
-) {
-  nodeEls.classed("rm-dim", false).classed("rm-sel", false);
-  linkEls.classed("rm-dim", false).classed("rm-hi", false);
 }
 
 // ─── Detail Panel Component ───
@@ -822,7 +1016,10 @@ function DetailPanel({
       </button>
 
       {/* Header */}
-      <div className="mb-4 flex items-center gap-3 pb-3" style={{ borderBottom: "1px solid rgba(40,50,80,0.25)" }}>
+      <div
+        className="mb-4 flex items-center gap-3 pb-3"
+        style={{ borderBottom: "1px solid rgba(40,50,80,0.25)" }}
+      >
         <div
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg"
           style={{
@@ -832,8 +1029,13 @@ function DetailPanel({
           }}
         />
         <div>
-          <h2 className="text-lg font-bold" style={{ color: "#d0d8f0" }}>{node.label}</h2>
-          <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: NODE_COLORS[node.type] }}>
+          <h2 className="text-lg font-bold" style={{ color: "#d0d8f0" }}>
+            {node.label}
+          </h2>
+          <p
+            className="text-[10px] font-semibold uppercase tracking-widest"
+            style={{ color: NODE_COLORS[node.type] }}
+          >
             {NODE_LABELS[node.type]}
           </p>
         </div>
@@ -841,7 +1043,12 @@ function DetailPanel({
 
       {/* Student-specific sections */}
       {node.student ? (
-        <StudentDetailSections student={node.student} body={node.body} desc={node.desc} actions={node.actions} />
+        <StudentDetailSections
+          student={node.student}
+          body={node.body}
+          desc={node.desc}
+          actions={node.actions}
+        />
       ) : (
         <>
           {/* Overview */}
@@ -850,7 +1057,9 @@ function DetailPanel({
             <div
               className="text-[13px] leading-relaxed [&_strong]:font-semibold [&_em]:not-italic [&_ul]:pl-4 [&_li]:my-0.5"
               style={{ color: "#8898b8" }}
-              dangerouslySetInnerHTML={{ __html: node.body || `<p>${node.desc}</p>` }}
+              dangerouslySetInnerHTML={{
+                __html: node.body || `<p>${node.desc}</p>`,
+              }}
             />
           </section>
 
@@ -870,12 +1079,23 @@ function DetailPanel({
 
       {/* Connections */}
       <section>
-        <h3 className="mb-1.5 pb-1 text-[10px] font-bold uppercase tracking-wider" style={{ color: "#3a4a6a", borderBottom: "1px solid rgba(30,40,60,0.4)" }}>
+        <h3
+          className="mb-1.5 pb-1 text-[10px] font-bold uppercase tracking-wider"
+          style={{
+            color: "#3a4a6a",
+            borderBottom: "1px solid rgba(30,40,60,0.4)",
+          }}
+        >
           Connections ({totalConnections})
         </h3>
         {Object.entries(connections).map(([type, items]) => (
           <div key={type} className="mb-2">
-            <p className="mb-1 text-[10px] font-bold" style={{ color: "#3a4a6a" }}>{type} ({items.length})</p>
+            <p
+              className="mb-1 text-[10px] font-bold"
+              style={{ color: "#3a4a6a" }}
+            >
+              {type} ({items.length})
+            </p>
             <ul className="space-y-0.5">
               {items.map((n) => (
                 <li
@@ -883,12 +1103,26 @@ function DetailPanel({
                   className="flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition"
                   style={{ border: "1px solid transparent" }}
                   onClick={() => onNodeClick(n.id)}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(25,35,70,0.5)"; e.currentTarget.style.borderColor = "rgba(60,80,140,0.3)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "transparent"; }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background =
+                      "rgba(25,35,70,0.5)";
+                    e.currentTarget.style.borderColor =
+                      "rgba(60,80,140,0.3)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.borderColor = "transparent";
+                  }}
                 >
-                  <div className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: NODE_COLORS[n.type] }} />
+                  <div
+                    className="h-1.5 w-1.5 shrink-0 rounded-full"
+                    style={{ background: NODE_COLORS[n.type] }}
+                  />
                   <span style={{ color: "#8898b8" }}>{n.label}</span>
-                  <span className="ml-auto max-w-[140px] truncate text-right text-[11px]" style={{ color: "#3a4a6a" }}>
+                  <span
+                    className="ml-auto max-w-[140px] truncate text-right text-[11px]"
+                    style={{ color: "#3a4a6a" }}
+                  >
                     {(n.desc || "").substring(0, 35)}
                   </span>
                 </li>
@@ -904,7 +1138,13 @@ function DetailPanel({
 // ─── Shared UI Helpers ───
 function SectionHeader({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="mb-1.5 pb-1 text-[10px] font-bold uppercase tracking-wider" style={{ color: "#3a4a6a", borderBottom: "1px solid rgba(30,40,60,0.4)" }}>
+    <h3
+      className="mb-1.5 pb-1 text-[10px] font-bold uppercase tracking-wider"
+      style={{
+        color: "#3a4a6a",
+        borderBottom: "1px solid rgba(30,40,60,0.4)",
+      }}
+    >
       {children}
     </h3>
   );
@@ -912,9 +1152,19 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
 
 function ActionCard({ title, desc }: { title: string; desc: string }) {
   return (
-    <div className="rounded-md p-2.5" style={{ background: "rgba(15,20,45,0.5)", border: "1px solid rgba(40,50,80,0.25)" }}>
-      <div className="text-sm font-semibold" style={{ color: "#ffb74d" }}>{title}</div>
-      <div className="text-xs" style={{ color: "#5a6a8a" }}>{desc}</div>
+    <div
+      className="rounded-md p-2.5"
+      style={{
+        background: "rgba(15,20,45,0.5)",
+        border: "1px solid rgba(40,50,80,0.25)",
+      }}
+    >
+      <div className="text-sm font-semibold" style={{ color: "#ffb74d" }}>
+        {title}
+      </div>
+      <div className="text-xs" style={{ color: "#5a6a8a" }}>
+        {desc}
+      </div>
     </div>
   );
 }
@@ -924,22 +1174,54 @@ function StudentSidebarPreview({ student }: { student: StudentProfile }) {
   return (
     <div className="mt-3 space-y-3">
       <div>
-        <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "#5bc0eb20", color: "#5bc0eb", border: "1px solid #5bc0eb40" }}>
+        <span
+          className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+          style={{
+            background: "#5bc0eb20",
+            color: "#5bc0eb",
+            border: "1px solid #5bc0eb40",
+          }}
+        >
           {student.degree}
         </span>
-        <p className="mt-1.5 text-xs leading-relaxed" style={{ color: "#8898b8" }}>{student.topic}</p>
+        <p
+          className="mt-1.5 text-xs leading-relaxed"
+          style={{ color: "#8898b8" }}
+        >
+          {student.topic}
+        </p>
       </div>
       <div>
-        <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#4a5a7a" }}>현재 진행</p>
-        <p className="mt-1 text-[11px] leading-relaxed" style={{ color: "#7a8ab0" }}>{student.status}</p>
+        <p
+          className="text-[10px] font-bold uppercase tracking-wider"
+          style={{ color: "#4a5a7a" }}
+        >
+          현재 진행
+        </p>
+        <p
+          className="mt-1 text-[11px] leading-relaxed"
+          style={{ color: "#7a8ab0" }}
+        >
+          {student.status}
+        </p>
       </div>
       {student.timeline && student.timeline.length > 0 && (
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#4a5a7a" }}>향후 일정</p>
+          <p
+            className="text-[10px] font-bold uppercase tracking-wider"
+            style={{ color: "#4a5a7a" }}
+          >
+            향후 일정
+          </p>
           <div className="mt-1 space-y-1">
             {student.timeline.slice(0, 3).map((t, i) => (
               <div key={i} className="flex gap-2 text-[11px]">
-                <span className="shrink-0 font-semibold" style={{ color: "#7eb8ff", minWidth: 72 }}>{t.date}</span>
+                <span
+                  className="shrink-0 font-semibold"
+                  style={{ color: "#7eb8ff", minWidth: 72 }}
+                >
+                  {t.date}
+                </span>
                 <span style={{ color: "#6a7a9a" }}>{t.event}</span>
               </div>
             ))}
@@ -948,10 +1230,23 @@ function StudentSidebarPreview({ student }: { student: StudentProfile }) {
       )}
       {student.methods && student.methods.length > 0 && (
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#4a5a7a" }}>방법론</p>
+          <p
+            className="text-[10px] font-bold uppercase tracking-wider"
+            style={{ color: "#4a5a7a" }}
+          >
+            방법론
+          </p>
           <div className="mt-1 flex flex-wrap gap-1">
             {student.methods.map((m, i) => (
-              <span key={i} className="rounded px-1.5 py-0.5 text-[10px]" style={{ background: "rgba(20,25,60,0.6)", color: "#6a7a9a", border: "1px solid rgba(40,50,80,0.4)" }}>
+              <span
+                key={i}
+                className="rounded px-1.5 py-0.5 text-[10px]"
+                style={{
+                  background: "rgba(20,25,60,0.6)",
+                  color: "#6a7a9a",
+                  border: "1px solid rgba(40,50,80,0.4)",
+                }}
+              >
                 {m}
               </span>
             ))}
@@ -963,28 +1258,63 @@ function StudentSidebarPreview({ student }: { student: StudentProfile }) {
 }
 
 // ─── Student Detail Sections (right panel) ───
-function StudentDetailSections({ student, body, desc, actions }: { student: StudentProfile; body: string; desc: string; actions?: { title: string; desc: string }[] }) {
+function StudentDetailSections({
+  student,
+  body,
+  desc,
+  actions,
+}: {
+  student: StudentProfile;
+  body: string;
+  desc: string;
+  actions?: { title: string; desc: string }[];
+}) {
   return (
     <>
       <section className="mb-4">
         <SectionHeader>연구 개요 (Research Overview)</SectionHeader>
         <div className="mb-2 flex items-center gap-2">
-          <span className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold" style={{ background: "#5bc0eb20", color: "#5bc0eb", border: "1px solid #5bc0eb40" }}>
+          <span
+            className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+            style={{
+              background: "#5bc0eb20",
+              color: "#5bc0eb",
+              border: "1px solid #5bc0eb40",
+            }}
+          >
             {student.degree}
           </span>
         </div>
-        <p className="mb-2 text-[13px] font-medium" style={{ color: "#a0b8d8" }}>{student.topic}</p>
+        <p
+          className="mb-2 text-[13px] font-medium"
+          style={{ color: "#a0b8d8" }}
+        >
+          {student.topic}
+        </p>
         <div
           className="text-[13px] leading-relaxed [&_strong]:font-semibold [&_em]:not-italic [&_ul]:pl-4 [&_li]:my-0.5"
           style={{ color: "#8898b8" }}
-          dangerouslySetInnerHTML={{ __html: body || `<p>${desc}</p>` }}
+          dangerouslySetInnerHTML={{
+            __html: body || `<p>${desc}</p>`,
+          }}
         />
       </section>
 
       <section className="mb-4">
         <SectionHeader>현재 진행 상황 (Current Status)</SectionHeader>
-        <div className="rounded-md p-3" style={{ background: "rgba(15,20,45,0.5)", border: "1px solid rgba(40,60,100,0.25)" }}>
-          <p className="text-[13px] leading-relaxed" style={{ color: "#8898b8" }}>{student.status}</p>
+        <div
+          className="rounded-md p-3"
+          style={{
+            background: "rgba(15,20,45,0.5)",
+            border: "1px solid rgba(40,60,100,0.25)",
+          }}
+        >
+          <p
+            className="text-[13px] leading-relaxed"
+            style={{ color: "#8898b8" }}
+          >
+            {student.status}
+          </p>
         </div>
       </section>
 
@@ -993,11 +1323,37 @@ function StudentDetailSections({ student, body, desc, actions }: { student: Stud
           <SectionHeader>투고 현황 (Publications)</SectionHeader>
           <div className="space-y-1.5">
             {student.publications.map((p, i) => (
-              <div key={i} className="flex items-start gap-2 rounded-md p-2.5" style={{ background: "rgba(15,20,45,0.5)", border: "1px solid rgba(40,50,80,0.25)" }}>
-                <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full" style={{ background: p.progress.includes("투고") || p.progress.includes("작성") ? "#5bc0eb" : p.progress === "목표 저널" ? "#5a6a8a" : "#7ec884" }} />
+              <div
+                key={i}
+                className="flex items-start gap-2 rounded-md p-2.5"
+                style={{
+                  background: "rgba(15,20,45,0.5)",
+                  border: "1px solid rgba(40,50,80,0.25)",
+                }}
+              >
+                <div
+                  className="mt-0.5 h-2 w-2 shrink-0 rounded-full"
+                  style={{
+                    background:
+                      p.progress.includes("투고") ||
+                      p.progress.includes("작성")
+                        ? "#5bc0eb"
+                        : p.progress === "목표 저널"
+                          ? "#5a6a8a"
+                          : "#7ec884",
+                  }}
+                />
                 <div className="flex-1">
-                  <div className="text-[13px] font-semibold" style={{ color: "#a0b8d8" }}>{p.journal}</div>
-                  <div className="flex items-center gap-2 text-[11px]" style={{ color: "#5a6a8a" }}>
+                  <div
+                    className="text-[13px] font-semibold"
+                    style={{ color: "#a0b8d8" }}
+                  >
+                    {p.journal}
+                  </div>
+                  <div
+                    className="flex items-center gap-2 text-[11px]"
+                    style={{ color: "#5a6a8a" }}
+                  >
                     {p.impactFactor && <span>IF {p.impactFactor}</span>}
                     <span>{p.progress}</span>
                   </div>
@@ -1011,13 +1367,33 @@ function StudentDetailSections({ student, body, desc, actions }: { student: Stud
       {student.timeline && student.timeline.length > 0 && (
         <section className="mb-4">
           <SectionHeader>향후 일정 (Timeline)</SectionHeader>
-          <div className="relative ml-2 space-y-0" style={{ borderLeft: "2px solid rgba(40,60,100,0.3)" }}>
+          <div
+            className="relative ml-2 space-y-0"
+            style={{ borderLeft: "2px solid rgba(40,60,100,0.3)" }}
+          >
             {student.timeline.map((t, i) => (
               <div key={i} className="relative pb-3 pl-4">
-                <div className="absolute -left-[5px] top-1.5 h-2 w-2 rounded-full" style={{ background: "#7eb8ff", border: "2px solid #0c1030" }} />
-                <div className="text-[11px] font-semibold" style={{ color: "#7eb8ff" }}>{t.date}</div>
-                <div className="text-[13px]" style={{ color: "#a0b8d8" }}>{t.event}</div>
-                {t.detail && <div className="text-[11px]" style={{ color: "#5a6a8a" }}>{t.detail}</div>}
+                <div
+                  className="absolute -left-[5px] top-1.5 h-2 w-2 rounded-full"
+                  style={{
+                    background: "#7eb8ff",
+                    border: "2px solid #0c1030",
+                  }}
+                />
+                <div
+                  className="text-[11px] font-semibold"
+                  style={{ color: "#7eb8ff" }}
+                >
+                  {t.date}
+                </div>
+                <div className="text-[13px]" style={{ color: "#a0b8d8" }}>
+                  {t.event}
+                </div>
+                {t.detail && (
+                  <div className="text-[11px]" style={{ color: "#5a6a8a" }}>
+                    {t.detail}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -1029,7 +1405,15 @@ function StudentDetailSections({ student, body, desc, actions }: { student: Stud
           <SectionHeader>연구 방법론 (Methods & Tools)</SectionHeader>
           <div className="flex flex-wrap gap-1.5">
             {student.methods.map((m, i) => (
-              <span key={i} className="rounded-full px-2.5 py-1 text-[11px] font-medium" style={{ background: "rgba(126,100,224,0.1)", color: "#c084e0", border: "1px solid rgba(126,100,224,0.3)" }}>
+              <span
+                key={i}
+                className="rounded-full px-2.5 py-1 text-[11px] font-medium"
+                style={{
+                  background: "rgba(126,100,224,0.1)",
+                  color: "#c084e0",
+                  border: "1px solid rgba(126,100,224,0.3)",
+                }}
+              >
                 {m}
               </span>
             ))}

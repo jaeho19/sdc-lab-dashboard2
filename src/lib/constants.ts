@@ -119,6 +119,34 @@ export const CALENDAR_CATEGORY_CONFIG = {
     label: "회식",
     color: "#ec4899",
   },
+  holiday: {
+    label: "공휴일",
+    color: "#9ca3af",
+  },
+  personal: {
+    label: "개인",
+    color: "#a78bfa",
+  },
+  other: {
+    label: "기타",
+    color: "#6b7280",
+  },
+  lab_meeting: {
+    label: "랩미팅",
+    color: "#0ea5e9",
+  },
+  social: {
+    label: "친목",
+    color: "#f97316",
+  },
+  study: {
+    label: "스터디",
+    color: "#14b8a6",
+  },
+  field_trip: {
+    label: "답사",
+    color: "#84cc16",
+  },
 } as const;
 
 // 타임라인 아이템 타입 설정
