@@ -77,6 +77,7 @@ export interface PaperMapNode {
   publicationDate: string | null;
   isLabMember: boolean;
   memberId: string | null;
+  paperCount?: number;
 }
 
 export interface PaperMapLink {

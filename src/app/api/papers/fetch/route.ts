@@ -99,7 +99,7 @@ async function fetchPapers(): Promise<FetchPapersResult> {
     );
 
     // 5. Search papers for each field
-    const fromDate = getDateDaysAgo(7);
+    const fromDate = getDateDaysAgo(1825); // 5 years
     const startTime = Date.now();
     const MAX_RUNTIME_MS = 22_000; // Stop before 25s timeout
     let totalFound = 0;

@@ -1,85 +1,134 @@
 import { useQuery } from "@tanstack/react-query";
-import { createBrowserClient } from "@supabase/ssr";
-import type { Database } from "@/types/database.types";
+import { createClient } from "@supabase/supabase-js";
 import type { PaperMapData, PaperMapNode, PaperMapLink } from "@/lib/papers/types";
-import { truncateTitle, buildPaperDetailHtml } from "@/lib/papers/normalize";
 
 function createPapersClient() {
-  return createBrowserClient<Database>(
+  return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 }
 
 interface UsePapersOptions {
-  labOnly?: boolean;
-  limit?: number;
   enabled?: boolean;
 }
 
-interface DBPaper {
-  id: string;
+interface FieldPaper {
   title: string;
-  authors: { name: string }[];
-  abstract: string | null;
-  doi: string | null;
-  url: string | null;
   journal: string | null;
-  publication_date: string | null;
   publication_year: number | null;
   citation_count: number;
-  is_lab_member: boolean;
-  member_id: string | null;
-  paper_field_links: {
-    relevance: number;
-    research_fields: {
-      id: string;
-      name: string;
-      map_node_id: string | null;
-    } | null;
-  }[];
+  doi: string | null;
 }
 
-function paperToMapNode(paper: DBPaper): PaperMapNode {
+interface FieldSummary {
+  fieldId: string;
+  fieldName: string;
+  mapNodeId: string | null;
+  papers: FieldPaper[];
+}
+
+function buildSummaryHtml(papers: FieldPaper[]): string {
+  const topPapers = [...papers]
+    .sort((a, b) => b.citation_count - a.citation_count)
+    .slice(0, 5);
+
+  const journalCounts = new Map<string, number>();
+  for (const p of papers) {
+    if (p.journal) {
+      journalCounts.set(p.journal, (journalCounts.get(p.journal) ?? 0) + 1);
+    }
+  }
+  const topJournals = [...journalCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([name]) => name);
+
+  const parts: string[] = [];
+
+  parts.push(
+    `<p style="margin:0 0 8px;font-size:12px;color:#94a3b8">총 <strong style="color:#e0e8ff">${papers.length}</strong>편 논문</p>`
+  );
+
+  if (topJournals.length > 0) {
+    parts.push(
+      `<p style="margin:0 0 10px;font-size:11px;color:#64748b">주요 저널: ${topJournals.map(escapeHtml).join(", ")}</p>`
+    );
+  }
+
+  if (topPapers.length > 0) {
+    parts.push(`<p style="margin:0 0 6px;font-size:11px;font-weight:600;color:#8898b8">인용 상위 논문</p>`);
+    parts.push(`<ol style="margin:0;padding-left:16px">`);
+    for (const p of topPapers) {
+      const meta = [p.journal, p.publication_year, `cited: ${p.citation_count}`]
+        .filter(Boolean)
+        .join(" | ");
+      const titleHtml = p.doi
+        ? `<a href="https://doi.org/${escapeHtml(p.doi)}" target="_blank" rel="noopener" style="color:#60a5fa;text-decoration:none">${escapeHtml(p.title)}</a>`
+        : escapeHtml(p.title);
+      parts.push(
+        `<li style="margin-bottom:6px;font-size:12px;line-height:1.4;color:#cbd5e1">${titleHtml}<br/><span style="font-size:10px;color:#64748b">${escapeHtml(meta)}</span></li>`
+      );
+    }
+    parts.push(`</ol>`);
+  }
+
+  return parts.join("");
+}
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function summaryToMapNode(summary: FieldSummary): PaperMapNode {
+  const count = summary.papers.length;
+  const topJournals = getTopJournals(summary.papers, 2);
+  const desc = topJournals.length > 0
+    ? `${count}편 | ${topJournals.join(", ")}`
+    : `${count}편`;
+
   return {
-    id: `paper_${paper.id.slice(0, 8)}`,
-    label: truncateTitle(paper.title, 25),
+    id: `papersummary_${summary.fieldId.slice(0, 8)}`,
+    label: `${summary.fieldName} (${count})`,
     type: "paper",
-    size: 10 + Math.min((paper.citation_count ?? 0) * 0.3, 8),
-    desc: [paper.journal, paper.publication_year, `cited: ${paper.citation_count ?? 0}`]
-      .filter(Boolean)
-      .join(" | "),
-    body: buildPaperDetailHtml(paper),
-    doi: paper.doi,
-    url: paper.url,
-    publicationDate: paper.publication_date,
-    isLabMember: paper.is_lab_member,
-    memberId: paper.member_id,
+    size: Math.min(12 + count * 0.5, 25),
+    desc,
+    body: buildSummaryHtml(summary.papers),
+    doi: null,
+    url: null,
+    publicationDate: null,
+    isLabMember: false,
+    memberId: null,
+    paperCount: count,
   };
 }
 
-function paperToMapLinks(paper: DBPaper): PaperMapLink[] {
-  const nodeId = `paper_${paper.id.slice(0, 8)}`;
-  const links: PaperMapLink[] = [];
-
-  // Link to research field keyword nodes
-  for (const link of paper.paper_field_links) {
-    const mapNodeId = link.research_fields?.map_node_id;
-    if (mapNodeId) {
-      links.push({ source: nodeId, target: mapNodeId, type: "link" });
+function getTopJournals(papers: FieldPaper[], n: number): string[] {
+  const counts = new Map<string, number>();
+  for (const p of papers) {
+    if (p.journal) {
+      counts.set(p.journal, (counts.get(p.journal) ?? 0) + 1);
     }
   }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, n)
+    .map(([name]) => name);
+}
 
-  // Link to lab member student node (if applicable)
-  if (paper.is_lab_member && paper.member_id) {
-    links.push({
-      source: nodeId,
-      target: `s_${paper.member_id.slice(0, 4)}`,
+function summaryToMapLinks(summary: FieldSummary): PaperMapLink[] {
+  if (!summary.mapNodeId) return [];
+  return [
+    {
+      source: `papersummary_${summary.fieldId.slice(0, 8)}`,
+      target: summary.mapNodeId,
       type: "link",
-    });
-  }
-
-  return links;
+    },
+  ];
 }
 
 export function usePapers(options?: UsePapersOptions): {
@@ -87,42 +136,71 @@ export function usePapers(options?: UsePapersOptions): {
   isLoading: boolean;
   error: Error | null;
 } {
-  const { labOnly, limit = 100, enabled = true } = options ?? {};
+  const { enabled = true } = options ?? {};
 
   const query = useQuery<PaperMapData>({
-    queryKey: ["papers", "map-nodes", { labOnly, limit }],
+    queryKey: ["papers", "field-summary"],
     queryFn: async () => {
       const supabase = createPapersClient();
 
-      let q = supabase
+      // 1. Get all active research fields
+      const { data: fields, error: fieldsError } = await supabase
+        .from("research_fields")
+        .select("id, name, map_node_id")
+        .eq("is_active", true);
+      if (fieldsError) throw fieldsError;
+
+      // 2. Get all visible papers with their field links
+      const { data: papers, error: papersError } = await supabase
         .from("papers")
         .select(`
-          id, title, authors, abstract, doi, url, journal,
-          publication_date, publication_year, citation_count,
-          is_lab_member, member_id,
-          paper_field_links(
-            relevance,
-            research_fields(id, name, map_node_id)
-          )
+          id, title, journal, publication_year, citation_count, doi,
+          paper_field_links(field_id)
         `)
         .eq("is_hidden", false)
-        .order("publication_date", { ascending: false })
-        .limit(limit);
+        .order("citation_count", { ascending: false })
+        .limit(500);
+      if (papersError) throw papersError;
 
-      if (labOnly) {
-        q = q.eq("is_lab_member", true);
+      // 3. Group papers by field
+      const fieldMap = new Map<string, FieldPaper[]>();
+      for (const paper of (papers ?? []) as unknown as {
+        title: string;
+        journal: string | null;
+        publication_year: number | null;
+        citation_count: number;
+        doi: string | null;
+        paper_field_links: { field_id: string }[];
+      }[]) {
+        for (const link of paper.paper_field_links ?? []) {
+          const existing = fieldMap.get(link.field_id) ?? [];
+          existing.push({
+            title: paper.title,
+            journal: paper.journal,
+            publication_year: paper.publication_year,
+            citation_count: paper.citation_count,
+            doi: paper.doi,
+          });
+          fieldMap.set(link.field_id, existing);
+        }
       }
 
-      const { data, error } = await q;
-      if (error) throw error;
+      // 4. Build summary nodes per field
+      const summaries: FieldSummary[] = (fields ?? [])
+        .filter((f) => (fieldMap.get(f.id)?.length ?? 0) > 0)
+        .map((f) => ({
+          fieldId: f.id,
+          fieldName: f.name,
+          mapNodeId: f.map_node_id,
+          papers: fieldMap.get(f.id) ?? [],
+        }));
 
-      const papers = (data ?? []) as unknown as DBPaper[];
-      const nodes: PaperMapNode[] = papers.map(paperToMapNode);
-      const links: PaperMapLink[] = papers.flatMap(paperToMapLinks);
+      const nodes: PaperMapNode[] = summaries.map(summaryToMapNode);
+      const mapLinks: PaperMapLink[] = summaries.flatMap(summaryToMapLinks);
 
-      return { nodes, links };
+      return { nodes, links: mapLinks };
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 10 * 60 * 1000,
     enabled,
   });
 
