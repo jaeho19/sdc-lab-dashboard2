@@ -19,8 +19,11 @@ function createServiceClient() {
   );
 }
 
-/** Rate limit delay between API calls */
-const API_DELAY_MS = 1500;
+/** Netlify free plan: max 26s function timeout */
+export const maxDuration = 25;
+
+/** Rate limit delay between API calls (reduced for serverless timeout) */
+const API_DELAY_MS = 800;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -97,11 +100,18 @@ async function fetchPapers(): Promise<FetchPapersResult> {
 
     // 5. Search papers for each field
     const fromDate = getDateDaysAgo(7);
+    const startTime = Date.now();
+    const MAX_RUNTIME_MS = 22_000; // Stop before 25s timeout
     let totalFound = 0;
     let totalInserted = 0;
     let totalSkipped = 0;
 
     for (const field of fields as ResearchField[]) {
+      // Safety: stop before serverless timeout
+      if (Date.now() - startTime > MAX_RUNTIME_MS) {
+        errors.push(`Timeout: processed ${totalFound} papers, remaining fields skipped`);
+        break;
+      }
       const queries: SearchQuery[] = Array.isArray(field.search_queries)
         ? field.search_queries
         : [];
