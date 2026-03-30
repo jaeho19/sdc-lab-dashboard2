@@ -22,8 +22,8 @@ function createServiceClient() {
 /** Netlify free plan: max 26s function timeout */
 export const maxDuration = 25;
 
-/** Rate limit delay between API calls (reduced for serverless timeout) */
-const API_DELAY_MS = 800;
+/** Rate limit delay between API calls */
+const API_DELAY_MS = 1200;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
