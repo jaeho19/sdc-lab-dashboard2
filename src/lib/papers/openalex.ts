@@ -23,10 +23,8 @@ interface OpenAlexWork {
     institutions?: { display_name?: string; country_code?: string }[];
   }[];
   abstract_inverted_index?: Record<string, number[]>;
-  concepts?: { id?: string; display_name?: string; score?: number }[];
   topics?: { id?: string; display_name?: string; score?: number }[];
-  is_oa?: boolean;
-  open_access?: { oa_url?: string };
+  open_access?: { is_oa?: boolean; oa_url?: string };
 }
 
 interface SearchResponse {
@@ -51,7 +49,7 @@ export async function searchOpenAlex(
     sort: "publication_date:desc",
     per_page: String(limit),
     select:
-      "id,doi,title,display_name,publication_date,publication_year,cited_by_count,primary_location,authorships,abstract_inverted_index,concepts,topics,is_oa,open_access",
+      "id,doi,title,display_name,publication_date,publication_year,cited_by_count,primary_location,authorships,abstract_inverted_index,topics,open_access",
   });
 
   if (fromDate) {
@@ -103,7 +101,7 @@ function normalizeOpenAlexWork(work: OpenAlexWork): NormalizedPaper {
     citation_count: work.cited_by_count ?? 0,
     source: "openalex",
     external_id: work.id,
-    is_open_access: work.is_oa ?? false,
+    is_open_access: work.open_access?.is_oa ?? false,
     open_access_url: work.open_access?.oa_url ?? null,
     raw_data: work as unknown as Record<string, unknown>,
   };
