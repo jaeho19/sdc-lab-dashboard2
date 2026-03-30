@@ -1,121 +1,163 @@
 # Gap Analysis: report-auto-generation
 
-## Overview
-- **Feature**: 월간/주간보고 출력 자동화
-- **Design Document**: `docs/02-design/features/report-auto-generation.design.md`
-- **Analysis Date**: 2026-03-29 (3rd analysis)
-- **Previous Analysis**: 2026-03-29 (90%), 2026-03-26 (92%)
-- **Overall Match Rate**: 91%
+> Design vs Implementation comparison
 
-## Category Scores
-
-| Category | Score | Status | Change |
-|----------|:-----:|:------:|:------:|
-| Database Schema | 95% | PASS | -3% (RLS column inconsistency noted) |
-| TypeScript Types | 100% | PASS | +3% |
-| Server Actions | 100% | PASS | +5% |
-| UI Components | 85% | PARTIAL | -3% (personal scope variant missing) |
-| Page Routes | 100% | PASS | +7% |
-| Print CSS | 95% | PASS | -1% |
-| Sidebar Integration | 95% | PASS | -5% |
-| Seed Data | 75% | PARTIAL | new category |
+**Design Document**: `docs/02-design/features/report-auto-generation.design.md`
+**Analysis Date**: 2026-03-30 (Re-analysis)
+**Previous Analysis**: 2026-03-29 (91%)
 
 ---
 
-## Detailed Results
+## Overall Match Rate: 93%
 
-### 1. Database Schema (95%) -- PASS
+```
+[Plan] ✅ → [Design] ✅ → [Do] ✅ → [Check] 🔄 93%
+```
 
-All 5 migration files exist and match design:
-- `00020_create_projects_table.sql` -- MATCH
-- `00021_create_sub_projects_table.sql` -- MATCH
-- `00022_create_progress_logs_table.sql` -- MATCH
-- `00023_create_report_templates_table.sql` -- MATCH
-- `00024_create_reports_table.sql` -- MATCH
+---
 
-**Deviation**: RLS admin policies use `members.id = auth.uid()` vs design's `members.user_id = auth.uid()`. Functionally correct since `members.id` references `auth.users(id)` directly.
+## Section Breakdown
 
-### 2. TypeScript Types (100%) -- PASS
+| Section | Score | Status |
+|---------|:-----:|:------:|
+| Database Schema (5 tables + enums + RLS) | 93% | PASS |
+| TypeScript Types (5 enums + 15 interfaces) | 97% | PASS |
+| Server Actions (13 functions) | 100% | PASS |
+| Page Routes (5 files) | 98% | PASS |
+| UI Components (10 files) | 87% | PARTIAL |
+| Print CSS (9 rules) | 89% | PARTIAL |
+| Sidebar Integration | 95% | PASS |
+| Seed Data | 67% | PARTIAL |
 
-All types in `src/types/database.ts` lines 598-769:
-- 5 enums (ProgressLogType, ProgressLogStatus, ReportPeriodType, ReportScope, ReportStatus)
-- 15 interfaces (Project, SubProject, ProgressLog, ReportTemplate, Report, etc.)
-- 3 union/content types (ReportSectionContent, ReportContent, etc.)
-- 2 joined view types (ProgressLogWithDetails, ReportWithDetails)
+---
 
-### 3. Server Actions (100%) -- PASS
+## Section Details
 
-All 13 functions in `src/lib/actions/reports.ts`:
+### 1. Database Schema — 93%
+
+All 5 migration files exist and match the design:
+
+| Migration | Status |
+|-----------|:------:|
+| `00020_create_projects_table.sql` | MATCH |
+| `00021_create_sub_projects_table.sql` | MATCH |
+| `00022_create_progress_logs_table.sql` | MATCH |
+| `00023_create_report_templates_table.sql` | MATCH |
+| `00024_create_reports_table.sql` | MATCH |
+| `00025_seed_report_data.sql` | ADDED (not in design as separate migration) |
+
+All 5 enum types (progress_log_type, progress_log_status, report_period_type, report_scope, report_status) match design exactly. All 12 indexes present.
+
+**Deviation**: RLS policies use `members.id = auth.uid()` instead of design's `members.user_id = auth.uid()` — functionally correct since this project's members table stores auth UID in `id` column.
+
+### 2. TypeScript Types — 97%
+
+All types in `src/types/database.ts` (lines 598-769):
+- 5 enum types: all values identical to design
+- 15 interfaces: all fields match design exactly
+- 2 join types (ProgressLogWithDetails, ReportWithDetails): match design
+
+**Minor gap**: `Database.public.Tables` and `Database.public.Enums` not extended with new tables/enums. Code uses `as never` casts to bypass. Reduces type safety but functionally correct.
+
+### 3. Server Actions — 100%
+
+`src/lib/actions/reports.ts` — all 13 functions match design:
 - getProjects, getSubProjects
-- getProgressLogs, getPersonalProgressLogs, addProgressLog, updateProgressLog, deleteProgressLog
-- getReportTemplates, getReports, getReport, createReport, updateReport, deleteReport
+- getProgressLogs (7 filter params), getPersonalProgressLogs
+- addProgressLog, updateProgressLog, deleteProgressLog
+- getReportTemplates, getReports, getReport
+- createReport, updateReport, deleteReport
 
-### 4. UI Components (85%) -- PARTIAL
+### 4. Page Routes — 98%
 
-All 10 component files exist in `src/components/features/reports/`:
+All 5 route files present:
+- `/reports` page + loading.tsx
+- `/reports/[id]` detail page
+- `/reports/[id]/edit` editor page
+- `/reports/progress` progress log management
 
-| Component | Status | Notes |
-|-----------|:------:|-------|
-| auto-generate-dialog.tsx | PARTIAL | Missing personal scope variant |
-| presentation-mode.tsx | MATCH | splitIntoSlides, keyboard, fullscreen |
-| print-layout.tsx | MATCH | format/sections props |
-| print-dialog.tsx | MATCH | format, orientation, includeSections |
-| progress-preview-tree.tsx | MATCH | Props match exactly |
-| report-detail-view.tsx | MATCH | Matrix/list/text rendering |
-| report-edit-form.tsx | PARTIAL | Missing onSave callback, loose types |
+**Change**: Reports list uses `dynamic = "force-dynamic"` instead of design's `revalidate = 60` — intentional improvement for fresh data.
+
+### 5. UI Components — 87%
+
+All 10 component files exist. Key gaps:
+
+| Component | Status | Gap |
+|-----------|:------:|-----|
+| auto-generate-dialog.tsx | PARTIAL | Missing personal scope variant (design Section 9) |
+| presentation-mode.tsx | MATCH | Full keyboard nav, fullscreen, slides |
+| print-dialog.tsx | MATCH | Format/orientation/section selection |
+| print-layout.tsx | MATCH | A4 layout with official format |
+| progress-preview-tree.tsx | MATCH | Checkbox toggle tree |
+| report-detail-view.tsx | PARTIAL | Props use `Record<string, unknown>` instead of typed interface |
+| report-edit-form.tsx | PARTIAL | Missing `onSave` callback prop, loose typing |
 | report-list.tsx | MATCH | Filters, status badges |
-| progress-log-form.tsx | MATCH | All fields present |
-| progress-log-list.tsx | MATCH | Project filter, date range |
+| progress-log-form.tsx | MATCH | Full CRUD form |
+| progress-log-list.tsx | MATCH | Sortable table with actions |
 
-### 5. Page Routes (100%) -- PASS
+### 6. Print CSS — 89%
 
-- `/reports` (page.tsx + loading.tsx)
-- `/reports/[id]` (detail view)
-- `/reports/[id]/edit` (edit form)
-- `/reports/progress` (progress log management)
+8/9 rules present in `src/app/globals.css`. **Missing**: `@page :first { margin-top: 10mm; }` for first-page margin override.
 
-### 6. Print CSS (95%) -- PASS
+### 7. Sidebar Integration — 95%
 
-All rules in `src/app/globals.css` lines 469-517. Missing: `@page :first { margin-top: 10mm; }`.
+Menu item present at `sidebar.tsx` line 120 with `FileText` icon. Label uses "Reports" (English) instead of design's "보고서" (Korean) — follows project convention.
+
+### 8. Seed Data — 67%
+
+- Project "청양읍" (code 2612): present
+- Project "홍성군" (code 2613): **MISSING**
+- Sub-projects: 5/6 present (missing 26126 "기타 사업 지원")
+- Sub-project names 26124, 26125 differ from design (real data vs placeholder)
 
 ---
 
 ## Gaps Summary
 
-### Missing Features
+| # | Gap | Severity | Priority |
+|---|-----|:--------:|:--------:|
+| 1 | Personal scope variant in AutoGenerateDialog | MEDIUM | High |
+| 2 | "Preview" button in dialog footer | LOW | Low |
+| 3 | `@page :first` CSS rule missing | LOW | Low |
+| 4 | `Database.public.Tables/Enums` not extended | LOW | Low |
+| 5 | Component props loosely typed | LOW | Low |
+| 6 | `onSave` callback missing from ReportEditForm | LOW | Low |
+| 7 | Second project seed (홍성군) missing | LOW | Low |
+| 8 | Sub-project 26126 not seeded | LOW | Low |
 
-| Item | Severity | Description |
-|------|:--------:|-------------|
-| Personal scope dialog variant | MEDIUM | `auto-generate-dialog.tsx` has no handling for `scope === "personal"` |
-| "미리보기" button | LOW | DialogFooter missing Preview button |
-| `@page :first` CSS rule | LOW | Missing first-page margin |
-| 홍성군 project seed | LOW | Second test project not seeded |
-| 6th sub-project seed | LOW | "기타 사업 지원" not seeded |
+## Added Beyond Design
 
-### Changed Features
-
-| Item | Severity | Description |
-|------|:--------:|-------------|
-| Component prop types | LOW | Uses `Record<string, unknown>` instead of typed interfaces |
-| RLS admin policy column | LOW | `members.id` vs `members.user_id` (functionally equivalent) |
-| Page caching | LOW | `force-dynamic` instead of `revalidate = 60` (improvement) |
-| Sidebar label | LOW | "Reports" vs "보고서" (project convention) |
-
----
-
-## Recommendations
-
-### To reach 95%+
-1. **Implement personal scope variant** in AutoGenerateDialog (MEDIUM priority)
-2. **Upgrade component prop types** to use existing typed interfaces from `database.ts`
-
-### Low Priority
-3. Add "미리보기" button to AutoGenerateDialog footer
-4. Add `@page :first { margin-top: 10mm; }` CSS rule
-5. Complete seed data (홍성군 project, missing sub-projects)
+| # | Addition | Reason |
+|---|----------|--------|
+| 1 | Personal monthly template in seed | UX improvement |
+| 2 | Separate seed migration file (00025) | Better migration hygiene |
+| 3 | `.no-print` CSS utility class | Additional flexibility |
 
 ---
 
-## Conclusion
+## Weighted Score Calculation
 
-Overall match rate: **91%** (above 90% threshold). The implementation is fundamentally complete. The single most impactful gap is the missing personal scope variant in AutoGenerateDialog.
+| Category | Weight | Score | Weighted |
+|----------|:------:|:-----:|:--------:|
+| Database Schema | 20% | 93% | 18.6 |
+| TypeScript Types | 15% | 97% | 14.6 |
+| Server Actions | 20% | 100% | 20.0 |
+| Page Routes | 10% | 98% | 9.8 |
+| UI Components | 20% | 87% | 17.4 |
+| Print CSS | 5% | 89% | 4.5 |
+| Sidebar Integration | 5% | 95% | 4.8 |
+| Seed Data | 5% | 67% | 3.4 |
+| **Total** | **100%** | — | **93.1%** |
+
+---
+
+## Verdict
+
+**Match Rate: 93%** — All core functionality implemented and production-ready. The single most impactful gap is the missing personal scope variant in AutoGenerateDialog. All other gaps are LOW severity.
+
+**Recommendation**: Feature is above 90% threshold. Proceed to `/pdca report report-auto-generation` or address the personal scope gap to reach 95%+.
+
+---
+
+*Feature: report-auto-generation*
+*Status: Check (93%) — Re-analyzed 2026-03-30*
