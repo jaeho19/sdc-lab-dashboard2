@@ -106,7 +106,10 @@ async function fetchPapers(): Promise<FetchPapersResult> {
     let totalInserted = 0;
     let totalSkipped = 0;
 
-    for (const field of fields as ResearchField[]) {
+    // Shuffle fields so different fields get processed each run (avoids timeout bias)
+    const shuffledFields = [...(fields as ResearchField[])].sort(() => Math.random() - 0.5);
+
+    for (const field of shuffledFields) {
       // Safety: stop before serverless timeout
       if (Date.now() - startTime > MAX_RUNTIME_MS) {
         errors.push(`Timeout: processed ${totalFound} papers, remaining fields skipped`);
