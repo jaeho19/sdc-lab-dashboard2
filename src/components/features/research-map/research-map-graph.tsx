@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import * as d3 from "d3";
 import { useTheme } from "next-themes";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { X } from "lucide-react";
 import {
   NODES,
@@ -189,36 +190,74 @@ function applyVisualState(
     if (n && !disabledTypes.has(n.type)) typeVisible.add(id);
   }
 
-  // Layer 3: Node selection (1-hop from selected, within typeVisible)
+  // Layer 3: Node selection — visibility stays as typeVisible, highlight is separate
   const effectiveSelectedId =
     selectedNodeId && typeVisible.has(selectedNodeId) ? selectedNodeId : null;
 
-  let finalNodeVisible: Set<string>;
+  // Neighborhood set (selected + 1-hop) — used ONLY for highlight, not for visibility
+  const neighborSet = new Set<string>();
   if (effectiveSelectedId) {
-    const neighborhood = new Set<string>([effectiveSelectedId]);
+    neighborSet.add(effectiveSelectedId);
     for (const l of links) {
       const s = nodeId(l.source);
       const t = nodeId(l.target);
-      if (s === effectiveSelectedId && typeVisible.has(t)) neighborhood.add(t);
-      if (t === effectiveSelectedId && typeVisible.has(s)) neighborhood.add(s);
+      if (s === effectiveSelectedId && typeVisible.has(t)) neighborSet.add(t);
+      if (t === effectiveSelectedId && typeVisible.has(s)) neighborSet.add(s);
     }
-    finalNodeVisible = neighborhood;
-  } else {
-    finalNodeVisible = typeVisible;
   }
 
+  // finalNodeVisible = typeVisible always (no dimming on selection)
+  const finalNodeVisible = typeVisible;
+
   const hasDimming =
-    viewMode !== "all" || disabledTypes.size > 0 || effectiveSelectedId !== null;
+    viewMode !== "all" || disabledTypes.size > 0;
 
   // ── Apply to nodes ──
   nodeEls.each(function (d: SimNode) {
     const isVisible = finalNodeVisible.has(d.id);
+    const isSelected = d.id === effectiveSelectedId;
+    const isNeighbor = neighborSet.has(d.id) && !isSelected;
     const g = d3.select(this);
-    g.classed("rm-sel", d.id === effectiveSelectedId);
-    g.select("circle")
-      .transition()
-      .duration(duration)
-      .attr("opacity", isVisible ? 1 : 0.08);
+    g.classed("rm-sel", isSelected);
+
+    const circle = g.select("circle");
+    const origStroke = NODE_COLORS[d.type];
+    const origStrokeWidth = d.type === "axis" ? 2 : 1.5;
+    const origStrokeOpacity =
+      d.type === "axis" ? 0.5 : d.type === "paper" ? 0.5 : 0.7;
+
+    if (isSelected) {
+      // Selected node: bright gold stroke + glow
+      circle
+        .transition()
+        .duration(duration)
+        .attr("opacity", 1)
+        .attr("stroke", "#FFD700")
+        .attr("stroke-width", 3.5)
+        .attr("stroke-opacity", 1)
+        .attr("filter", `url(#glow-${d.type})`);
+    } else if (isNeighbor) {
+      // Neighbor node: glow + brighter stroke
+      circle
+        .transition()
+        .duration(duration)
+        .attr("opacity", 1)
+        .attr("stroke", origStroke)
+        .attr("stroke-width", 2)
+        .attr("stroke-opacity", 1)
+        .attr("filter", `url(#glow-${d.type})`);
+    } else {
+      // All other nodes: original style (no dimming)
+      circle
+        .transition()
+        .duration(duration)
+        .attr("opacity", isVisible ? 1 : 0.08)
+        .attr("stroke", origStroke)
+        .attr("stroke-width", origStrokeWidth)
+        .attr("stroke-opacity", isVisible ? origStrokeOpacity : 0.1)
+        .attr("filter", null);
+    }
+
     g.select("text")
       .transition()
       .duration(duration)
@@ -237,26 +276,49 @@ function applyVisualState(
     const origOp = origLinkOpacity(d);
     const origW = origLinkWidth(d);
 
+    // Compute original stroke color for this link
+    const nodes_ = nodes;
+    let origColor: string;
+    if (d.type === "kk") {
+      origColor = "#ffffff";
+    } else if (d.type === "collab") {
+      origColor = NODE_COLORS.student;
+    } else {
+      const tn = nodes_.find((x) => x.id === nodeId(d.target));
+      origColor = tn ? NODE_COLORS[tn.type] : "#1a2040";
+    }
+
     let targetOpacity: number;
     let targetWidth: number;
+    let targetColor: string;
 
     if (!bothVisible) {
       targetOpacity = 0.04;
       targetWidth = origW;
+      targetColor = origColor;
     } else if (effectiveSelectedId && connectsSelected) {
-      targetOpacity = Math.max(origOp * 3, 0.35);
-      targetWidth = origW + 0.5;
+      targetOpacity = 0.8;
+      targetWidth = 2.5;
+      targetColor = "#FFD700";
+    } else if (effectiveSelectedId && !connectsSelected) {
+      // Non-connected edge: keep original (no dimming)
+      targetOpacity = origOp;
+      targetWidth = origW;
+      targetColor = origColor;
     } else if (hasDimming && !effectiveSelectedId) {
       targetOpacity = origOp;
       targetWidth = origW + 0.5;
+      targetColor = origColor;
     } else {
       targetOpacity = origOp;
       targetWidth = origW;
+      targetColor = origColor;
     }
 
     d3.select(this)
       .transition()
       .duration(duration)
+      .attr("stroke", targetColor)
       .attr("stroke-opacity", targetOpacity)
       .attr("stroke-width", targetWidth);
   });
@@ -659,10 +721,15 @@ export function ResearchMapGraph() {
     >
       {/* ── Left Sidebar ── */}
       <div
-        className="relative z-10 flex shrink-0 flex-col overflow-y-auto"
+        className="relative z-10 flex shrink-0 flex-col"
         style={{
-          width: 300,
-          borderRight: "1px solid rgba(60,80,140,0.2)",
+          width: selectedNode ? 0 : 300,
+          overflow: selectedNode ? "hidden" : "auto hidden",
+          overflowY: selectedNode ? "hidden" : "auto",
+          transition: "width 300ms ease-in-out",
+          borderRight: selectedNode
+            ? "none"
+            : "1px solid rgba(60,80,140,0.2)",
           background:
             "linear-gradient(180deg, #0c1030 0%, #080c22 100%)",
         }}
@@ -889,7 +956,7 @@ export function ResearchMapGraph() {
       {/* ── Graph Area ── */}
       <div
         ref={containerRef}
-        className="relative min-w-0 flex-1 transition-all duration-300 ease-in-out"
+        className="relative flex-1"
         style={{
           background:
             "radial-gradient(ellipse at center, #0a0e28 0%, #060818 70%)",
@@ -904,20 +971,19 @@ export function ResearchMapGraph() {
           }}
         />
         <svg ref={svgRef} className="h-full w-full" />
-      </div>
 
-      {/* ── Detail Panel — Desktop flex panel (not overlay) ── */}
-      <div
-        className="hidden shrink-0 overflow-hidden transition-all duration-300 ease-in-out md:block"
-        style={{
-          width: selectedNode ? 400 : 0,
-          borderLeft: selectedNode ? "1px solid rgba(60,80,140,0.15)" : "none",
-          background:
-            "linear-gradient(180deg, #0c1030 0%, #080c22 100%)",
-        }}
-      >
-        {selectedNode && (
-          <div className="h-full w-[400px]">
+        {/* ── Detail Panel — absolute overlay inside graph container ── */}
+        <div
+          className={`absolute right-0 top-0 bottom-0 z-20 hidden w-[400px] transition-transform duration-300 ease-in-out md:block ${
+            selectedNode ? "translate-x-0" : "translate-x-full"
+          }`}
+          style={{
+            borderLeft: "1px solid rgba(60,80,140,0.15)",
+            background:
+              "linear-gradient(180deg, #0c1030 0%, #080c22 100%)",
+          }}
+        >
+          {selectedNode && (
             <DetailPanel
               node={selectedNode}
               connections={connectionsByType}
@@ -925,12 +991,13 @@ export function ResearchMapGraph() {
               onNodeClick={handleDetailNodeClick}
               isDark={isDark}
             />
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Mobile: Sheet */}
       <Sheet
+        modal={false}
         open={!!selectedNode}
         onOpenChange={(open) => {
           if (!open) clearSelection();
@@ -938,12 +1005,16 @@ export function ResearchMapGraph() {
       >
         <SheetContent
           side="bottom"
+          hideOverlay
           className="h-[70vh] md:hidden"
           style={{
             background: "#0c1030",
             borderColor: "rgba(60,80,140,0.2)",
           }}
         >
+          <VisuallyHidden>
+            <SheetTitle>Node Detail</SheetTitle>
+          </VisuallyHidden>
           {selectedNode && (
             <DetailPanel
               node={selectedNode}

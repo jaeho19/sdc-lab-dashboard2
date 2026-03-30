@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-30T00:31:34.184Z",
+  "lastUpdated": "2026-03-30T09:19:34.414Z",
   "activeFeatures": [
     "report-auto-generation",
     "mobile-performance-optimization",
@@ -30,8 +30,19 @@
     "fetch",
     "approvals"
   ],
-  "primaryFeature": "report-auto-generation",
+  "primaryFeature": "research-paper-auto-update",
   "features": {
+    "research-paper-auto-update": {
+      "phase": "completed",
+      "matchRate": 97,
+      "startedAt": "2026-03-29T00:00:00.000Z",
+      "completedAt": "2026-03-30T00:00:00.000Z",
+      "planPath": "docs/01-plan/features/research-paper-auto-update.plan.md",
+      "designPath": "docs/02-design/features/research-paper-auto-update.design.md",
+      "analysisPath": "docs/03-analysis/research-paper-auto-update.analysis.md",
+      "reportPath": "docs/04-report/features/research-paper-auto-update.report.md",
+      "description": "연구분야별 최신 논문 자동 검색 및 Research Map 노드 자동 업데이트"
+    },
     "report-auto-generation": {
       "phase": "completed",
       "matchRate": 91,
@@ -98,9 +109,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-09T06:32:43.640Z",
-        "lastUpdated": "2026-03-29T08:10:45.485Z"
+        "lastUpdated": "2026-03-30T09:19:34.414Z"
       },
-      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\lib\\constants.ts"
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\middleware.ts"
     },
     "research": {
       "phase": "do",
@@ -228,9 +239,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-25T00:08:25.204Z",
-        "lastUpdated": "2026-02-25T00:08:25.204Z"
+        "lastUpdated": "2026-03-30T05:42:32.808Z"
       },
-      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\components\\ui\\skeleton.tsx"
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\components\\ui\\sheet.tsx"
     },
     "announcements": {
       "phase": "do",
@@ -280,7 +291,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-24T11:18:49.800Z",
-        "lastUpdated": "2026-03-30T00:31:34.184Z"
+        "lastUpdated": "2026-03-30T05:51:54.360Z"
       },
       "lastFile": "C:\\dev\\sdclab-dashboard\\src\\components\\features\\research-map\\research-map-graph.tsx"
     },
@@ -332,9 +343,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-29T07:45:32.201Z",
-        "lastUpdated": "2026-03-29T08:09:40.357Z"
+        "lastUpdated": "2026-03-30T08:26:49.677Z"
       },
-      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\app\\api\\papers\\route.ts"
+      "lastFile": "C:\\dev\\sdclab-dashboard\\src\\app\\(dashboard)\\settings\\papers\\page.tsx"
     },
     "fetch": {
       "phase": "do",
@@ -371,7 +382,7 @@
   "session": {
     "startedAt": "2026-01-31T23:00:19.416Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-30T00:31:34.184Z"
+    "lastActivity": "2026-03-30T09:19:34.414Z"
   },
   "history": [
     {
@@ -1667,6 +1678,132 @@
     {
       "timestamp": "2026-03-30T00:31:34.184Z",
       "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-30T01:51:01.417Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-30T04:45:05.790Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-30T04:45:20.482Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-30T05:10:59.625Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-30T05:11:05.796Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-30T05:11:11.843Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-30T05:26:50.021Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-30T05:27:01.918Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-30T05:29:07.193Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-30T05:29:14.607Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-30T05:31:55.271Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-30T05:32:06.611Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-30T05:34:20.765Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-30T05:42:32.808Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-30T05:42:53.667Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-30T05:51:36.401Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-30T05:51:54.360Z",
+      "feature": "research-map",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-30T08:25:18.569Z",
+      "feature": "papers",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-30T08:25:56.306Z",
+      "feature": "papers",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-30T08:26:49.677Z",
+      "feature": "papers",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-30T09:19:34.414Z",
+      "feature": "sdclab-dashboard",
       "phase": "do",
       "action": "updated"
     }

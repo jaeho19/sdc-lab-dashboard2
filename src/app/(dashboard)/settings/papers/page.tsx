@@ -17,6 +17,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -36,6 +51,10 @@ import {
   AlertCircle,
   CheckCircle2,
   Loader2,
+  Pencil,
+  Save,
+  UserCheck,
+  UserX,
 } from "lucide-react";
 
 export default function PapersSettingsPage() {
@@ -80,6 +99,14 @@ export default function PapersSettingsPage() {
 }
 
 // ─── Tab 1: Research Fields ───
+
+interface SearchQueryEntry {
+  api: string;
+  query: string;
+  fields_of_study?: string[];
+  concepts?: string[];
+}
+
 function ResearchFieldsTab() {
   const supabase = createClient();
   const queryClient = useQueryClient();
@@ -113,6 +140,23 @@ function ResearchFieldsTab() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["research-fields"] }),
   });
 
+  const updateQueries = useMutation({
+    mutationFn: async ({
+      id,
+      searchQueries,
+    }: {
+      id: string;
+      searchQueries: SearchQueryEntry[];
+    }) => {
+      const { error } = await supabase
+        .from("research_fields")
+        .update({ search_queries: searchQueries })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["research-fields"] }),
+  });
+
   if (isLoading) return <LoadingSpinner />;
 
   return (
@@ -130,46 +174,184 @@ function ResearchFieldsTab() {
               <TableHead>분야명</TableHead>
               <TableHead>영문명</TableHead>
               <TableHead>Map 노드</TableHead>
+              <TableHead>검색 쿼리</TableHead>
               <TableHead>마지막 검색</TableHead>
               <TableHead>활성</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {(fields ?? []).map((field) => (
-              <TableRow key={field.id}>
-                <TableCell className="font-medium">{field.name}</TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {field.name_en}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline">{field.map_node_id}</Badge>
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {field.last_fetched_at
-                    ? new Date(field.last_fetched_at).toLocaleDateString("ko-KR")
-                    : "—"}
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant={field.is_active ? "default" : "outline"}
-                    size="sm"
-                    onClick={() =>
-                      toggleActive.mutate({
-                        id: field.id,
-                        isActive: !field.is_active,
-                      })
-                    }
-                    disabled={toggleActive.isPending}
-                  >
-                    {field.is_active ? "활성" : "비활성"}
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
+            {(fields ?? []).map((field) => {
+              const queries: SearchQueryEntry[] = Array.isArray(field.search_queries)
+                ? field.search_queries
+                : [];
+
+              return (
+                <TableRow key={field.id}>
+                  <TableCell className="font-medium">{field.name}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {field.name_en}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{field.map_node_id}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <SearchQueryEditor
+                      fieldId={field.id}
+                      fieldName={field.name}
+                      queries={queries}
+                      onSave={(newQueries) =>
+                        updateQueries.mutate({
+                          id: field.id,
+                          searchQueries: newQueries,
+                        })
+                      }
+                      isSaving={updateQueries.isPending}
+                    />
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {field.last_fetched_at
+                      ? new Date(field.last_fetched_at).toLocaleDateString("ko-KR")
+                      : "—"}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant={field.is_active ? "default" : "outline"}
+                      size="sm"
+                      onClick={() =>
+                        toggleActive.mutate({
+                          id: field.id,
+                          isActive: !field.is_active,
+                        })
+                      }
+                      disabled={toggleActive.isPending}
+                    >
+                      {field.is_active ? "활성" : "비활성"}
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </CardContent>
     </Card>
+  );
+}
+
+// ─── Search Query Editor Dialog ───
+function SearchQueryEditor({
+  fieldId,
+  fieldName,
+  queries,
+  onSave,
+  isSaving,
+}: {
+  fieldId: string;
+  fieldName: string;
+  queries: SearchQueryEntry[];
+  onSave: (queries: SearchQueryEntry[]) => void;
+  isSaving: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<SearchQueryEntry[]>([]);
+
+  const handleOpen = (isOpen: boolean) => {
+    if (isOpen) {
+      setDraft(
+        queries.length > 0
+          ? queries.map((q) => ({ ...q }))
+          : [{ api: "semantic_scholar", query: "" }]
+      );
+    }
+    setOpen(isOpen);
+  };
+
+  const updateDraftQuery = (index: number, value: string) => {
+    setDraft((prev) =>
+      prev.map((q, i) => (i === index ? { ...q, query: value } : q))
+    );
+  };
+
+  const updateDraftApi = (index: number, api: string) => {
+    setDraft((prev) =>
+      prev.map((q, i) => (i === index ? { ...q, api } : q))
+    );
+  };
+
+  const addQuery = () => {
+    setDraft((prev) => [...prev, { api: "semantic_scholar", query: "" }]);
+  };
+
+  const removeQuery = (index: number) => {
+    setDraft((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSave = () => {
+    const valid = draft.filter((q) => q.query.trim() !== "");
+    onSave(valid);
+    setOpen(false);
+  };
+
+  const queryCount = queries.length;
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm" className="gap-1.5">
+          <Pencil className="h-3.5 w-3.5" />
+          {queryCount > 0 ? `${queryCount}개 쿼리` : "설정"}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>검색 쿼리 편집 — {fieldName}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          {draft.map((q, i) => (
+            <div key={`${fieldId}-query-${i}`} className="flex items-start gap-2">
+              <Select value={q.api} onValueChange={(v) => updateDraftApi(i, v)}>
+                <SelectTrigger className="w-[130px] shrink-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="semantic_scholar">Semantic Scholar</SelectItem>
+                  <SelectItem value="openalex">OpenAlex</SelectItem>
+                </SelectContent>
+              </Select>
+              <Textarea
+                value={q.query}
+                onChange={(e) => updateDraftQuery(i, e.target.value)}
+                placeholder={`검색 쿼리 (예: "green space" accessibility equity)`}
+                className="min-h-[60px] flex-1 text-sm"
+              />
+              {draft.length > 1 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="shrink-0 text-destructive"
+                  onClick={() => removeQuery(i)}
+                >
+                  &times;
+                </Button>
+              )}
+            </div>
+          ))}
+          <div className="flex items-center justify-between pt-2">
+            <Button variant="outline" size="sm" onClick={addQuery}>
+              + 쿼리 추가
+            </Button>
+            <Button size="sm" onClick={handleSave} disabled={isSaving}>
+              {isSaving ? (
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Save className="mr-1.5 h-3.5 w-3.5" />
+              )}
+              저장
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -179,15 +361,65 @@ function PapersListTab() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [fieldFilter, setFieldFilter] = useState("all");
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 300);
     return () => clearTimeout(timer);
   }, [search]);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["papers-list", debouncedSearch],
+  const { data: researchFields } = useQuery({
+    queryKey: ["research-fields-for-filter"],
     queryFn: async () => {
+      const { data, error } = await supabase
+        .from("research_fields")
+        .select("id, name")
+        .order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["papers-list", debouncedSearch, fieldFilter],
+    queryFn: async () => {
+      if (fieldFilter !== "all") {
+        // Field filter: query through paper_field_links join
+        const { data: linkData, error: linkError } = await supabase
+          .from("paper_field_links")
+          .select("paper_id")
+          .eq("field_id", fieldFilter);
+        if (linkError) throw linkError;
+
+        const paperIds = (linkData ?? []).map((l) => l.paper_id);
+        if (paperIds.length === 0) {
+          return { papers: [], total: 0 };
+        }
+
+        let query = supabase
+          .from("papers")
+          .select(
+            `
+            id, title, authors, doi, journal,
+            publication_date, publication_year, citation_count,
+            source, is_lab_member, is_hidden, created_at,
+            paper_field_links(research_fields(name))
+          `,
+            { count: "exact" }
+          )
+          .in("id", paperIds)
+          .order("publication_date", { ascending: false, nullsFirst: false })
+          .limit(50);
+
+        if (debouncedSearch) {
+          query = query.ilike("title", `%${debouncedSearch}%`);
+        }
+
+        const { data, error, count } = await query;
+        if (error) throw error;
+        return { papers: data, total: count ?? 0 };
+      }
+
       let query = supabase
         .from("papers")
         .select(
@@ -229,6 +461,26 @@ function PapersListTab() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["papers-list"] }),
   });
 
+  const toggleLabMember = useMutation({
+    mutationFn: async ({
+      id,
+      isLabMember,
+    }: {
+      id: string;
+      isLabMember: boolean;
+    }) => {
+      const { error } = await supabase
+        .from("papers")
+        .update({ is_lab_member: isLabMember })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["papers-list"] });
+      queryClient.invalidateQueries({ queryKey: ["papers", "map-nodes"] });
+    },
+  });
+
   if (isLoading) return <LoadingSpinner />;
 
   return (
@@ -236,14 +488,29 @@ function PapersListTab() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>논문 목록 ({data?.total ?? 0})</CardTitle>
-          <div className="relative w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="논문 제목 검색..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
+          <div className="flex items-center gap-2">
+            <Select value={fieldFilter} onValueChange={setFieldFilter}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="분야 필터" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">전체 분야</SelectItem>
+                {(researchFields ?? []).map((f) => (
+                  <SelectItem key={f.id} value={f.id}>
+                    {f.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="relative w-64">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="논문 제목 검색..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -257,6 +524,7 @@ function PapersListTab() {
               <TableHead>인용</TableHead>
               <TableHead>출처</TableHead>
               <TableHead>분야</TableHead>
+              <TableHead>Lab</TableHead>
               <TableHead>상태</TableHead>
             </TableRow>
           </TableHeader>
@@ -293,11 +561,6 @@ function PapersListTab() {
                           </a>
                         )}
                       </div>
-                      {paper.is_lab_member && (
-                        <Badge variant="default" className="shrink-0 text-[10px]">
-                          Lab
-                        </Badge>
-                      )}
                     </div>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
@@ -328,6 +591,26 @@ function PapersListTab() {
                       variant="ghost"
                       size="sm"
                       onClick={() =>
+                        toggleLabMember.mutate({
+                          id: paper.id,
+                          isLabMember: !paper.is_lab_member,
+                        })
+                      }
+                      disabled={toggleLabMember.isPending}
+                      title={paper.is_lab_member ? "Lab 멤버 논문 해제" : "Lab 멤버 논문으로 지정"}
+                    >
+                      {paper.is_lab_member ? (
+                        <UserCheck className="h-4 w-4 text-blue-500" />
+                      ) : (
+                        <UserX className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
                         toggleHidden.mutate({
                           id: paper.id,
                           isHidden: !paper.is_hidden,
@@ -347,7 +630,7 @@ function PapersListTab() {
             })}
             {(data?.papers ?? []).length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                <TableCell colSpan={8} className="text-center text-muted-foreground">
                   논문이 없습니다. 수동 검색을 실행하세요.
                 </TableCell>
               </TableRow>
