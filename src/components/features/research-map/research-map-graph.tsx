@@ -213,16 +213,46 @@ function applyVisualState(
   // ── Apply to nodes ──
   nodeEls.each(function (d: SimNode) {
     const isVisible = finalNodeVisible.has(d.id);
+    const isSelected = d.id === effectiveSelectedId;
     const g = d3.select(this);
-    g.classed("rm-sel", d.id === effectiveSelectedId);
-    g.select("circle")
-      .transition()
-      .duration(duration)
-      .attr("opacity", isVisible ? 1 : 0.08);
+    g.classed("rm-sel", isSelected);
+
+    const circle = g.select("circle");
+    const origStroke = NODE_COLORS[d.type];
+    const origStrokeWidth = d.type === "axis" ? 2 : 1.5;
+    const origStrokeOpacity =
+      d.type === "axis" ? 0.5 : d.type === "paper" ? 0.5 : 0.7;
+
+    if (isSelected) {
+      circle
+        .transition()
+        .duration(duration)
+        .attr("opacity", 1)
+        .attr("stroke", "#FFD700")
+        .attr("stroke-width", 3)
+        .attr("stroke-opacity", 1);
+    } else if (isVisible) {
+      circle
+        .transition()
+        .duration(duration)
+        .attr("opacity", 1)
+        .attr("stroke", origStroke)
+        .attr("stroke-width", origStrokeWidth)
+        .attr("stroke-opacity", effectiveSelectedId ? 0.9 : origStrokeOpacity);
+    } else {
+      circle
+        .transition()
+        .duration(duration)
+        .attr("opacity", 0.15)
+        .attr("stroke", origStroke)
+        .attr("stroke-width", origStrokeWidth)
+        .attr("stroke-opacity", 0.1);
+    }
+
     g.select("text")
       .transition()
       .duration(duration)
-      .attr("opacity", isVisible ? 1 : 0.05);
+      .attr("opacity", isSelected ? 1 : isVisible ? 1 : 0.05);
   });
 
   // ── Apply to links ──
@@ -237,26 +267,48 @@ function applyVisualState(
     const origOp = origLinkOpacity(d);
     const origW = origLinkWidth(d);
 
+    // Compute original stroke color for this link
+    const nodes_ = nodes;
+    let origColor: string;
+    if (d.type === "kk") {
+      origColor = "#ffffff";
+    } else if (d.type === "collab") {
+      origColor = NODE_COLORS.student;
+    } else {
+      const tn = nodes_.find((x) => x.id === nodeId(d.target));
+      origColor = tn ? NODE_COLORS[tn.type] : "#1a2040";
+    }
+
     let targetOpacity: number;
     let targetWidth: number;
+    let targetColor: string;
 
     if (!bothVisible) {
       targetOpacity = 0.04;
       targetWidth = origW;
+      targetColor = origColor;
     } else if (effectiveSelectedId && connectsSelected) {
-      targetOpacity = Math.max(origOp * 3, 0.35);
-      targetWidth = origW + 0.5;
+      targetOpacity = 0.8;
+      targetWidth = 2.5;
+      targetColor = "#FFD700";
+    } else if (effectiveSelectedId && !connectsSelected) {
+      targetOpacity = 0.05;
+      targetWidth = origW;
+      targetColor = origColor;
     } else if (hasDimming && !effectiveSelectedId) {
       targetOpacity = origOp;
       targetWidth = origW + 0.5;
+      targetColor = origColor;
     } else {
       targetOpacity = origOp;
       targetWidth = origW;
+      targetColor = origColor;
     }
 
     d3.select(this)
       .transition()
       .duration(duration)
+      .attr("stroke", targetColor)
       .attr("stroke-opacity", targetOpacity)
       .attr("stroke-width", targetWidth);
   });
