@@ -889,7 +889,7 @@ export function ResearchMapGraph() {
       {/* ── Graph Area ── */}
       <div
         ref={containerRef}
-        className="relative flex-1"
+        className="relative min-w-0 flex-1 transition-all duration-300 ease-in-out"
         style={{
           background:
             "radial-gradient(ellipse at center, #0a0e28 0%, #060818 70%)",
@@ -906,25 +906,26 @@ export function ResearchMapGraph() {
         <svg ref={svgRef} className="h-full w-full" />
       </div>
 
-      {/* ── Detail Panel — Desktop slide-in ── */}
+      {/* ── Detail Panel — Desktop flex panel (not overlay) ── */}
       <div
-        className={`absolute right-0 top-0 bottom-0 z-20 hidden w-[400px] transition-transform duration-300 ease-in-out md:block ${
-          selectedNode ? "translate-x-0" : "translate-x-full"
-        }`}
+        className="hidden shrink-0 overflow-hidden transition-all duration-300 ease-in-out md:block"
         style={{
-          borderLeft: "1px solid rgba(60,80,140,0.15)",
+          width: selectedNode ? 400 : 0,
+          borderLeft: selectedNode ? "1px solid rgba(60,80,140,0.15)" : "none",
           background:
             "linear-gradient(180deg, #0c1030 0%, #080c22 100%)",
         }}
       >
         {selectedNode && (
-          <DetailPanel
-            node={selectedNode}
-            connections={connectionsByType}
-            onClose={clearSelection}
-            onNodeClick={handleDetailNodeClick}
-            isDark={isDark}
-          />
+          <div className="h-full w-[400px]">
+            <DetailPanel
+              node={selectedNode}
+              connections={connectionsByType}
+              onClose={clearSelection}
+              onNodeClick={handleDetailNodeClick}
+              isDark={isDark}
+            />
+          </div>
         )}
       </div>
 
