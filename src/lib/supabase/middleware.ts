@@ -43,7 +43,10 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/signup");
   const isPendingApprovalPage =
     request.nextUrl.pathname.startsWith("/pending-approval");
-  const isPublicPath = isAuthPage || isPendingApprovalPage;
+  const isCronApi =
+    request.nextUrl.pathname.startsWith("/api/cron") ||
+    request.nextUrl.pathname.startsWith("/api/papers/fetch");
+  const isPublicPath = isAuthPage || isPendingApprovalPage || isCronApi;
   const isProtectedPath = !isPublicPath;
 
   // 로그인하지 않은 사용자가 보호된 경로에 접근할 경우
