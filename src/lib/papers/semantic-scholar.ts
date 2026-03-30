@@ -84,6 +84,7 @@ export async function searchSemanticScholar(
 
   const response = await fetch(`${BASE_URL}/paper/search?${params}`, {
     headers,
+    signal: AbortSignal.timeout(5000),
   });
 
   if (!response.ok) {
