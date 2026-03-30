@@ -23,7 +23,7 @@ function createServiceClient() {
 export const maxDuration = 25;
 
 /** Rate limit delay between API calls */
-const API_DELAY_MS = 1200;
+const API_DELAY_MS = 500;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));

@@ -64,6 +64,7 @@ export async function searchOpenAlex(
 
   const response = await fetch(`${BASE_URL}/works?${params}`, {
     headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(5000),
   });
 
   if (!response.ok) {
