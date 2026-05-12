@@ -17,6 +17,7 @@ import {
   type StudentProfile,
 } from "./research-map-data";
 import { usePapers } from "@/hooks/use-papers";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 // ─── Types for D3 simulation ───
 interface SimNode extends MapNode {
@@ -516,6 +517,19 @@ export function ResearchMapGraph() {
           })
       );
 
+    // Clip paths for student avatar images
+    nodes.forEach((d) => {
+      if (d.type === "student" && d.avatar) {
+        defs
+          .append("clipPath")
+          .attr("id", `clip-${d.id.replace(/\s/g, "")}`)
+          .append("circle")
+          .attr("r", d.size)
+          .attr("cx", 0)
+          .attr("cy", 0);
+      }
+    });
+
     nodeEls
       .append("circle")
       .attr("r", (d) => d.size)
@@ -528,6 +542,18 @@ export function ResearchMapGraph() {
       .attr("stroke-width", (d) => (d.type === "axis" ? 2 : 1.5))
       .attr("stroke-opacity", (d) => (d.type === "axis" ? 0.5 : d.type === "paper" ? 0.5 : 0.7))
       .attr("stroke-dasharray", (d) => (d.type === "paper" ? "3,2" : null));
+
+    // Student avatar images (rendered on top of circle)
+    nodeEls
+      .filter((d) => d.type === "student" && !!d.avatar)
+      .append("image")
+      .attr("href", (d) => d.avatar!)
+      .attr("x", (d) => -d.size)
+      .attr("y", (d) => -d.size)
+      .attr("width", (d) => d.size * 2)
+      .attr("height", (d) => d.size * 2)
+      .attr("clip-path", (d) => `url(#clip-${d.id.replace(/\s/g, "")})`)
+      .style("pointer-events", "none");
 
     nodeEls
       .append("text")
@@ -1092,14 +1118,29 @@ function DetailPanel({
         className="mb-4 flex items-center gap-3 pb-3"
         style={{ borderBottom: "1px solid rgba(40,50,80,0.25)" }}
       >
-        <div
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg"
-          style={{
-            background: NODE_COLORS[node.type] + "15",
-            border: `1.5px solid ${NODE_COLORS[node.type]}40`,
-            color: NODE_COLORS[node.type],
-          }}
-        />
+        {node.type === "student" && node.avatar ? (
+          <Avatar className="h-10 w-10 shrink-0">
+            <AvatarImage src={node.avatar} />
+            <AvatarFallback
+              className="text-sm font-bold"
+              style={{
+                background: NODE_COLORS.student + "30",
+                color: NODE_COLORS.student,
+              }}
+            >
+              {node.label[0]}
+            </AvatarFallback>
+          </Avatar>
+        ) : (
+          <div
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg"
+            style={{
+              background: NODE_COLORS[node.type] + "15",
+              border: `1.5px solid ${NODE_COLORS[node.type]}40`,
+              color: NODE_COLORS[node.type],
+            }}
+          />
+        )}
         <div>
           <h2 className="text-lg font-bold" style={{ color: "#d0d8f0" }}>
             {node.label}
