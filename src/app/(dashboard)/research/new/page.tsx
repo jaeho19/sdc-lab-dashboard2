@@ -51,6 +51,7 @@ export default function NewResearchPage() {
   const [targetJournal, setTargetJournal] = useState("");
   const [deadline, setDeadline] = useState("");
   const [status, setStatus] = useState("preparing");
+  const [firstAuthor, setFirstAuthor] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -71,6 +72,7 @@ export default function NewResearchPage() {
       target_journal: targetJournal || undefined,
       deadline: deadline || undefined,
       status,
+      first_author: firstAuthor || undefined,
     });
 
     if (result.error) {
@@ -238,6 +240,20 @@ export default function NewResearchPage() {
                   투고 또는 제출 목표일을 입력하세요.
                 </p>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="firstAuthor">주저자 (1저자)</Label>
+              <Input
+                id="firstAuthor"
+                value={firstAuthor}
+                onChange={(e) => setFirstAuthor(e.target.value)}
+                placeholder="예: 홍길동"
+                disabled={isLoading}
+              />
+              <p className="text-xs text-muted-foreground">
+                주저자(1저자) 이름을 입력하세요. 생성 후 대시보드에서도 바로 수정할 수 있습니다.
+              </p>
             </div>
           </CardContent>
         </Card>

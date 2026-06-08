@@ -29,7 +29,7 @@ export default async function DashboardPage() {
   const [projectsResult, eventsResult, goalsResult, announcementsResult] = await Promise.all([
     supabase
       .from("research_projects")
-      .select("id, title, status, overall_progress, updated_at, submission_status, target_journal, is_archived")
+      .select("id, title, status, overall_progress, updated_at, submission_status, target_journal, is_archived, first_author")
       .order("updated_at", { ascending: false }),
 
     supabase
@@ -142,6 +142,7 @@ export default async function DashboardPage() {
     submission_status: SubmissionStatus;
     target_journal: string | null;
     is_archived: boolean;
+    first_author: string | null;
   }>;
 
   // 투고 중인 연구 (투고 후)
@@ -221,34 +222,6 @@ export default async function DashboardPage() {
     };
   });
 
-  // 캘린더 이벤트를 통합 마감일 형식으로 변환 (미래 일정만)
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const calendarDeadlines: UnifiedDeadlineItem[] = eventList
-    .filter((event) => {
-      const eventDate = new Date(event.start_date);
-      eventDate.setHours(0, 0, 0, 0);
-      return eventDate >= today; // 오늘 포함, 과거 제외
-    })
-    .map((event) => ({
-      id: event.id,
-      type: "event" as const,
-      title: event.title,
-      date: event.start_date,
-      category: event.category,
-      memberName: event.member?.name || "Lab",
-      memberAvatarUrl: event.member?.avatar_url,
-      memberId: event.member_id || undefined,
-      isAllDay: event.all_day,
-    }));
-
-  // 다가오는 마감일: 미완료 목표 + 오늘 이후 일정 (날짜 오름차순)
-  const upcomingDeadlines = [...goalDeadlines, ...calendarDeadlines]
-    .filter((item) => !item.isCompleted)  // 미완료만
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(0, 20);
-
   // 완료된 목표: 완료된 목표만 (날짜 내림차순 - 최근 완료 순)
   const completedDeadlines = goalDeadlines
     .filter((item) => item.isCompleted)
@@ -305,40 +278,32 @@ export default async function DashboardPage() {
       </div>
 
       {/*
-        2×2 그리드 레이아웃
-        - gap-6 md:gap-8: 카드 간 여백 증가 (기존 gap-4 md:gap-6)
-        - 모든 카드 동일 높이 유지
+        2열 그리드 레이아웃 (다가오는 마감일 제거)
+        - 좌측 컬럼: 공지사항(상) + 완료된 목표(하)
+        - 우측 컬럼: 투고 중인 연구가 2행을 차지해 더 길게 표시 (md:row-span-2)
+        - 행 우선 흐름(grid auto-flow row)으로 배치되므로 컴포넌트 순서가 곧 배치 순서
       */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-        {/* 첫 번째 행 좌측: 다가오는 마감일 */}
-        <UnifiedDeadlineView
-          items={upcomingDeadlines}
-          title="다가오는 마감일"
-          icon="clock"
-          variant="upcoming"
-          className="h-[600px] md:h-[675px]"
-        />
-
-        {/* 첫 번째 행 우측: 공지사항 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 md:grid-rows-2 gap-6 md:gap-8">
+        {/* 좌상단: 공지사항 */}
         <AnnouncementsSection
           announcements={announcementItems}
           maxItems={5}
           className="h-[600px] md:h-[675px]"
         />
 
-        {/* 두 번째 행 좌측: 완료된 목표 */}
+        {/* 우측 컬럼 전체(2행 span): 투고 중인 연구 — 더 길게 */}
+        <SubmittedProjectsCard
+          projects={activeProjects}
+          archivedProjects={archivedProjects}
+          className="h-[600px] md:h-full md:row-span-2"
+        />
+
+        {/* 좌하단: 완료된 목표 */}
         <UnifiedDeadlineView
           items={completedDeadlines}
           title="완료된 목표"
           icon="history"
           variant="past"
-          className="h-[600px] md:h-[675px]"
-        />
-
-        {/* 두 번째 행 우측: 투고 중인 연구 */}
-        <SubmittedProjectsCard
-          projects={activeProjects}
-          archivedProjects={archivedProjects}
           className="h-[600px] md:h-[675px]"
         />
       </div>

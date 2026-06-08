@@ -15,6 +15,7 @@ export type ProjectFormData = {
   deadline?: string;
   status: string;
   submission_status?: string;
+  first_author?: string;
 };
 
 export type ActionResult = {
@@ -62,6 +63,13 @@ export async function createProject(
       target_journal: formData.target_journal || null,
       target_date: formData.deadline || null,
       status: formData.status,
+      first_author: formData.first_author?.trim() || null,
+      ...(formData.submission_status && formData.submission_status !== "not_submitted"
+        ? {
+            submission_status: formData.submission_status,
+            submitted_at: new Date().toISOString(),
+          }
+        : {}),
       overall_progress: 0,
       created_by: memberData.id,
     } as never)
@@ -146,6 +154,7 @@ export async function createProject(
   }
 
   revalidatePath("/research");
+  revalidatePath("/dashboard");
   return { success: true, id: projectData.id };
 }
 
@@ -182,6 +191,7 @@ export async function updateProject(
   if (formData.deadline !== undefined) updateData.target_date = formData.deadline || null;
   if (formData.status !== undefined) updateData.status = formData.status;
   if (formData.submission_status !== undefined) updateData.submission_status = formData.submission_status;
+  if (formData.first_author !== undefined) updateData.first_author = formData.first_author.trim() || null;
 
   const { error } = await supabase
     .from("research_projects")
@@ -895,6 +905,36 @@ export async function updateSubmissionStatus(
   if (error) {
     console.error("Submission status update error:", error);
     return { error: "투고 상태 변경 중 오류가 발생했습니다." };
+  }
+
+  revalidatePath(`/research/${projectId}`);
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+// 주저자(1저자) 인라인 업데이트 — 대시보드 카드 등에서 빠른 편집용
+export async function updateFirstAuthor(
+  projectId: string,
+  firstAuthor: string
+): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "로그인이 필요합니다." };
+  }
+
+  const { error } = await supabase
+    .from("research_projects")
+    .update({ first_author: firstAuthor.trim() || null } as never)
+    .eq("id", projectId);
+
+  if (error) {
+    console.error("First author update error:", error);
+    return { error: "주저자 변경 중 오류가 발생했습니다." };
   }
 
   revalidatePath(`/research/${projectId}`);
