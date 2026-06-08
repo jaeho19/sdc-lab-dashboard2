@@ -942,6 +942,36 @@ export async function updateFirstAuthor(
   return { success: true };
 }
 
+// 타겟 저널 인라인 업데이트 — 대시보드 카드 등에서 빠른 편집용
+export async function updateTargetJournal(
+  projectId: string,
+  targetJournal: string
+): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "로그인이 필요합니다." };
+  }
+
+  const { error } = await supabase
+    .from("research_projects")
+    .update({ target_journal: targetJournal.trim() || null } as never)
+    .eq("id", projectId);
+
+  if (error) {
+    console.error("Target journal update error:", error);
+    return { error: "저널 변경 중 오류가 발생했습니다." };
+  }
+
+  revalidatePath(`/research/${projectId}`);
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
 // 프로젝트 아카이브 토글
 export async function toggleProjectArchive(
   projectId: string,

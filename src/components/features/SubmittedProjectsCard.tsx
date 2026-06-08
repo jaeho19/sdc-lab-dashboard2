@@ -41,6 +41,7 @@ import {
   updateSubmissionStatus,
   toggleProjectArchive,
   updateFirstAuthor,
+  updateTargetJournal,
   createProject,
 } from "@/lib/actions/research";
 import { getSubmissionStatusLabel, getSubmissionStatusColor, cn } from "@/lib/utils";
@@ -70,6 +71,113 @@ type Project = {
 // 아카이브 가능한 상태들
 const ARCHIVABLE_STATUSES: SubmissionStatus[] = ["accepted", "in_press", "published"];
 
+// 카드 내 텍스트 필드를 클릭하여 인라인 편집하는 공용 컴포넌트 (저널/주저자 공용)
+function InlineTextEdit({
+  label,
+  value,
+  placeholder,
+  editable,
+  onSave,
+}: {
+  label: string;
+  value: string | null;
+  placeholder: string;
+  editable: boolean;
+  onSave: (next: string) => Promise<{ error?: string }>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  function start() {
+    setDraft(value ?? "");
+    setEditing(true);
+  }
+
+  function cancel() {
+    setEditing(false);
+    setDraft("");
+  }
+
+  async function save() {
+    setSaving(true);
+    const result = await onSave(draft.trim());
+    setSaving(false);
+    if (result?.error) {
+      alert(result.error);
+      return;
+    }
+    setEditing(false);
+    setDraft("");
+  }
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-1">
+        <Input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder={placeholder}
+          autoFocus
+          className="h-6 w-40 text-xs"
+          disabled={saving}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") save();
+            if (e.key === "Escape") cancel();
+          }}
+        />
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 w-6 p-0 text-green-600 hover:text-green-700"
+          onClick={save}
+          disabled={saving}
+          title="저장"
+        >
+          {saving ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <Check className="h-3 w-3" />
+          )}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+          onClick={cancel}
+          disabled={saving}
+          title="취소"
+        >
+          <X className="h-3 w-3" />
+        </Button>
+      </div>
+    );
+  }
+
+  // 아카이브 항목 등 편집 불가 시 표시만
+  if (!editable) {
+    return (
+      <span className="text-xs text-muted-foreground block truncate">
+        {label}: {value || "미지정"}
+      </span>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={start}
+      className="group/inline flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors max-w-full"
+      title={`${label} 수정`}
+    >
+      <span className="truncate">
+        {label}: {value || "미지정"}
+      </span>
+      <Pencil className="h-3 w-3 shrink-0 opacity-0 group-hover/inline:opacity-100 transition-opacity" />
+    </button>
+  );
+}
+
 interface SubmittedProjectsCardProps {
   projects: Project[];
   archivedProjects?: Project[];
@@ -87,11 +195,6 @@ export function SubmittedProjectsCard({
   const [localProjects, setLocalProjects] = useState(projects);
   const [localArchivedProjects, setLocalArchivedProjects] = useState(archivedProjects);
   const [isArchivedOpen, setIsArchivedOpen] = useState(true);
-
-  // 주저자 인라인 편집 상태
-  const [editingAuthorId, setEditingAuthorId] = useState<string | null>(null);
-  const [authorDraft, setAuthorDraft] = useState("");
-  const [savingAuthorId, setSavingAuthorId] = useState<string | null>(null);
 
   // 새 투고 추가 다이얼로그 상태
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -125,38 +228,34 @@ export function SubmittedProjectsCard({
     setUpdatingId(null);
   }
 
-  function startEditAuthor(project: Project) {
-    setEditingAuthorId(project.id);
-    setAuthorDraft(project.first_author ?? "");
+  // 활성/아카이브 양쪽 리스트에 필드 패치 (optimistic)
+  function patchLocal(projectId: string, patch: Partial<Project>) {
+    setLocalProjects((prev) =>
+      prev.map((p) => (p.id === projectId ? { ...p, ...patch } : p))
+    );
+    setLocalArchivedProjects((prev) =>
+      prev.map((p) => (p.id === projectId ? { ...p, ...patch } : p))
+    );
   }
 
-  function cancelEditAuthor() {
-    setEditingAuthorId(null);
-    setAuthorDraft("");
-  }
-
-  async function handleAuthorSave(projectId: string) {
-    const value = authorDraft.trim();
-    setSavingAuthorId(projectId);
-
-    // Optimistic update (활성/아카이브 양쪽 모두 반영)
-    const apply = (p: Project) =>
-      p.id === projectId ? { ...p, first_author: value || null } : p;
-    setLocalProjects((prev) => prev.map(apply));
-    setLocalArchivedProjects((prev) => prev.map(apply));
-
+  async function saveFirstAuthor(projectId: string, value: string) {
+    patchLocal(projectId, { first_author: value || null });
     const result = await updateFirstAuthor(projectId, value);
-
     if (result.error) {
-      // Revert on error
       setLocalProjects(projects);
       setLocalArchivedProjects(archivedProjects);
-      alert(result.error);
     }
+    return result;
+  }
 
-    setSavingAuthorId(null);
-    setEditingAuthorId(null);
-    setAuthorDraft("");
+  async function saveTargetJournal(projectId: string, value: string) {
+    patchLocal(projectId, { target_journal: value || null });
+    const result = await updateTargetJournal(projectId, value);
+    if (result.error) {
+      setLocalProjects(projects);
+      setLocalArchivedProjects(archivedProjects);
+    }
+    return result;
   }
 
   async function handleArchive(projectId: string) {
@@ -256,74 +355,6 @@ export function SubmittedProjectsCard({
     router.refresh();
   }
 
-  const renderAuthorRow = (project: Project, isArchived: boolean) => {
-    const isEditing = editingAuthorId === project.id;
-
-    if (isEditing) {
-      return (
-        <div className="flex items-center gap-1">
-          <Input
-            value={authorDraft}
-            onChange={(e) => setAuthorDraft(e.target.value)}
-            placeholder="주저자 이름"
-            autoFocus
-            className="h-6 w-32 text-xs"
-            disabled={savingAuthorId === project.id}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleAuthorSave(project.id);
-              if (e.key === "Escape") cancelEditAuthor();
-            }}
-          />
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 text-green-600 hover:text-green-700"
-            onClick={() => handleAuthorSave(project.id)}
-            disabled={savingAuthorId === project.id}
-            title="저장"
-          >
-            {savingAuthorId === project.id ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : (
-              <Check className="h-3 w-3" />
-            )}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
-            onClick={cancelEditAuthor}
-            disabled={savingAuthorId === project.id}
-            title="취소"
-          >
-            <X className="h-3 w-3" />
-          </Button>
-        </div>
-      );
-    }
-
-    // 아카이브 항목은 표시만, 활성 항목은 클릭하여 편집
-    if (isArchived) {
-      return (
-        <span className="text-xs text-muted-foreground block">
-          주저자: {project.first_author || "미지정"}
-        </span>
-      );
-    }
-
-    return (
-      <button
-        type="button"
-        onClick={() => startEditAuthor(project)}
-        className="group/author flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
-        title="주저자 수정"
-      >
-        <span>주저자: {project.first_author || "미지정"}</span>
-        <Pencil className="h-3 w-3 opacity-0 group-hover/author:opacity-100 transition-opacity" />
-      </button>
-    );
-  };
-
   const renderProjectItem = (project: Project, isArchived: boolean = false) => (
     <div
       key={project.id}
@@ -338,12 +369,20 @@ export function SubmittedProjectsCard({
             {project.title}
           </p>
         </Link>
-        {project.target_journal && (
-          <span className="text-xs text-muted-foreground truncate block">
-            {project.target_journal}
-          </span>
-        )}
-        {renderAuthorRow(project, isArchived)}
+        <InlineTextEdit
+          label="저널"
+          value={project.target_journal}
+          placeholder="저널 이름"
+          editable={!isArchived}
+          onSave={(v) => saveTargetJournal(project.id, v)}
+        />
+        <InlineTextEdit
+          label="주저자"
+          value={project.first_author}
+          placeholder="주저자 이름"
+          editable={!isArchived}
+          onSave={(v) => saveFirstAuthor(project.id, v)}
+        />
       </div>
       <div className="flex items-center gap-2">
         {isArchived ? (
